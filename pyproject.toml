@@ -9,6 +9,14 @@ description = "CFlow Platform (Phase 1 wrapper) for MCP public API, env verifica
 requires-python = ">=3.11"
 authors = [{ name = "Cerebral" }]
 dependencies = []
+readme = "README.md"
+license = { text = "MIT" }
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Operating System :: OS Independent",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["cflow_platform"]
