@@ -1,0 +1,9 @@
+#!/bin/bash
+# Asset copy of enhanced pre-commit; source of truth remains in monorepo git-hooks/
+# Used by cflow_platform.install_hooks when project lacks git-hooks/.
+
+# This file intentionally minimal; real logic will be copied from repo hooks
+# during installation if available.
+
+echo "[cflow-platform] Placeholder asset: please run scripts/install-enhanced-git-hooks.sh" >&2
+exit 2

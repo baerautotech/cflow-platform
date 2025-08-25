@@ -1,0 +1,7 @@
+#!/bin/bash
+# Asset copy of enhanced post-commit; source of truth remains in monorepo git-hooks/
+
+echo "[cflow-platform] Placeholder asset: please run scripts/install-enhanced-git-hooks.sh" >&2
+exit 2
+
+
