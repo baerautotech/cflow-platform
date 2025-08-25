@@ -1,9 +1,16 @@
 #!/bin/bash
-# Asset copy of enhanced pre-commit; source of truth remains in monorepo git-hooks/
-# Used by cflow_platform.install_hooks when project lacks git-hooks/.
+# Functional asset shim for enhanced pre-commit.
+# Delegates to repository hook if present; otherwise returns 2.
 
-# This file intentionally minimal; real logic will be copied from repo hooks
-# during installation if available.
+set -euo pipefail
 
-echo "[cflow-platform] Placeholder asset: please run scripts/install-enhanced-git-hooks.sh" >&2
-exit 2
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+REPO_HOOK="$PROJECT_ROOT/git-hooks/enhanced-pre-commit"
+
+if [ -x "$REPO_HOOK" ]; then
+  exec "$REPO_HOOK"
+else
+  echo "[cflow-platform] enhanced-pre-commit not found in repo; run scripts/install-enhanced-git-hooks.sh" >&2
+  exit 2
+fi
