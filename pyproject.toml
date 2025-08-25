@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cflow-platform"
+version = "0.1.0"
+description = "CFlow Platform (Phase 1 wrapper) for MCP public API, env verification, and hook installation"
+requires-python = ">=3.11"
+authors = [{ name = "Cerebral" }]
+dependencies = []
+
+[tool.hatch.build.targets.wheel]
+packages = ["cflow_platform"]
+
+
