@@ -13,4 +13,8 @@ dependencies = []
 [tool.hatch.build.targets.wheel]
 packages = ["cflow_platform"]
 
+[project.scripts]
+cflow-install-hooks = "cflow_platform.install_hooks:install"
+cflow-verify-env = "cflow_platform.verify_env:cli"
+
 

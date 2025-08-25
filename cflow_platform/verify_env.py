@@ -6,7 +6,7 @@ import importlib.util
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 
 def _load_monorepo_verifier():
@@ -39,5 +39,11 @@ if __name__ == "__main__":
     # Pass-through CLI to monorepo script
     ve = _load_monorepo_verifier()
     sys.exit(ve.main())
+
+
+def cli() -> int:
+    """Console script entrypoint compatible with pyproject scripts."""
+    ve = _load_monorepo_verifier()
+    return ve.main()
 
 
