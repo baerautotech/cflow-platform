@@ -1,7 +1,7 @@
 from typing import Any, Dict
 from .handler_loader import load_handler_module
 from pathlib import Path
-from .task_manager_adapter import TaskManagerAdapter
+from .task_manager_client import TaskManagerClient
 
 
 async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
@@ -19,13 +19,13 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
     if tool_name == "sys_test":
         # Dispatch to migrated system handler
         mod = load_handler_module("system_handlers")
-        tm = TaskManagerAdapter()
+        tm = TaskManagerClient()
         handler = mod.SystemHandlers(task_manager=tm, project_root=Path.cwd())  # type: ignore[attr-defined]
         result = await handler.handle_test_connection({})
         return {"status": "success", "content": result}
     if tool_name in {"task_list", "task_get", "task_next"}:
         mod = load_handler_module("task_handlers")
-        tm = TaskManagerAdapter()
+        tm = TaskManagerClient()
         handler = mod.TaskHandlers(task_manager=tm, project_root=Path.cwd())  # type: ignore[attr-defined]
         if tool_name == "task_list":
             return await handler.handle_list_tasks(kwargs or {})
@@ -35,7 +35,7 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             return await handler.handle_next_task(kwargs or {})
     if tool_name == "doc_research":
         mod = load_handler_module("enhanced_research_handlers")
-        tm = TaskManagerAdapter()
+        tm = TaskManagerClient()
         handler = mod.EnhancedResearchHandlers(task_manager=tm, project_root=Path.cwd())  # type: ignore[attr-defined]
         return await handler.handle_doc_research(kwargs or {})
     if tool_name in {"lint_full", "lint_bg", "lint_supa", "lint_status", "lint_trigger", "watch_start", "watch_status"}:
@@ -67,7 +67,7 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
         return await mapping[tool_name](kwargs or {})
     if tool_name in {"task_add", "task_update", "task_status", "task_sub_add", "task_sub_upd", "task_multi", "task_remove"}:
         mod = load_handler_module("task_mod_handlers")
-        tm = TaskManagerAdapter()
+        tm = TaskManagerClient()
         handler = mod.TaskModificationHandlers(task_manager=tm)  # type: ignore[attr-defined]
         mapping = {
             "task_add": handler.handle_task_add,
