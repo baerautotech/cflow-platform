@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Tuple
 
 def _load_monorepo_verifier():
     """Try to load the monorepo verifier when running inside the repo."""
-    base = Path(__file__).resolve().parents[2]
+    base = Path.cwd()
     ve = base / "scripts" / "verify_env.py"
     if ve.exists():
         spec = importlib.util.spec_from_file_location("verify_env", str(ve))
