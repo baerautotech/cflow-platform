@@ -65,7 +65,7 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             "enh_status": handler.handle_enh_status,
         }
         return await mapping[tool_name](kwargs or {})
-    if tool_name in {"task_add", "task_update", "task_status"}:
+    if tool_name in {"task_add", "task_update", "task_status", "task_sub_add", "task_sub_upd", "task_multi", "task_remove"}:
         mod = load_handler_module("task_mod_handlers")
         tm = TaskManagerAdapter()
         handler = mod.TaskModificationHandlers(task_manager=tm)  # type: ignore[attr-defined]
@@ -73,6 +73,10 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             "task_add": handler.handle_task_add,
             "task_update": handler.handle_task_update,
             "task_status": handler.handle_task_status,
+            "task_sub_add": handler.handle_task_sub_add,
+            "task_sub_upd": handler.handle_task_sub_upd,
+            "task_multi": handler.handle_task_multi,
+            "task_remove": handler.handle_task_remove,
         }
         return await mapping[tool_name](kwargs or {})
     if tool_name in {"test_analyze", "test_delete_flaky", "test_confidence"}:
