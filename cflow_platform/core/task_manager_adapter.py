@@ -50,4 +50,7 @@ class TaskManagerAdapter:
         # Monorepo manager currently logs update and returns True
         return await self._manager.update_task(task_id, updates)
 
+    async def delete_task(self, task_id: str) -> bool:
+        return await self._manager.delete_task(task_id)
+
 

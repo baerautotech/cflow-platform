@@ -51,6 +51,30 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             "watch_status": handler.handle_watch_status,
         }
         return await mapping[tool_name](kwargs or {})
+    if tool_name in {"enh_full_lint", "enh_pattern", "enh_autofix", "enh_perf", "enh_rag", "enh_mon_start", "enh_mon_stop", "enh_status"}:
+        mod = load_handler_module("linting_handlers")
+        handler = mod.LintingHandlers()  # type: ignore[attr-defined]
+        mapping = {
+            "enh_full_lint": handler.handle_enh_full_lint,
+            "enh_pattern": handler.handle_enh_pattern,
+            "enh_autofix": handler.handle_enh_autofix,
+            "enh_perf": handler.handle_enh_perf,
+            "enh_rag": handler.handle_enh_rag,
+            "enh_mon_start": handler.handle_enh_mon_start,
+            "enh_mon_stop": handler.handle_enh_mon_stop,
+            "enh_status": handler.handle_enh_status,
+        }
+        return await mapping[tool_name](kwargs or {})
+    if tool_name in {"task_add", "task_update", "task_status"}:
+        mod = load_handler_module("task_mod_handlers")
+        tm = TaskManagerAdapter()
+        handler = mod.TaskModificationHandlers(task_manager=tm)  # type: ignore[attr-defined]
+        mapping = {
+            "task_add": handler.handle_task_add,
+            "task_update": handler.handle_task_update,
+            "task_status": handler.handle_task_status,
+        }
+        return await mapping[tool_name](kwargs or {})
     if tool_name in {"test_analyze", "test_delete_flaky", "test_confidence"}:
         mod = load_handler_module("testing_handlers")
         handler = mod.TestingHandlers()  # type: ignore[attr-defined]

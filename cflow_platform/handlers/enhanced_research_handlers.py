@@ -28,17 +28,21 @@ class EnhancedResearchHandlers:
                 MonoHandlers = getattr(mod, "EnhancedResearchHandlers")
                 mono = MonoHandlers(task_manager=self.task_manager, project_root=self.project_root)
                 result = await mono.handle_enhanced_research(arguments)
-                # Convert list of TextContent to dict response if needed
-                try:
-                    # If result is list-like text contents
-                    if isinstance(result, list):
-                        text = "\n\n".join(getattr(x, "text", str(x)) for x in result)
-                        return {"status": "success", "content": text}
-                except Exception:
-                    pass
-                # If already dict-like
+                # Normalize to structured response
+                if isinstance(result, list):
+                    text = "\n\n".join(getattr(x, "text", str(x)) for x in result)
+                    return {
+                        "status": "success",
+                        "content": text,
+                        "taskId": arguments.get("taskId"),
+                        "autoCreateSubtasks": bool(arguments.get("autoCreateSubtasks", True)),
+                        "createTDD": bool(arguments.get("createTDD", True)),
+                    }
                 if isinstance(result, dict):
-                    return result
+                    # Ensure status and taskId present
+                    out = {"status": result.get("status", "success"), **result}
+                    out.setdefault("taskId", arguments.get("taskId"))
+                    return out
         except Exception:
             # Fall back to minimal implementation
             pass
