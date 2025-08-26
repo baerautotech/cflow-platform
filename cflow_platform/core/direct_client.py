@@ -42,6 +42,29 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             return await handler.handle_get_task(kwargs or {})
         if tool_name == "task_next":
             return await handler.handle_next_task(kwargs or {})
+    if tool_name in {"doc_generate", "doc_quality", "doc_refs", "doc_research", "doc_comply"}:
+        mod = load_handler_module("rag_handlers")
+        handler = mod.RAGHandlers(project_root=Path.cwd())  # type: ignore[attr-defined]
+        mapping = {
+            "doc_generate": handler.handle_doc_generate,
+            "doc_quality": handler.handle_doc_quality,
+            "doc_refs": handler.handle_doc_refs,
+            "doc_research": handler.handle_doc_research,
+            "doc_comply": handler.handle_doc_comply,
+        }
+        return await mapping[tool_name](kwargs or {})
+    if tool_name in {"sys_stats", "sys_debug", "sys_version"}:
+        mod = load_handler_module("system_handlers")
+        class _Shim:
+            async def get_task_stats(self) -> Dict[str, int]:
+                return {"total": 0}
+        handler = mod.SystemHandlers(task_manager=_Shim(), project_root=Path.cwd())  # type: ignore[attr-defined]
+        if tool_name == "sys_stats":
+            return await handler.handle_get_stats(kwargs or {})
+        if tool_name == "sys_debug":
+            return await handler.handle_debug_environment(kwargs or {})
+        if tool_name == "sys_version":
+            return await handler.handle_version_info(kwargs or {})
     return {"status": "error", "message": f"Unknown tool: {tool_name}"}
 
 

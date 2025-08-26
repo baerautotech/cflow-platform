@@ -38,9 +38,33 @@ class SystemHandlers:
             logger.error(f"Connection test failed: {e}")
             return [{"type": "text", "text": f"error: {e}"}]
 
+    async def handle_get_stats(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        stats = await _safe_call(self.task_manager.get_task_stats)
+        return {"status": "success", "stats": stats or {}}
+
+    async def handle_debug_environment(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        info = {
+            "python_version": sys.version.split()[0],
+            "platform": sys.platform,
+            "cwd": str(Path.cwd()),
+            "timestamp": datetime.now().isoformat(),
+        }
+        return {"status": "success", "environment": info}
+
+    async def handle_version_info(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        from cflow_platform.core.tool_registry import ToolRegistry  # type: ignore
+        return {"status": "success", "version": ToolRegistry.get_version_info()}
+
 
 def json_dump(data: Dict[str, Any]) -> str:
     import json
     return json.dumps(data)
+
+
+async def _safe_call(fn):
+    try:
+        return await fn()
+    except Exception:
+        return None
 
 
