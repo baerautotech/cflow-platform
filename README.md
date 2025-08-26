@@ -22,6 +22,12 @@ async def main():
 asyncio.run(main())
 ```
 
+## Core API (Phase 2)
+
+```python
+from cflow_platform.core.public_api import get_stdio_server, get_direct_client_executor, safe_get_version_info
+```
+
 ## CLI Examples
 
 ```bash

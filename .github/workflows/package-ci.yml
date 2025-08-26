@@ -1,0 +1,33 @@
+name: cflow-platform CI
+
+on:
+  push:
+    paths:
+      - 'cflow-platform/**'
+  pull_request:
+    paths:
+      - 'cflow-platform/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install uv
+        run: pipx install uv
+      - name: Build wheel and sdist
+        working-directory: cflow-platform
+        run: |
+          uv run -q python -m build
+      - name: Smoke install from dist
+        run: |
+          python -m venv .pkgtest
+          . .pkgtest/bin/activate
+          pip install --upgrade pip
+          pip install ./cflow-platform/dist/*.whl
+          python -c "import cflow_platform; import cflow_platform.public_api as p; assert callable(p.get_stdio_server())"
+
+
