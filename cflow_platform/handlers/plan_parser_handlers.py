@@ -80,4 +80,22 @@ class PlanParserHandlers:
                 })
         return {"success": True, "plans_found": len(plans), "search_path": str(base_path), "plans": sorted(plans, key=lambda x: x["modified"], reverse=True)}
 
+    async def validate_plan_format(self, **kwargs: Any) -> Dict[str, Any]:
+        # Delegate to monorepo AtomicPlanParser for validation when available
+        plan_file = kwargs.get("plan_file")
+        if not plan_file:
+            return {"success": False, "error": "plan_file parameter is required"}
+        try:
+            parser = self._get_parser()
+            file_path = Path(plan_file)
+            if not file_path.is_absolute():
+                file_path = Path.cwd() / file_path
+            if not file_path.exists():
+                return {"success": False, "error": f"Plan file not found: {file_path}"}
+            plan_data = parser.parse_atomic_plan(str(file_path))
+            has_tasks = bool(plan_data.get("tasks"))
+            return {"success": True, "file_valid": True, "has_tasks": has_tasks, "plan_info": plan_data.get("plan_info", {})}
+        except Exception as e:
+            return {"success": False, "error": f"Plan validation failed: {e}"}
+
 

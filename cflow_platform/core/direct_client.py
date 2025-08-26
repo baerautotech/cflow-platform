@@ -38,6 +38,28 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
         tm = TaskManagerAdapter()
         handler = mod.EnhancedResearchHandlers(task_manager=tm, project_root=Path.cwd())  # type: ignore[attr-defined]
         return await handler.handle_doc_research(kwargs or {})
+    if tool_name in {"lint_full", "lint_bg", "lint_supa", "lint_status", "lint_trigger", "watch_start", "watch_status"}:
+        mod = load_handler_module("linting_handlers")
+        handler = mod.LintingHandlers()  # type: ignore[attr-defined]
+        mapping = {
+            "lint_full": handler.handle_lint_full,
+            "lint_bg": handler.handle_lint_bg,
+            "lint_supa": handler.handle_lint_supa,
+            "lint_status": handler.handle_lint_status,
+            "lint_trigger": handler.handle_lint_trigger,
+            "watch_start": handler.handle_watch_start,
+            "watch_status": handler.handle_watch_status,
+        }
+        return await mapping[tool_name](kwargs or {})
+    if tool_name in {"test_analyze", "test_delete_flaky", "test_confidence"}:
+        mod = load_handler_module("testing_handlers")
+        handler = mod.TestingHandlers()  # type: ignore[attr-defined]
+        mapping = {
+            "test_analyze": handler.handle_test_analyze,
+            "test_delete_flaky": handler.handle_test_delete_flaky,
+            "test_confidence": handler.handle_test_confidence,
+        }
+        return await mapping[tool_name](kwargs or {})
     if tool_name in {"plan_parse", "plan_list", "plan_validate"}:
         mod = load_handler_module("plan_parser_handlers")
         handler = mod.PlanParserHandlers()  # type: ignore[attr-defined]

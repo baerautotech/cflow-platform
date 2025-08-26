@@ -43,4 +43,11 @@ class TaskManagerAdapter:
     async def update_task_status(self, task_id: str, status: str) -> bool:
         return await self._manager.update_task_status(task_id, status)
 
+    async def add_task(self, title: str, description: str, priority: str = "medium") -> str:
+        return await self._manager.add_task(title, description, priority)
+
+    async def update_task(self, task_id: str, updates: Dict[str, Any]) -> bool:
+        # Monorepo manager currently logs update and returns True
+        return await self._manager.update_task(task_id, updates)
+
 
