@@ -29,7 +29,7 @@ jobs:
           . .pkgtest/bin/activate
           pip install --upgrade pip
           pip install ./dist/*.whl
-          python -c "import cflow_platform as m; from cflow_platform.core.public_api import get_stdio_server; assert callable(get_stdio_server())"
+          python -c "from cflow_platform.core.public_api import get_stdio_server; assert callable(get_stdio_server())"
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
