@@ -96,12 +96,9 @@ class ToolRegistry:
 
         return tools
 
-from typing import Any, Dict
-
-
-class ToolRegistry:
     @staticmethod
     def get_version_info() -> Dict[str, Any]:
+        total = len(ToolRegistry.get_tools_for_mcp())
         return {
             "mcp_server_version": "1.0.0",
             "api_version": "1.0.0",
@@ -109,7 +106,7 @@ class ToolRegistry:
             "next_version": "2.0.0",
             "deprecation_date": "2025-12-31T23:59:59Z",
             "versioning_standard": "CEREBRAL_191_INTEGRATION_API_VERSIONING_STANDARDS.md",
-            "total_tools": 0,
+            "total_tools": total,
             "version_metadata": {
                 "semantic_versioning": True,
                 "backward_compatibility": True,
