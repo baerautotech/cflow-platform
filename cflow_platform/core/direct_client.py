@@ -110,7 +110,7 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
         return await mapping[tool_name](kwargs or {})
     if tool_name in {"sys_stats", "sys_debug", "sys_version"}:
         mod = load_handler_module("system_handlers")
-        tm = TaskManagerAdapter()
+        tm = TaskManagerClient()
         handler = mod.SystemHandlers(task_manager=tm, project_root=Path.cwd())  # type: ignore[attr-defined]
         if tool_name == "sys_stats":
             return await handler.handle_get_stats(kwargs or {})
