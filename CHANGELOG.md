@@ -13,3 +13,9 @@ All notable changes to this project will be documented in this file.
 - Add package-native TaskManagerClient (HTTP ChromaDB)
 - Route handlers to TaskManagerClient
 - CI: add TestPyPI and PyPI publish jobs
+
+## 0.1.5 - minor fix: parity + sys handlers route TaskManagerClient (tag publish)
+
+- Fix: direct_client sys_* uses TaskManagerClient
+- Tests: parity accepts status/success shapes, deterministic task_get wrapper
+- CI: ensure tag publish triggers
