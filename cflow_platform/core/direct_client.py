@@ -33,11 +33,13 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             return await handler.handle_get_task(kwargs or {})
         if tool_name == "task_next":
             return await handler.handle_next_task(kwargs or {})
-    if tool_name == "doc_research":
+    if tool_name in {"doc_research", "research"}:
         mod = load_handler_module("enhanced_research_handlers")
         tm = TaskManagerClient()
         handler = mod.EnhancedResearchHandlers(task_manager=tm, project_root=Path.cwd())  # type: ignore[attr-defined]
-        return await handler.handle_doc_research(kwargs or {})
+        if tool_name == "doc_research":
+            return await handler.handle_doc_research(kwargs or {})
+        return await handler.handle_research(kwargs or {})
     if tool_name in {"lint_full", "lint_bg", "lint_supa", "lint_status", "lint_trigger", "watch_start", "watch_status"}:
         mod = load_handler_module("linting_handlers")
         handler = mod.LintingHandlers()  # type: ignore[attr-defined]

@@ -59,4 +59,11 @@ class EnhancedResearchHandlers:
             "analysis": {"summary": f"researched: {research_query[:64]}"},
         }
 
+    async def handle_research(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Generic enhanced research entrypoint matching tool name 'research'."""
+        # Reuse the same implementation but accept 'query' as the canonical field
+        if "researchQuery" not in arguments and "query" in arguments:
+            arguments = {**arguments, "researchQuery": arguments.get("query", "")}
+        return await self.handle_doc_research(arguments)
+
 
