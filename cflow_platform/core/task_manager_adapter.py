@@ -3,11 +3,20 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from pathlib import Path
 from importlib.util import spec_from_file_location, module_from_spec
+import importlib
 
 
-def _load_monorepo_task_manager() -> Any:
-    """Load TaskManager class from monorepo by file path to avoid import loops."""
-    # Repo root: .../Cerebral
+def _load_task_manager_class() -> Any:
+    """Resolve TaskManager class from vendor or monorepo."""
+    # 1) Prefer vendored Cerebral module if present
+    try:
+        vendored = importlib.import_module(
+            "cflow_platform.vendor.cerebral.core.mcp.core.task_manager"
+        )
+        return getattr(vendored, "TaskManager")
+    except Exception:
+        pass
+    # 2) Fallback to monorepo by file path
     repo_root = Path(__file__).resolve().parents[4]
     tm_path = repo_root / ".cerebraflow" / "core" / "mcp" / "core" / "task_manager.py"
     spec = spec_from_file_location("monorepo_task_manager", str(tm_path))
@@ -22,7 +31,7 @@ class TaskManagerAdapter:
     """Adapter exposing simple methods used by package handlers, backed by monorepo TaskManager."""
 
     def __init__(self, tenant_id: Optional[str] = None):
-        TaskManager = _load_monorepo_task_manager()
+        TaskManager = _load_task_manager_class()
         self._manager = TaskManager(tenant_id=tenant_id or "00000000-0000-0000-0000-000000000100")
 
     async def get_task_stats(self) -> Dict[str, int]:
