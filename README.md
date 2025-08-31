@@ -7,6 +7,8 @@ This package provides Phase 1 wrappers to allow early consumption of CFlow APIs 
 - CLI:
   - `cflow-install-hooks` → installs enterprise git hooks (delegates to repo script when present)
   - `cflow-verify-env` → verifies required env keys per operation via the monorepo verifier
+  - `cflow-test-runner` → runs pytest and returns structured JSON (supports uv)
+  - `cflow-agent-loop` → unified CLI agent loop with planning/verify cycle
 
 ## SDK Example
 
@@ -36,6 +38,12 @@ cflow-verify-env --mode migrations --mode ragkg --mode llm --scope both
 
 # Install enterprise git hooks (delegates to scripts/install-enhanced-git-hooks.sh)
 cflow-install-hooks
+
+# Structured test runner
+cflow-test-runner --verbose --no-in-process cflow_platform/tests
+
+# Agent loop
+cflow-agent-loop --profile quick --max-iter 1 --json
 ```
 
 Notes: In Phase 1, this wrapper delegates to the monorepo implementations. After the split, these entry points will target packaged CFlow modules directly.
