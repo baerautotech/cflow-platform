@@ -64,6 +64,7 @@ def run_tests(
     timeout_sec: Optional[int] = None,
     verbose: bool = False,
     extra_pytest_args: Optional[List[str]] = None,
+    env_overrides: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     start = time.perf_counter()
     if in_process:
@@ -143,6 +144,7 @@ def run_tests(
             text=True,
             timeout=timeout_sec,
             check=False,
+            env={**os.environ, **(env_overrides or {})},
         )
     except subprocess.TimeoutExpired as te:
         duration = time.perf_counter() - start
