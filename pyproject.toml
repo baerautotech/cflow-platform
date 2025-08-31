@@ -31,6 +31,8 @@ cflow-install-hooks = "cflow_platform.install_hooks:install"
 cflow-verify-env = "cflow_platform.verify_env:cli"
 cflow-test-runner = "cflow_platform.core.test_runner:cli"
 cflow-agent-loop = "cflow_platform.core.agent_loop:cli"
+cflow-sync = "cflow_platform.cli.sync_supervisor:cli"
+cflow-caef = "cflow_platform.cli.caef_cli:cli"
 
 
 
