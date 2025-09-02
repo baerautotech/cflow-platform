@@ -120,6 +120,17 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             return await handler.handle_debug_environment(kwargs or {})
         if tool_name == "sys_version":
             return await handler.handle_version_info(kwargs or {})
+    if tool_name in {"memory_add", "memory_search", "memory_store_procedure", "memory_store_episode", "memory_stats"}:
+        mod = load_handler_module("memory_handlers")
+        handler = mod.MemoryHandlers()  # type: ignore[attr-defined]
+        mapping = {
+            "memory_add": handler.handle_memory_add,
+            "memory_search": handler.handle_memory_search,
+            "memory_store_procedure": handler.handle_memory_store_procedure,
+            "memory_store_episode": handler.handle_memory_store_episode,
+            "memory_stats": handler.handle_memory_stats,
+        }
+        return await mapping[tool_name](kwargs or {})
     return {"status": "error", "message": f"Unknown tool: {tool_name}"}
 
 

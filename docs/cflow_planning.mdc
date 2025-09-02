@@ -1,0 +1,188 @@
+# CFlow Planning
+
+Use this file for AI-assisted planning. Iteration checkpoints will mirror here.
+
+# Iteration 1 — 2025-09-01T00:16:20
+
+
+## Plan
+
+```json
+{
+  "status": "success",
+  "plan": [
+    {
+      "step": 1,
+      "action": "run-tests",
+      "paths": [
+        "cflow_platform/tests"
+      ]
+    }
+  ]
+}
+```
+
+## Verify
+
+```json
+{
+  "status": "success",
+  "verification": {
+    "status": "success",
+    "summary": {
+      "passed": 6,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "xpassed": 0,
+      "total": 6,
+      "exit_code": 0
+    },
+    "duration_sec": 0.5993176670745015,
+    "tests": [
+      {
+        "nodeid": "cflow_platform/tests/test_contracts.py::test_core_public_api_surfaces",
+        "outcome": "passed",
+        "duration_sec": 0.0015796659281477332
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_contracts.py::test_direct_client_exec_unknown_tool",
+        "outcome": "passed",
+        "duration_sec": 0.00019695900846272707
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_contracts.py::test_tool_dispatch_families",
+        "outcome": "passed",
+        "duration_sec": 0.20083937502931803
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_parse_pytest_output_extracts_summary_and_failures",
+        "outcome": "passed",
+        "duration_sec": 0.00016387493815273046
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_no_tests_path_returns_nonzero",
+        "outcome": "passed",
+        "duration_sec": 0.12421770801302046
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_with_passing_test_succeeds",
+        "outcome": "passed",
+        "duration_sec": 0.1366612920537591
+      }
+    ]
+  }
+}
+```
+
+## Meta
+
+```json
+{
+  "run_id": "local-run",
+  "task_id": "",
+  "iteration": 1,
+  "profile": "quick"
+}
+```
+
+# Iteration 1 — 2025-09-02T11:39:55
+
+
+## Plan
+
+```json
+{
+  "status": "success",
+  "plan": [
+    {
+      "step": 1,
+      "action": "run-tests",
+      "paths": [
+        "cflow_platform/tests"
+      ]
+    }
+  ]
+}
+```
+
+## Verify
+
+```json
+{
+  "status": "success",
+  "verification": {
+    "status": "success",
+    "summary": {
+      "passed": 9,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "xpassed": 0,
+      "total": 9,
+      "exit_code": 0
+    },
+    "duration_sec": 4.409542000037618,
+    "tests": [
+      {
+        "nodeid": "cflow_platform/tests/test_contracts.py::test_core_public_api_surfaces",
+        "outcome": "passed",
+        "duration_sec": 0.0004640000406652689
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_contracts.py::test_direct_client_exec_unknown_tool",
+        "outcome": "passed",
+        "duration_sec": 0.00023987493477761745
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_contracts.py::test_tool_dispatch_families",
+        "outcome": "passed",
+        "duration_sec": 0.11299804202280939
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_embeddings_core.py::test_core_accelerator_generates_embeddings_without_hf_optin",
+        "outcome": "passed",
+        "duration_sec": 2.7296915830811486
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_failure_parser.py::test_parse_pytest_failures_from_sample_output",
+        "outcome": "passed",
+        "duration_sec": 0.0003612920409068465
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_parse_pytest_output_extracts_summary_and_failures",
+        "outcome": "passed",
+        "duration_sec": 6.237498018890619e-05
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_no_tests_path_returns_nonzero",
+        "outcome": "passed",
+        "duration_sec": 0.13017633301205933
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_with_passing_test_succeeds",
+        "outcome": "passed",
+        "duration_sec": 0.13591900002211332
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_unified_rag_core.py::test_unified_enterprise_rag_build_index_payload_smoke",
+        "outcome": "passed",
+        "duration_sec": 0.9299407080980018
+      }
+    ]
+  }
+}
+```
+
+## Meta
+
+```json
+{
+  "run_id": "local-run",
+  "task_id": "",
+  "iteration": 1,
+  "profile": "quick"
+}
+```

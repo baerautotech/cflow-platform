@@ -7,3 +7,12 @@ __pycache__/
 .mypy_cache/
 .testpypi_env
 node_modules
+.cerebraflow/core/storage/chromadb/
+cflow_platform/vendor/.cerebraflow/core/storage/chromadb/chroma.sqlite3
+cflow_platform/vendor/.cerebraflow/core/storage/chromadb/2a3691b9-1703-4f4f-aa0f-56736c550aed/data_level0.bin
+cflow_platform/vendor/.cerebraflow/core/storage/chromadb/2a3691b9-1703-4f4f-aa0f-56736c550aed/header.bin
+cflow_platform/vendor/.cerebraflow/core/storage/chromadb/2a3691b9-1703-4f4f-aa0f-56736c550aed/length.bin
+cflow_platform/vendor/.cerebraflow/core/storage/chromadb/2a3691b9-1703-4f4f-aa0f-56736c550aed/link_lists.bin
+.cerebraflow/.env
+uv.lock
+.gitignore
