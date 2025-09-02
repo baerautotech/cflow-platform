@@ -16,3 +16,4 @@ cflow_platform/vendor/.cerebraflow/core/storage/chromadb/2a3691b9-1703-4f4f-aa0f
 .cerebraflow/.env
 uv.lock
 .gitignore
+*.db
