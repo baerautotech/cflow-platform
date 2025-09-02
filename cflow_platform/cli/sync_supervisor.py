@@ -278,6 +278,122 @@ def _install_hooks(project_root: str | None) -> int:
     return 0
 
 
+def _agent_plist_content(project_root: Path) -> str:
+    logs_dir = project_root / ".cerebraflow" / "logs"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    out_log = logs_dir / "sync-agent.out.log"
+    err_log = logs_dir / "sync-agent.err.log"
+    cmd = f"cd {project_root} && uv run python cflow_platform/vendor/cerebral/services/unified_realtime_sync_service.py start --project-root {project_root}"
+    return f"""
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>com.cerebraflow.sync</string>
+    <key>ProgramArguments</key>
+    <array>
+      <string>/bin/zsh</string>
+      <string>-lc</string>
+      <string>{cmd}</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>{project_root}</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>{out_log}</string>
+    <key>StandardErrorPath</key>
+    <string>{err_log}</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>CEREBRAL_PROJECT_ROOT</key>
+      <string>{project_root}</string>
+    </dict>
+  </dict>
+  </plist>
+""".strip()
+
+
+def _watch_plist_content(project_root: Path) -> str:
+    script_path = project_root / ".cerebraflow" / "scripts" / "sync_watch.sh"
+    return f"""
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>com.cerebraflow.sync.watch</string>
+    <key>ProgramArguments</key>
+    <array>
+      <string>/bin/zsh</string>
+      <string>{script_path}</string>
+    </array>
+    <key>StartInterval</key>
+    <integer>120</integer>
+    <key>RunAtLoad</key>
+    <true/>
+  </dict>
+  </plist>
+""".strip()
+
+
+def _install_launch_agents(project_root: str | None) -> int:
+    root = Path(project_root or Path.cwd())
+    launch_dir = Path.home() / "Library" / "LaunchAgents"
+    launch_dir.mkdir(parents=True, exist_ok=True)
+    agent_plist = launch_dir / "com.cerebraflow.sync.plist"
+    watch_plist = launch_dir / "com.cerebraflow.sync.watch.plist"
+    # Write agent plist
+    agent_plist.write_text(_agent_plist_content(root), encoding="utf-8")
+    # Write watch script and plist
+    script_dir = root / ".cerebraflow" / "scripts"
+    script_dir.mkdir(parents=True, exist_ok=True)
+    script_path = script_dir / "sync_watch.sh"
+    script_path.write_text(
+        """
+#!/bin/zsh
+set -euo pipefail
+LABEL="com.cerebraflow.sync"
+if ! launchctl list | grep -q "$LABEL"; then
+  /usr/bin/osascript -e 'display notification "Sync agent not found" with title "CerebraFlow" subtitle "Attempting start"'
+  launchctl load -w ~/Library/LaunchAgents/com.cerebraflow.sync.plist || true
+fi
+if ! launchctl list | grep "$LABEL" | awk '{print $1}' | grep -qE '^[0-9]+$'; then
+  /usr/bin/osascript -e 'display notification "Sync agent restarting" with title "CerebraFlow"'
+  launchctl kickstart -k gui/$UID/$LABEL || launchctl load -w ~/Library/LaunchAgents/com.cerebraflow.sync.plist || true
+fi
+""".lstrip(),
+        encoding="utf-8",
+    )
+    os.chmod(script_path, 0o755)
+    watch_plist.write_text(_watch_plist_content(root), encoding="utf-8")
+    # Load plists
+    subprocess.run(["launchctl", "load", "-w", str(agent_plist)], check=False)
+    subprocess.run(["launchctl", "load", "-w", str(watch_plist)], check=False)
+    print(json.dumps({"success": True, "agent": str(agent_plist), "watch": str(watch_plist)}))
+    return 0
+
+
+def _uninstall_launch_agents() -> int:
+    launch_dir = Path.home() / "Library" / "LaunchAgents"
+    agent_plist = launch_dir / "com.cerebraflow.sync.plist"
+    watch_plist = launch_dir / "com.cerebraflow.sync.watch.plist"
+    subprocess.run(["launchctl", "unload", str(agent_plist)], check=False)
+    subprocess.run(["launchctl", "unload", str(watch_plist)], check=False)
+    removed = []
+    for p in [agent_plist, watch_plist]:
+        try:
+            if p.exists():
+                p.unlink()
+                removed.append(str(p))
+        except Exception:
+            pass
+    print(json.dumps({"success": True, "removed": removed}))
+    return 0
+
 def _import_memories(project_root: str | None) -> int:
     report: dict[str, object] = {"imported": 0, "errors": []}
     try:
@@ -374,7 +490,7 @@ def _import_mcp(project_root: str | None, source_mcp: str | None) -> int:
 
 def cli() -> int:
     parser = argparse.ArgumentParser(description="CFlow sync supervisor (vendored Cerebral sync service)")
-    parser.add_argument("command", choices=["start", "stop", "status", "import-hooks", "import-memories", "import-env", "import-mcp"], help="Supervisor command")
+    parser.add_argument("command", choices=["start", "stop", "status", "import-hooks", "import-memories", "import-env", "import-mcp", "install-agent", "uninstall-agent"], help="Supervisor command")
     parser.add_argument("--project-root", dest="project_root", help="Project root for underlying service")
     parser.add_argument("--source-env", dest="source_env", help="Source .env path (defaults to Cerebral .env)")
     parser.add_argument("--source-mcp", dest="source_mcp", help="Source mcp.json path (defaults to Cerebral .cursor/mcp.json)")
@@ -391,6 +507,10 @@ def cli() -> int:
         return _import_env(args.project_root, args.source_env)
     if args.command == "import-mcp":
         return _import_mcp(args.project_root, args.source_mcp)
+    if args.command == "install-agent":
+        return _install_launch_agents(args.project_root)
+    if args.command == "uninstall-agent":
+        return _uninstall_launch_agents()
     return status(args.project_root)
 
 
