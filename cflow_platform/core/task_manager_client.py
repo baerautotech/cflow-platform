@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 from datetime import datetime
 import httpx
 from .local_task_manager import LocalTaskManager
+import os
 
 
 class TaskManagerClient:
@@ -37,10 +38,34 @@ class TaskManagerClient:
     async def list_by_status(self, status: str) -> List[Dict[str, Any]]:
         ep = await self._endpoint()
         if not ep:
-            # Local-first fallback
+            # Local-first fallback: SQLite
             try:
                 ltm = LocalTaskManager()
                 return ltm.list_by_status(status)
+            except Exception:
+                pass
+            # Secondary fallback: ChromaDB (read-only)
+            try:
+                chroma_path = os.environ.get(
+                    "CFLOW_CHROMADB_PATH",
+                    str((os.getcwd() if os.getcwd() else ".")
+                        + "")
+                )
+                # Attempt default canonical path if not provided
+                if not chroma_path or chroma_path == ".":
+                    chroma_path = str(
+                        (os.path.abspath("."))
+                    )
+                from chromadb import PersistentClient  # type: ignore
+                from chromadb.config import Settings  # type: ignore
+                client = PersistentClient(path=chroma_path, settings=Settings(anonymized_telemetry=False, allow_reset=False))
+                col = client.get_or_create_collection(name=self.collection)
+                result = col.get(where={"status": status}, include=["metadatas"])  # type: ignore
+                items: List[Dict[str, Any]] = []
+                for md in (result.get("metadatas") or [[]])[0]:
+                    if isinstance(md, dict):
+                        items.append(md)
+                return items
             except Exception:
                 return []
         payload = {"where": {"status": status}, "include": ["documents", "metadatas"]}
@@ -68,11 +93,27 @@ class TaskManagerClient:
 
     async def get_task(self, task_id: str | None) -> Dict[str, Any]:
         if task_id:
+            # SQLite first
             try:
                 ltm = LocalTaskManager()
                 return ltm.get_task(task_id)
             except Exception:
-                return {"task_id": task_id}
+                pass
+            # ChromaDB fallback
+            try:
+                chroma_path = os.environ.get("CFLOW_CHROMADB_PATH")
+                from chromadb import PersistentClient  # type: ignore
+                from chromadb.config import Settings  # type: ignore
+                if chroma_path:
+                    client = PersistentClient(path=chroma_path, settings=Settings(anonymized_telemetry=False, allow_reset=False))
+                    col = client.get_or_create_collection(name=self.collection)
+                    result = col.get(ids=[task_id], include=["metadatas"])  # type: ignore
+                    md = (result.get("metadatas") or [[]])[0]
+                    if md and isinstance(md[0], dict):
+                        return md[0]
+            except Exception:
+                pass
+            return {"task_id": task_id}
         return {}
 
     async def next_task(self) -> Dict[str, Any]:

@@ -1,0 +1,36 @@
+{
+	"mcpServers": {
+		"cerebraflow": {
+			"command": ".cerebraflow/core/mcp/start_mcp_server.sh",
+			"env": {
+				"PYTHONUNBUFFERED": "1",
+				"CEREBRAFLOW_ENV": "local",
+				"NEXUS_URL": "",
+				"NEXUS_API_KEY": "",
+				"NEXUS_AUTH_HEADER": "",
+				"NEXUS_AUTH_VALUE": "",
+				"NEXUS_RAG_ENABLED": "true",
+				"NEXUS_RAG_PATH": "/rag/search",
+				"NEXUS_LLM_ENABLED": "true",
+				"NEXUS_CHAT_PATH": "/v1/chat/completions",
+				"NEXUS_MODEL": "gpt-5"
+			}
+		},
+		"supabase": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@supabase/mcp-server-supabase@0.4.5",
+				"--project-ref=txlzlhcrfippujcmnief"
+			],
+			"env": {
+				"SUPABASE_ACCESS_TOKEN": "sbp_f0176f9ee5611fffef3678fbe8d4e3901a2684ad"
+			}
+		},
+		"context7": {
+			"command": "npx",
+			"args": ["@upstash/context7-mcp@latest"]
+		}
+	}
+}
+

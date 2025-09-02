@@ -1,0 +1,9 @@
+{
+  "name": "cflow-default",
+  "description": "CFlow default instruction profile",
+  "policies": {
+    "minimal_edits": true,
+    "fail_closed_lint": true,
+    "sandbox_python": true
+  }
+}

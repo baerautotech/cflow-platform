@@ -30,6 +30,13 @@ BACKEND_DIR="$PROJECT_ROOT/backend-python"
 LOG_FILE="$PROJECT_ROOT/.cerebraflow/logs/post-commit-processing.log"
 VENV_PATH="$PROJECT_ROOT/.venv"
 
+# Resolve Python runner strictly from project env
+if command -v uv >/dev/null 2>&1; then
+  PY_RUN=(uv run -q python)
+else
+  PY_RUN=("$VENV_PATH/bin/python")
+fi
+
 # Create log directory if it doesn't exist
 mkdir -p "$(dirname "$LOG_FILE")"
 
@@ -44,8 +51,6 @@ handle_error() {
     log_message "❌ ERROR: $1" "ERROR"
     log_message "⚠️  Post-commit processing failed but commit succeeded" "WARN"
     log_message "📋 Check log file: $LOG_FILE" "INFO"
-    
-    # Don't fail the commit, but ensure error is logged for audit
     cat >> "$LOG_FILE" << EOF
 
 === ERROR AUDIT TRAIL ===
@@ -57,7 +62,7 @@ Branch: $(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
 =========================
 
 EOF
-    exit 0  # Don't fail the commit
+    exit 0
 }
 
 # Check if this is a merge commit (skip processing for merges)
@@ -210,20 +215,13 @@ process_documentation_changes() {
     log_message "📚 Starting enhanced documentation processing workflow..."
     
     {
-        # Activate Python environment
-        source "$VENV_PATH/bin/activate" || {
-            handle_error "Failed to activate Python virtual environment for documentation"
-        }
-        
-        # Change to backend directory
-        cd "$BACKEND_DIR" || {
-            handle_error "Failed to change to backend directory for documentation"
-        }
+        # Activate Python environment via runner
+        cd "$BACKEND_DIR" || { handle_error "Failed to change to backend directory for documentation"; }
         
         log_message "📝 Phase 1: Enterprise documentation import to relational database"
         
         # Run enterprise documentation processor with enhanced error handling
-        python scripts/post_commit_doc_processor.py "$PROJECT_ROOT" "$TENANT_ID" 2>&1 | tee -a "$LOG_FILE"
+        "${PY_RUN[@]}" scripts/post_commit_doc_processor.py "$PROJECT_ROOT" "$TENANT_ID" 2>&1 | tee -a "$LOG_FILE"
         
         local doc_exit_code=${PIPESTATUS[0]}
         
@@ -234,7 +232,7 @@ process_documentation_changes() {
             
             # Update documentation RAG after successful database import
             if [ -f "scripts/sync_documentation_to_chromadb.py" ]; then
-                python scripts/sync_documentation_to_chromadb.py 2>&1 | tee -a "$LOG_FILE"
+                "${PY_RUN[@]}" scripts/sync_documentation_to_chromadb.py 2>&1 | tee -a "$LOG_FILE"
                 local rag_exit_code=${PIPESTATUS[0]}
                 
                 if [ $rag_exit_code -eq 0 ]; then
@@ -284,25 +282,13 @@ process_codebase_changes() {
     fi
 
     {
-        log_message "🔄 Activating Python environment for codebase vectorization..."
-        
-        # Activate virtual environment
-        source "$VENV_PATH/bin/activate" || {
-            handle_error "Failed to activate Python virtual environment for vectorization"
-        }
-        
-        # Change to backend directory
-        cd "$BACKEND_DIR" || {
-            handle_error "Failed to change to backend directory for vectorization"
-        }
+        cd "$BACKEND_DIR" || { handle_error "Failed to change to backend directory for vectorization"; }
         
         log_message "🧠 Starting enterprise codebase vectorization process..."
         
         # Run vectorization service with enhanced context
-        python -c "
-import asyncio
-import sys
-import os
+        "${PY_RUN[@]}" - <<'PY' 2>&1 | tee -a "$LOG_FILE"
+import asyncio, os, sys
 sys.path.append('.')
 
 from services.enterprise_codebase_vectorization_service import process_commit_hook
@@ -310,33 +296,31 @@ from services.enterprise_codebase_vectorization_service import process_commit_ho
 async def main():
     try:
         result = await process_commit_hook(
-            commit_hash='$COMMIT_HASH',
-            tenant_identifier='$TENANT_ID',
-            project_id='$PROJECT_ID',
-            user_id='$USER_ID'
+            commit_hash=os.environ.get('COMMIT_HASH',''),
+            tenant_identifier=os.environ.get('TENANT_ID',''),
+            project_id=os.environ.get('PROJECT_ID',''),
+            user_id=os.environ.get('USER_ID','')
         )
         
-        print(f\"✅ Codebase vectorization completed\")
-        print(f\"📊 Vectors generated: {result.get('vectors_generated', 0)}\")
-        print(f\"⏱️  Processing time: {result.get('processing_time_ms', 0):.0f}ms\")
-        print(f\"📁 Files processed: {result.get('files_processed', 0)}\")
+        print(f"✅ Codebase vectorization completed")
+        print(f"📊 Vectors generated: {result.get('vectors_generated', 0)}")
+        print(f"⏱️  Processing time: {result.get('processing_time_ms', 0):.0f}ms")
+        print(f"📁 Files processed: {result.get('files_processed', 0)}")
         
         if result.get('errors'):
-            print(f\"⚠️  Errors encountered: {len(result['errors'])}\")
+            print(f"⚠️  Errors encountered: {len(result['errors'])}")
             for error in result['errors'][:3]:  # Show first 3 errors
-                print(f\"   - {error}\")
+                print(f"   - {error}")
         
         return 0
         
     except Exception as e:
-        print(f\"❌ Codebase vectorization failed: {str(e)}\")
-        import traceback
-        traceback.print_exc()
+        print(f"❌ Codebase vectorization failed: {str(e)}")
+        import traceback; traceback.print_exc()
         return 1
 
-exit_code = asyncio.run(main())
-exit(exit_code)
-" 2>&1 | tee -a "$LOG_FILE"
+exit_code = asyncio.run(main()); exit(exit_code)
+PY
         
         local vectorization_exit_code=${PIPESTATUS[0]}
         
@@ -346,9 +330,8 @@ exit(exit_code)
             # Optional: Trigger real-time sync notification
             if [ -f "services/unified_realtime_sync_service.py" ]; then
                 log_message "🔄 Triggering real-time sync notification..."
-                python -c "
-import asyncio
-import sys
+                "${PY_RUN[@]}" - <<'PY' >> "$LOG_FILE" 2>&1
+import asyncio, os, sys
 sys.path.append('.')
 
 async def notify_sync():
@@ -361,7 +344,7 @@ async def notify_sync():
         return False
 
 asyncio.run(notify_sync())
-" >> "$LOG_FILE" 2>&1
+PY
             fi
         else
             log_message "❌ Codebase vectorization failed with exit code: $vectorization_exit_code"
