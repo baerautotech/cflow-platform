@@ -29,3 +29,7 @@ This folder organizes the CerebraFlow agent plan per `docs/ProjectBuildGuide.md`
 ### Notes
 - This structure supersedes the legacy `docs/plans/Fowler-aligned_implementation_plan.md`. That file now points here.
 
+### Sources
+- Primary inspiration and capability model: [Building your own CLI Coding Agent with Pydantic-AI](https://martinfowler.com/articles/build-own-coding-agent.html?utm_source=tldrai)
+- Runtime environment: Cerebral Server private cluster (documented in knowledgeRAG/GRAPH); AWS not required.
+

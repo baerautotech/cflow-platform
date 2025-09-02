@@ -46,6 +46,9 @@ cflow-memory-check = "cflow_platform.cli.memory_check:cli"
 cflow-memory-watch = "cflow_platform.cli.memory_watch:cli"
 cflow-codebase-vectorize = "cflow_platform.cli.codebase_vectorize:cli"
 cflow-migrate-supabase = "cflow_platform.cli.migrate_supabase:cli"
+cflow-docs-backfill = "cflow_platform.cli.docs_backfill:cli"
+cflow-chroma-reset = "cflow_platform.cli.chroma_reset:cli"
+cflow-tasks-backfill = "cflow_platform.cli.tasks_backfill:cli"
 
 
 
