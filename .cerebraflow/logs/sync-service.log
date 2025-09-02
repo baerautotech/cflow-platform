@@ -1,0 +1,304 @@
+2025-08-31 20:13:59,854 INFO UnifiedSync starting
+2025-08-31 20:14:00,326 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 20:14:00,396 INFO discovered docs table: documentation_files
+2025-08-31 20:16:46,891 INFO UnifiedSync starting
+2025-08-31 20:16:46,891 DEBUG run loop tick start
+2025-08-31 20:16:47,333 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 20:16:47,421 INFO discovered docs table: documentation_files
+2025-08-31 20:22:15,652 INFO UnifiedSync starting
+2025-08-31 20:22:15,653 DEBUG run loop tick start
+2025-08-31 20:22:16,088 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 20:22:16,152 INFO discovered docs table: documentation_files
+2025-08-31 20:24:11,035 INFO UnifiedSync starting
+2025-08-31 20:24:11,036 DEBUG run loop tick start
+2025-08-31 20:24:11,036 DEBUG sync_once start
+2025-08-31 20:24:11,447 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 20:24:11,533 INFO discovered docs table: documentation_files
+2025-08-31 20:25:54,396 INFO UnifiedSync starting
+2025-08-31 20:25:54,397 DEBUG run loop tick start
+2025-08-31 20:25:54,397 DEBUG sync_once start
+2025-08-31 20:25:54,933 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 20:25:55,087 INFO discovered docs table: documentation_files
+2025-08-31 20:27:05,697 INFO UnifiedSync starting
+2025-08-31 20:27:05,698 DEBUG run loop tick start
+2025-08-31 20:27:05,698 DEBUG sync_once start
+2025-08-31 20:27:06,004 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 20:27:06,080 INFO discovered docs table: documentation_files
+2025-08-31 20:27:06,206 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks params={'select': 'id', 'limit': 1}
+2025-08-31 20:27:06,334 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks -> 200
+2025-08-31 20:27:06,334 DEBUG sync_tasks_pull enter
+2025-08-31 20:27:06,334 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks params={'select': '*', 'order': 'updated_at.desc', 'limit': 1000}
+2025-08-31 20:27:06,567 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks -> 200
+2025-08-31 20:27:06,574 DEBUG tasks pull fetched=1000
+2025-08-31 20:28:28,225 INFO tasks pull upserted=1000
+2025-08-31 20:28:28,226 DEBUG sync_docs_pull enter
+2025-08-31 20:28:28,226 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/documentation_files params={'select': '*', 'order': 'updated_at.desc', 'limit': 1000}
+2025-08-31 20:28:28,680 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/documentation_files -> 200
+2025-08-31 20:28:28,690 DEBUG docs pull fetched=263
+2025-08-31 20:33:10,163 INFO UnifiedSync starting
+2025-08-31 20:33:10,163 DEBUG run loop tick start
+2025-08-31 20:33:10,163 DEBUG sync_once start
+2025-08-31 20:33:10,648 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 20:33:10,723 INFO discovered docs table: documentation_files
+2025-08-31 20:34:57,518 INFO UnifiedSync starting
+2025-08-31 20:34:57,518 DEBUG run loop tick start
+2025-08-31 20:34:57,518 DEBUG sync_once start
+2025-08-31 20:34:57,928 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 20:34:58,054 INFO discovered docs table: documentation_files
+2025-08-31 20:35:42,173 INFO UnifiedSync starting
+2025-08-31 20:35:42,173 DEBUG run loop tick start
+2025-08-31 20:35:42,173 DEBUG sync_once start
+2025-08-31 20:35:42,441 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 20:35:42,500 INFO discovered docs table: documentation_files
+2025-08-31 20:35:42,611 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks params={'select': 'id', 'limit': 1}
+2025-08-31 20:35:42,728 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks -> 200
+2025-08-31 20:35:42,729 DEBUG sync_tasks_pull enter
+2025-08-31 20:35:42,729 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks params={'select': '*', 'order': 'updated_at.desc', 'limit': 1000}
+2025-08-31 20:35:42,937 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks -> 200
+2025-08-31 20:35:42,947 DEBUG tasks pull fetched=1000
+2025-08-31 20:35:54,262 INFO tasks pull upserted=1000
+2025-08-31 20:35:54,262 DEBUG sync_docs_pull enter
+2025-08-31 20:35:54,262 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/documentation_files params={'select': '*', 'order': 'updated_at.desc', 'limit': 1000}
+2025-08-31 20:35:54,606 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/documentation_files -> 200
+2025-08-31 20:35:54,620 DEBUG docs pull fetched=263
+2025-08-31 20:35:54,620 INFO docs pull progress upserted~0
+2025-08-31 20:45:41,220 INFO UnifiedSync starting
+2025-08-31 20:45:41,220 DEBUG run loop tick start
+2025-08-31 20:45:41,220 DEBUG sync_once start
+2025-08-31 20:45:41,680 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 20:45:41,750 INFO discovered docs table: documentation_files
+2025-08-31 20:45:41,856 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks params={'select': 'id', 'limit': 1}
+2025-08-31 20:45:41,960 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks -> 200
+2025-08-31 20:45:41,960 DEBUG sync_tasks_pull enter
+2025-08-31 20:45:41,960 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks params={'select': '*', 'limit': 1000, 'order': 'updated_at.desc', 'offset': 0}
+2025-08-31 20:45:42,161 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks -> 200
+2025-08-31 20:45:42,169 DEBUG tasks pull page fetched=1000 total=1000 offset=0
+2025-08-31 20:47:02,648 INFO UnifiedSync starting
+2025-08-31 20:47:02,649 DEBUG run loop tick start
+2025-08-31 20:47:02,649 DEBUG sync_once start
+2025-08-31 20:47:03,039 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 20:47:03,124 INFO discovered docs table: documentation_files
+2025-08-31 20:47:03,243 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks params={'select': 'id', 'limit': 1}
+2025-08-31 20:47:03,384 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks -> 200
+2025-08-31 20:47:03,384 DEBUG sync_tasks_pull enter
+2025-08-31 20:47:03,384 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks params={'select': '*', 'limit': 500, 'order': 'updated_at.desc', 'offset': 0}
+2025-08-31 20:47:03,603 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks -> 200
+2025-08-31 20:47:03,606 DEBUG tasks pull page fetched=500 total=500 offset=0
+2025-08-31 20:47:07,426 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks params={'select': '*', 'limit': 1000, 'order': 'updated_at.desc', 'offset': 1000}
+2025-08-31 20:47:07,646 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks -> 200
+2025-08-31 20:47:07,655 DEBUG tasks pull page fetched=1000 total=2000 offset=1000
+2025-08-31 20:47:48,607 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks params={'select': '*', 'limit': 500, 'order': 'updated_at.desc', 'offset': 500}
+2025-08-31 20:47:48,942 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks -> 200
+2025-08-31 20:47:48,943 DEBUG tasks pull page fetched=500 total=1000 offset=500
+2025-08-31 20:48:34,900 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks params={'select': '*', 'limit': 500, 'order': 'updated_at.desc', 'offset': 1000}
+2025-08-31 20:48:35,174 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks -> 200
+2025-08-31 20:48:35,180 DEBUG tasks pull page fetched=500 total=1500 offset=1000
+2025-08-31 20:48:38,438 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks params={'select': '*', 'limit': 1000, 'order': 'updated_at.desc', 'offset': 2000}
+2025-08-31 20:48:38,692 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks -> 200
+2025-08-31 20:48:38,701 DEBUG tasks pull page fetched=1000 total=3000 offset=2000
+2025-08-31 20:49:19,521 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks params={'select': '*', 'limit': 500, 'order': 'updated_at.desc', 'offset': 1500}
+2025-08-31 20:49:19,780 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks -> 200
+2025-08-31 20:49:19,798 DEBUG tasks pull page fetched=500 total=2000 offset=1500
+2025-08-31 20:50:06,036 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks params={'select': '*', 'limit': 500, 'order': 'updated_at.desc', 'offset': 2000}
+2025-08-31 20:50:06,320 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks -> 200
+2025-08-31 20:50:06,324 DEBUG tasks pull page fetched=500 total=2500 offset=2000
+2025-08-31 20:50:09,155 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks params={'select': '*', 'limit': 1000, 'order': 'updated_at.desc', 'offset': 3000}
+2025-08-31 20:50:09,329 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks -> 200
+2025-08-31 20:50:09,331 DEBUG tasks pull page fetched=99 total=3099 offset=3000
+2025-08-31 20:50:17,970 INFO tasks pull upserted=3099
+2025-08-31 20:50:17,971 DEBUG sync_docs_pull enter
+2025-08-31 20:50:17,971 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/documentation_files params={'select': '*', 'limit': 1000, 'order': 'updated_at.desc', 'offset': 0}
+2025-08-31 20:50:18,460 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/documentation_files -> 200
+2025-08-31 20:50:18,471 DEBUG docs pull page fetched=263 total=263 offset=0
+2025-08-31 20:50:49,217 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks params={'select': '*', 'limit': 500, 'order': 'updated_at.desc', 'offset': 2500}
+2025-08-31 20:50:49,423 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks -> 200
+2025-08-31 20:50:49,427 DEBUG tasks pull page fetched=500 total=3000 offset=2500
+2025-08-31 20:51:32,897 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks params={'select': '*', 'limit': 500, 'order': 'updated_at.desc', 'offset': 3000}
+2025-08-31 20:51:33,137 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/cerebraflow_tasks -> 200
+2025-08-31 20:51:33,140 DEBUG tasks pull page fetched=99 total=3099 offset=3000
+2025-08-31 20:51:41,410 INFO tasks pull upserted=3099
+2025-08-31 20:51:41,410 DEBUG sync_docs_pull enter
+2025-08-31 20:51:41,410 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/documentation_files params={'select': '*', 'limit': 500, 'order': 'updated_at.desc', 'offset': 0}
+2025-08-31 20:51:41,812 DEBUG HTTP GET https://txlzlhcrfippujcmnief.supabase.co/rest/v1/documentation_files -> 200
+2025-08-31 20:51:41,823 DEBUG docs pull page fetched=263 total=263 offset=0
+2025-08-31 21:51:53,949 INFO UnifiedSync starting
+2025-08-31 21:51:53,949 DEBUG run loop tick start
+2025-08-31 21:51:53,949 DEBUG sync_once start
+2025-08-31 21:51:54,549 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 21:51:54,672 INFO discovered docs table: documentation_files
+2025-08-31 21:57:03,920 INFO UnifiedSync starting
+2025-08-31 21:57:03,920 DEBUG run loop tick start
+2025-08-31 21:57:03,920 DEBUG sync_once start
+2025-08-31 21:57:04,462 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 21:57:04,609 INFO discovered docs table: documentation_files
+2025-08-31 22:00:07,563 DEBUG no embedding function available: No module named 'sentence_transformers'
+2025-08-31 22:00:07,564 INFO UnifiedSync starting
+2025-08-31 22:00:07,565 DEBUG run loop tick start
+2025-08-31 22:00:07,565 DEBUG sync_once start
+2025-08-31 22:00:08,085 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 22:00:08,168 INFO discovered docs table: documentation_files
+2025-08-31 22:04:01,709 WARNING failed to enable embedding function: '_NoopEmbedder' object has no attribute 'name'; falling back to no-embed
+2025-08-31 22:04:01,710 INFO UnifiedSync starting
+2025-08-31 22:04:01,710 DEBUG run loop tick start
+2025-08-31 22:04:01,710 DEBUG sync_once start
+2025-08-31 22:04:02,222 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 22:04:02,382 INFO discovered docs table: documentation_files
+2025-08-31 22:05:01,946 INFO UnifiedSync starting
+2025-08-31 22:05:01,946 DEBUG run loop tick start
+2025-08-31 22:05:01,946 DEBUG sync_once start
+2025-08-31 22:05:02,341 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 22:05:02,432 INFO discovered docs table: documentation_files
+⚠️ PyTorch not available - Apple Silicon acceleration disabled
+⚠️ Sentence Transformers not available
+2025-08-31 22:13:48,734 WARNING failed to enable embedding function: 'str' object is not callable; falling back to no-embed
+2025-08-31 22:13:48,735 INFO UnifiedSync starting
+2025-08-31 22:13:48,735 DEBUG run loop tick start
+2025-08-31 22:13:48,735 DEBUG sync_once start
+2025-08-31 22:13:49,166 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 22:13:49,231 INFO discovered docs table: documentation_files
+2025-08-31 22:20:02,919 WARNING failed to enable embedding function: 'str' object is not callable; falling back to no-embed
+2025-08-31 22:20:02,920 INFO UnifiedSync starting
+2025-08-31 22:20:02,920 DEBUG run loop tick start
+2025-08-31 22:20:02,920 DEBUG sync_once start
+2025-08-31 22:20:03,359 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 22:20:03,435 INFO discovered docs table: documentation_files
+2025-08-31 22:23:59,810 WARNING failed to enable embedding function: 'str' object is not callable; falling back to no-embed
+2025-08-31 22:23:59,812 INFO UnifiedSync starting
+2025-08-31 22:23:59,812 DEBUG run loop tick start
+2025-08-31 22:23:59,812 DEBUG sync_once start
+2025-08-31 22:24:00,279 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 22:24:00,364 INFO discovered docs table: documentation_files
+2025-08-31 22:26:15,744 WARNING failed to enable embedding function: 'str' object is not callable; falling back to no-embed
+2025-08-31 22:26:15,745 INFO UnifiedSync starting
+2025-08-31 22:26:15,746 DEBUG run loop tick start
+2025-08-31 22:26:15,746 DEBUG sync_once start
+2025-08-31 22:26:16,198 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 22:26:16,264 INFO discovered docs table: documentation_files
+2025-08-31 22:36:48,915 INFO UnifiedSync starting
+2025-08-31 22:36:48,916 DEBUG run loop tick start
+2025-08-31 22:36:48,916 DEBUG sync_once start
+2025-08-31 22:36:49,316 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 22:36:49,386 INFO discovered docs table: documentation_files
+2025-08-31 22:44:16,853 INFO vector_sync_enabled=True vector_column=embedding
+2025-08-31 22:44:16,853 INFO UnifiedSync starting
+2025-08-31 22:44:16,854 DEBUG run loop tick start
+2025-08-31 22:44:16,854 DEBUG sync_once start
+2025-08-31 22:44:17,416 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 22:44:17,544 INFO discovered docs table: documentation_files
+2025-08-31 22:50:02,977 INFO embedding initialized: enhanced_apple_silicon@M4_Pro
+2025-08-31 22:50:02,980 INFO vector_sync_enabled=True vector_column=embedding
+2025-08-31 22:50:02,980 INFO UnifiedSync starting
+2025-08-31 22:50:02,980 DEBUG run loop tick start
+2025-08-31 22:50:02,980 DEBUG sync_once start
+2025-08-31 22:50:03,483 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 22:50:03,566 INFO discovered docs table: documentation_files
+2025-08-31 22:52:02,488 INFO embedding initialized: enhanced_apple_silicon@M4_Pro
+2025-08-31 22:52:02,490 INFO vector_sync_enabled=True vector_column=embeddings
+2025-08-31 22:52:02,490 INFO UnifiedSync starting
+2025-08-31 22:52:02,491 DEBUG run loop tick start
+2025-08-31 22:52:02,491 DEBUG sync_once start
+2025-08-31 22:52:03,009 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 22:52:03,117 INFO discovered docs table: documentation_files
+2025-08-31 22:53:39,915 INFO embedding initialized: enhanced_apple_silicon@M4_Pro
+2025-08-31 22:53:39,918 INFO vector_sync_enabled=True vector_column=embeddings
+2025-08-31 22:53:39,918 INFO UnifiedSync once
+2025-08-31 22:53:39,918 DEBUG sync_once start
+2025-08-31 22:53:40,255 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 22:53:40,335 INFO discovered docs table: documentation_files
+2025-08-31 22:55:18,989 INFO embedding initialized: enhanced_apple_silicon@M4_Pro
+2025-08-31 22:55:18,992 INFO vector_sync_enabled=True vector_column=embeddings
+2025-08-31 22:55:18,992 INFO UnifiedSync once
+2025-08-31 22:55:18,992 DEBUG sync_once start
+2025-08-31 22:56:06,000 INFO embedding initialized: enhanced_apple_silicon@M4_Pro
+2025-08-31 22:56:06,003 INFO vector_sync_enabled=True vector_column=embeddings
+2025-08-31 22:56:06,003 INFO UnifiedSync once
+2025-08-31 22:56:06,004 DEBUG sync_once start
+2025-08-31 22:56:45,878 INFO embedding model initialized: sentence-transformers/all-MiniLM-L6-v2 on cpu
+2025-08-31 22:56:45,878 INFO embedding initialized: _Embedder
+2025-08-31 22:56:45,880 INFO vector_sync_enabled=True vector_column=embeddings
+2025-08-31 22:56:45,880 INFO UnifiedSync once
+2025-08-31 22:56:45,882 DEBUG sync_once start
+2025-08-31 22:57:50,075 INFO embedding model initialized: sentence-transformers/all-MiniLM-L6-v2 on cpu
+2025-08-31 22:57:50,075 INFO embedding initialized: _Embedder
+2025-08-31 22:57:50,077 INFO vector_sync_enabled=True vector_column=embeddings
+2025-08-31 22:57:50,079 INFO UnifiedSync once
+2025-08-31 22:57:50,079 DEBUG sync_once start
+2025-08-31 22:59:02,917 INFO embedding model initialized: sentence-transformers/all-MiniLM-L6-v2 on cpu
+2025-08-31 22:59:02,917 INFO embedding initialized: _Embedder
+2025-08-31 22:59:02,920 INFO vector_sync_enabled=True vector_column=embeddings
+2025-08-31 22:59:02,920 INFO UnifiedSync once
+2025-08-31 22:59:02,920 DEBUG sync_once start
+2025-08-31 23:00:01,583 INFO embedding model initialized: sentence-transformers/all-MiniLM-L6-v2 on cpu
+2025-08-31 23:00:01,583 INFO embedding initialized: _Embedder
+2025-08-31 23:00:01,584 INFO vector_sync_enabled=True vector_column=embeddings
+2025-08-31 23:00:01,584 INFO UnifiedSync once
+2025-08-31 23:00:01,584 DEBUG sync_once start
+2025-08-31 23:00:53,737 INFO embedding model initialized: sentence-transformers/all-MiniLM-L6-v2 on cpu
+2025-08-31 23:00:53,737 INFO embedding initialized: _Embedder
+2025-08-31 23:00:53,739 INFO vector_sync_enabled=True vector_column=embeddings
+2025-08-31 23:00:53,739 INFO UnifiedSync once
+2025-08-31 23:00:53,739 DEBUG sync_once start
+2025-08-31 23:01:48,669 INFO embedding model initialized: sentence-transformers/all-MiniLM-L6-v2 on cpu
+2025-08-31 23:01:48,669 INFO embedding initialized: _Embedder
+2025-08-31 23:01:48,673 INFO vector_sync_enabled=True vector_column=embeddings
+2025-08-31 23:01:48,673 INFO UnifiedSync once
+2025-08-31 23:01:48,673 DEBUG sync_once start
+2025-08-31 23:04:42,631 INFO embedding model initialized: sentence-transformers/all-MiniLM-L6-v2 on cpu
+2025-08-31 23:04:42,631 INFO embedding initialized: _Embedder
+2025-08-31 23:04:42,633 INFO vector_sync_enabled=True vector_column=embeddings
+2025-08-31 23:04:42,633 INFO UnifiedSync once
+2025-08-31 23:04:42,633 DEBUG sync_once start
+2025-08-31 23:05:42,239 INFO embedding model initialized: sentence-transformers/all-MiniLM-L6-v2 on cpu
+2025-08-31 23:05:42,239 INFO embedding initialized: _Embedder
+2025-08-31 23:05:42,241 INFO vector_sync_enabled=True vector_column=embeddings
+2025-08-31 23:05:42,241 INFO UnifiedSync starting
+2025-08-31 23:05:42,242 DEBUG run loop tick start
+2025-08-31 23:05:42,242 DEBUG sync_once start
+2025-08-31 23:05:42,862 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 23:05:43,007 INFO discovered docs table: documentation_files
+2025-08-31 23:10:52,355 INFO embedding model initialized: sentence-transformers/all-MiniLM-L6-v2 on cpu
+2025-08-31 23:10:52,355 INFO embedding initialized: _Embedder
+2025-08-31 23:10:52,359 INFO vector_sync_enabled=True vector_column=embeddings
+2025-08-31 23:10:52,359 INFO UnifiedSync once
+2025-08-31 23:10:52,359 DEBUG sync_once start
+2025-08-31 23:10:52,825 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 23:10:52,948 INFO discovered docs table: documentation_files
+2025-08-31 23:12:02,353 INFO embedding model initialized: sentence-transformers/all-MiniLM-L6-v2 on cpu
+2025-08-31 23:12:02,353 INFO embedding initialized: _Embedder
+2025-08-31 23:12:02,356 INFO vector_sync_enabled=True vector_column=embeddings
+2025-08-31 23:12:02,357 INFO UnifiedSync once
+2025-08-31 23:12:02,357 DEBUG sync_once start
+2025-08-31 23:12:02,681 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 23:12:02,757 INFO discovered docs table: documentation_files
+2025-08-31 23:13:51,457 INFO embedding model initialized: sentence-transformers/all-MiniLM-L6-v2 on cpu
+2025-08-31 23:13:51,457 INFO embedding initialized: _Embedder
+2025-08-31 23:13:51,463 INFO vector_sync_enabled=True vector_column=embeddings
+2025-08-31 23:13:51,463 INFO UnifiedSync once
+2025-08-31 23:13:51,463 DEBUG sync_once start
+2025-08-31 23:13:51,894 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 23:13:51,984 INFO discovered docs table: documentation_files
+2025-08-31 23:13:52,617 INFO vector targets tasks=cerebraflow_tasks docs=documentation_files column=embeddings
+2025-08-31 23:17:49,751 INFO embedding model initialized: sentence-transformers/all-MiniLM-L6-v2 on cpu
+2025-08-31 23:17:49,751 INFO embedding initialized: _Embedder
+2025-08-31 23:17:49,752 INFO vector_sync_enabled=True vector_column=embeddings
+2025-08-31 23:17:49,752 INFO UnifiedSync once
+2025-08-31 23:17:49,753 DEBUG sync_once start
+2025-08-31 23:17:50,233 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 23:17:50,373 INFO discovered docs table: documentation_files
+2025-08-31 23:17:50,982 INFO vector targets tasks=cerebraflow_tasks docs=documentation_files column=embeddings
+2025-08-31 23:18:42,790 INFO embedding model initialized: sentence-transformers/all-MiniLM-L6-v2 on cpu
+2025-08-31 23:18:42,790 INFO embedding initialized: _Embedder
+2025-08-31 23:18:42,793 INFO vector_sync_enabled=True vector_column=embeddings
+2025-08-31 23:18:42,794 INFO UnifiedSync once
+2025-08-31 23:18:42,794 DEBUG sync_once start
+2025-08-31 23:18:43,085 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 23:18:43,153 INFO discovered docs table: documentation_files
+2025-08-31 23:18:43,728 INFO vector targets tasks=cerebraflow_tasks docs=documentation_files column=embeddings
+2025-08-31 23:36:52,710 INFO embedding initialized: enhanced_apple_silicon@M4_Pro
+2025-08-31 23:36:52,712 INFO vector_sync_enabled=True vector_column=embeddings
+2025-08-31 23:36:52,712 INFO UnifiedSync starting
+2025-08-31 23:36:52,713 DEBUG run loop tick start
+2025-08-31 23:36:52,713 DEBUG sync_once start
+2025-08-31 23:36:53,031 INFO discovered tasks table: cerebraflow_tasks
+2025-08-31 23:36:53,124 INFO discovered docs table: documentation_files
+2025-08-31 23:36:53,651 INFO vector targets tasks=cerebraflow_tasks docs=documentation_files column=embeddings

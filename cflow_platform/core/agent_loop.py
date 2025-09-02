@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .public_api import get_direct_client_executor
 from .test_runner import run_tests
+from .memory.checkpointer import checkpoint_iteration
 
 
 @dataclass
@@ -62,6 +63,18 @@ def loop(profile_name: str, max_iterations: int = 1) -> Dict[str, Any]:
         history.append({"iteration": i + 1, "planning": p})
         v = verify(profile)
         history[-1]["verify"] = v
+        # Persist checkpoint to Cursor artifacts + CerebralMemory (best-effort)
+        try:
+            checkpoint_iteration(
+                iteration_index=i + 1,
+                plan=p,
+                verify=v,
+                run_id=os.getenv("CFLOW_RUN_ID", "local-run"),
+                task_id=os.getenv("CFLOW_TASK_ID", ""),
+                extra_metadata={"profile": profile.name},
+            )
+        except Exception:
+            pass
         if v.get("status") == "success":
             break
     return {"status": history[-1]["verify"].get("status", "error"), "iterations": len(history), "history": history}

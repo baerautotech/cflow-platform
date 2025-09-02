@@ -94,6 +94,15 @@ class ToolRegistry:
             tool("test_confidence", "Test confidence report"),
         ]
 
+        # Memory (CerebralMemory)
+        tools += [
+            tool("memory_add", "Add a memory to CerebralMemory", {"type": "object", "properties": {"content": {"type": "string"}, "userId": {"type": "string"}, "metadata": {"type": "object"}}, "required": ["content"]}),
+            tool("memory_search", "Search memories from CerebralMemory", {"type": "object", "properties": {"query": {"type": "string"}, "userId": {"type": "string"}, "limit": {"type": "integer"}}, "required": ["query"]}),
+            tool("memory_store_procedure", "Store/update a procedure in CerebralMemory", {"type": "object", "properties": {"title": {"type": "string"}, "steps": {"type": "array", "items": {"type": "object"}}, "justification": {"type": "string"}, "source": {"type": "string"}}, "required": ["title", "steps", "justification"]}),
+            tool("memory_store_episode", "Store an episodic iteration log in CerebralMemory", {"type": "object", "properties": {"runId": {"type": "string"}, "taskId": {"type": "string"}, "content": {"type": "string"}, "metadata": {"type": "object"}}, "required": ["runId", "content"]}),
+            tool("memory_stats", "Get memory system stats"),
+        ]
+
         return tools
 
     @staticmethod

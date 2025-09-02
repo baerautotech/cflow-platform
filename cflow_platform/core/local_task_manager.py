@@ -15,9 +15,20 @@ class LocalTaskManager:
     """
 
     def __init__(self, db_path: Optional[Path] = None) -> None:
-        base = Path.cwd() / ".cflow"
-        base.mkdir(parents=True, exist_ok=True)
-        self.db_path = db_path or (base / "tasks.db")
+        # Prefer consolidated .cerebraflow dir; migrate legacy .cflow if present
+        repo_root = Path.cwd()
+        new_base = repo_root / ".cerebraflow"
+        old_base = repo_root / ".cflow"
+        new_base.mkdir(parents=True, exist_ok=True)
+        candidate = new_base / "tasks.db"
+        if not candidate.exists():
+            legacy = old_base / "tasks.db"
+            if legacy.exists():
+                try:
+                    legacy.rename(candidate)
+                except Exception:
+                    pass
+        self.db_path = db_path or candidate
         self._ensure_schema()
 
     def _ensure_schema(self) -> None:
