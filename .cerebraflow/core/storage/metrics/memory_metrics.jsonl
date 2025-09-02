@@ -1,0 +1,29 @@
+{"ts": 1756700173.636252, "name": "memory_add", "value": 1, "latency_ms": 5092.89, "content_length": 28}
+{"ts": 1756700173.7099829, "name": "memory_search", "value": 0, "latency_ms": 57.34, "min_similarity": 0.72, "requested_limit": 20, "final_k": 0}
+{"ts": 1756724910.569866, "name": "memory_add", "value": 1, "latency_ms": 8595.89, "content_length": 40}
+{"ts": 1756724910.65903, "name": "memory_search", "value": 0, "latency_ms": 72.85, "min_similarity": 0.72, "requested_limit": 20, "final_k": 0}
+{"ts": 1756724951.716699, "name": "memory_add", "value": 1, "latency_ms": 3228.45, "content_length": 28}
+{"ts": 1756724951.9632268, "name": "memory_search", "value": 0, "latency_ms": 230.07, "min_similarity": 0.72, "requested_limit": 20, "final_k": 0}
+{"ts": 1756724997.330348, "name": "memory_add", "value": 1, "latency_ms": 3172.62, "content_length": 23}
+{"ts": 1756724997.4249952, "name": "memory_search", "value": 0, "latency_ms": 77.98, "min_similarity": 0.72, "requested_limit": 20, "final_k": 0}
+{"ts": 1756726467.371368, "name": "memory_add", "value": 1, "latency_ms": 3428.79, "content_length": 32}
+{"ts": 1756726467.422503, "name": "memory_search", "value": 0, "latency_ms": 32.9, "min_similarity": 0.72, "requested_limit": 20, "final_k": 0}
+{"ts": 1756752943.566795, "name": "memory_add", "value": 1, "latency_ms": 5841.18, "content_length": 313}
+{"ts": 1756752944.212299, "name": "memory_add", "value": 1, "latency_ms": 504.75, "content_length": 188}
+{"ts": 1756752944.687197, "name": "memory_add", "value": 1, "latency_ms": 440.03, "content_length": 1940}
+{"ts": 1756752944.750241, "name": "memory_add", "value": 1, "latency_ms": 45.75, "content_length": 425}
+{"ts": 1756752944.791023, "name": "memory_add", "value": 1, "latency_ms": 25.18, "content_length": 406}
+{"ts": 1756752944.839415, "name": "memory_add", "value": 1, "latency_ms": 33.51, "content_length": 170}
+{"ts": 1756827596.206422, "name": "memory_add", "value": 1, "latency_ms": 155.33, "content_length": 2471}
+{"ts": 1756845285.524835, "name": "memory_add", "value": 1, "latency_ms": 4586.84, "content_length": 313}
+{"ts": 1756845286.013076, "name": "memory_add", "value": 1, "latency_ms": 471.49, "content_length": 188}
+{"ts": 1756845286.466354, "name": "memory_add", "value": 1, "latency_ms": 439.06, "content_length": 4413}
+{"ts": 1756845286.894287, "name": "memory_add", "value": 1, "latency_ms": 410.13, "content_length": 435}
+{"ts": 1756845287.359353, "name": "memory_add", "value": 1, "latency_ms": 450.65, "content_length": 446}
+{"ts": 1756845287.837954, "name": "memory_add", "value": 1, "latency_ms": 462.88, "content_length": 170}
+{"ts": 1756845341.7414248, "name": "memory_add", "value": 1, "latency_ms": 3258.0, "content_length": 313}
+{"ts": 1756845342.203351, "name": "memory_add", "value": 1, "latency_ms": 448.62, "content_length": 188}
+{"ts": 1756845342.5457048, "name": "memory_add", "value": 1, "latency_ms": 329.04, "content_length": 4413}
+{"ts": 1756845342.943768, "name": "memory_add", "value": 1, "latency_ms": 383.32, "content_length": 435}
+{"ts": 1756845343.36303, "name": "memory_add", "value": 1, "latency_ms": 404.65, "content_length": 446}
+{"ts": 1756845343.694491, "name": "memory_add", "value": 1, "latency_ms": 316.87, "content_length": 170}

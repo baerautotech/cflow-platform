@@ -49,7 +49,7 @@ def check_file_org_violations(repo_root: Path) -> List[str]:
         return []
 
     allowlist = re.compile(
-        r"^(README\.md|package\.json|package-lock\.json|pyproject\.toml|uv\.lock|"
+        r"^(README\.md|AGENTS\.md|LICENSE|CHANGELOG\.md|package\.json|package-lock\.json|pyproject\.toml|uv\.lock|"
         r"tsconfig.*\.json|activate\.(sh|bat)|components\.json|cerebraflow_.*\.json|.*\.lock)$"
     )
     violations = [f for f in root_added if not allowlist.match(f)]
@@ -92,8 +92,39 @@ def main() -> int:
         print("")
         return 1
 
-    # RAG chunk guard
+    # Emoji guard (no emojis in code artifacts)
     staged_all = get_staged_files("--diff-filter=ACM")
+    emoji_detected: List[str] = []
+    emoji_pattern = re.compile(r"[\U0001F300-\U0001FAFF\U00002600-\U000027BF]")
+    code_exts = {".py", ".pyi", ".ts", ".tsx", ".js", ".jsx", ".rs", ".go", ".java", ".kt"}
+    MAX_SCAN_BYTES = 512 * 1024  # skip very large files
+    for rel in staged_all:
+        p = repo_root / rel
+        try:
+            if not p.exists() or not p.is_file():
+                continue
+            if p.suffix.lower() not in code_exts:
+                continue
+            try:
+                if p.stat().st_size > MAX_SCAN_BYTES:
+                    continue
+            except Exception:
+                pass
+            text = p.read_text(encoding="utf-8", errors="ignore")
+            if emoji_pattern.search(text):
+                emoji_detected.append(rel)
+        except Exception:
+            continue
+    if emoji_detected:
+        print("EMOJI DETECTED IN CODE FILES:")
+        for f in emoji_detected:
+            print(f"  {f}")
+        print("")
+        print("Remove emoji characters from source files. Logs at runtime may include emojis, but source must not.")
+        return 3
+
+    # RAG chunk guard
+    staged_all = staged_all or get_staged_files("--diff-filter=ACM")
     if not check_rag_chunk_guard(staged_all):
         return 2
 
