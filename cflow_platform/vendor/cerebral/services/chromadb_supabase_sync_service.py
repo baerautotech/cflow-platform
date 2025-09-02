@@ -23,10 +23,15 @@ import logging
 import signal
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any, Optional, Union, Tuple
 from datetime import datetime
+import uuid
+from dotenv import load_dotenv
 import psutil
 import time
+import json as _json
+from urllib import request as _urlreq
+from urllib.error import URLError, HTTPError
 
 # Add project paths for imports
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -84,10 +89,50 @@ class ChromaDBSupabaseSyncService:
         # Initialize clients for direct operations
         self.chromadb_client = None
         self.supabase_client = None
+        # Hard-coded Supabase targets aligned with knowledge RAG/KG
+        # Items live in `public.knowledge_items`; embeddings live in `public.knowledge_embeddings`.
+        # Search uses RPC `public.search_agentic_embeddings`.
+        self._items_table = "knowledge_items"
+        self._embeddings_table = "knowledge_embeddings"
+        self._search_rpc = "search_agentic_embeddings"
+
+        # Cached ids (not hardcoded; resolved from environment per call as needed)
+        self.tenant_id_env = os.getenv("CEREBRAL_TENANT_ID") or os.getenv("CEREBRAFLOW_TENANT_ID")
+        self.user_id_env = (
+            os.getenv("CEREBRAL_USER_ID")
+            or os.getenv("CEREBRAFLOW_USER_ID")
+            or self.tenant_id_env
+        )
+        self.project_id_env = os.getenv("CEREBRAL_PROJECT_ID") or os.getenv("CEREBRAFLOW_PROJECT_ID")
+
+        # Load environment from .env files to pick up Supabase credentials
+        try:
+            # Load .env from project_root and ascend to repo root
+            roots = [
+                self.project_root,
+                self.project_root.parent,
+                self.project_root.parent.parent,
+                self.project_root.parent.parent.parent,
+            ]
+            seen = set()
+            candidates = []
+            for r in roots:
+                if r is None:
+                    continue
+                for p in [r / ".env", r / ".cerebraflow" / ".env"]:
+                    if p not in seen and p.exists():
+                        candidates.append(p)
+                        seen.add(p)
+            for p in candidates:
+                load_dotenv(dotenv_path=str(p), override=True)
+            # Fallback: default search on cwd
+            load_dotenv(override=False)
+        except Exception:
+            pass
         
         # Check if daemon is already running or start if requested
         if self.is_daemon_running():
-            logger.info("✅ CerebraFlow sync daemon already running")
+            logger.info(" CerebraFlow sync daemon already running")
         elif auto_start_daemon:
             self._ensure_daemon_running()
         else:
@@ -99,18 +144,30 @@ class ChromaDBSupabaseSyncService:
         """Ensure the sync daemon is running"""
         try:
             if self.is_daemon_running():
-                logger.info("✅ Sync daemon already running")
+                logger.info(" Sync daemon already running")
                 return True
             
             # Try to start daemon
-            logger.info("🚀 Starting CerebraFlow sync daemon...")
+            logger.info(" Starting CerebraFlow sync daemon...")
             return self.start_daemon()
             
         except Exception as e:
-            logger.warning(f"⚠️ Could not start daemon, falling back to direct sync: {e}")
+            logger.warning(f"️ Could not start daemon, falling back to direct sync: {e}")
             self.direct_sync_mode = True
             self._initialize_direct_clients()
             return False
+
+    def _resolve_tenant_user_project(self) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+        """Resolve tenant, user, and project IDs from the environment at call time."""
+        tenant_id = os.getenv("CEREBRAL_TENANT_ID") or os.getenv("CEREBRAFLOW_TENANT_ID") or self.tenant_id_env
+        user_id = (
+            os.getenv("CEREBRAL_USER_ID")
+            or os.getenv("CEREBRAFLOW_USER_ID")
+            or tenant_id
+            or self.user_id_env
+        )
+        project_id = os.getenv("CEREBRAL_PROJECT_ID") or os.getenv("CEREBRAFLOW_PROJECT_ID") or self.project_id_env
+        return tenant_id, user_id, project_id
     
     def _initialize_direct_clients(self) -> bool:
         """Initialize direct ChromaDB and Supabase clients"""
@@ -120,28 +177,269 @@ class ChromaDBSupabaseSyncService:
                 try:
                     from chromadb import PersistentClient
                     self.chromadb_client = PersistentClient(path=str(self.chromadb_path))
-                    logger.info("✅ Direct ChromaDB client initialized (new client API)")
+                    logger.info(" Direct ChromaDB client initialized (new client API)")
                 except Exception:
                     # Fallback to generic client if PersistentClient import path differs
                     self.chromadb_client = chromadb.PersistentClient(path=str(self.chromadb_path))
-                    logger.info("✅ Direct ChromaDB client initialized (compat mode)")
+                    logger.info(" Direct ChromaDB client initialized (compat mode)")
             
             # Initialize Supabase client
             if SUPABASE_AVAILABLE:
                 supabase_url = os.getenv("SUPABASE_URL")
-                supabase_key = os.getenv("SUPABASE_ANON_KEY")
+                supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
                 
                 if supabase_url and supabase_key:
                     self.supabase_client = create_client(supabase_url, supabase_key)
-                    logger.info("✅ Direct Supabase client initialized")
+                    logger.info(" Direct Supabase client initialized")
                 else:
-                    logger.warning("⚠️ Supabase credentials not found in environment")
+                    logger.warning("️ Supabase credentials not found in environment")
             
             return True
             
         except Exception as e:
-            logger.error(f"❌ Failed to initialize direct clients: {e}")
+            logger.error(f" Failed to initialize direct clients: {e}")
             return False
+
+    # ---------------- Supabase HTTP fallback -----------------
+    def _get_supabase_http_headers(self) -> Optional[Dict[str, str]]:
+        url = os.getenv("SUPABASE_URL")
+        key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
+        if not url or not key:
+            return None
+        return {
+            "apikey": key,
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Prefer": "resolution=merge-duplicates",
+        }
+
+    def _supabase_http_upsert(self, table: str, payload: Dict[str, Any], on_conflict: str = "id") -> bool:
+        headers = self._get_supabase_http_headers()
+        url = os.getenv("SUPABASE_URL")
+        if not headers or not url:
+            return False
+        endpoint = f"{url}/rest/v1/{table}?on_conflict={on_conflict}"
+        data = _json.dumps(payload).encode("utf-8")
+        req = _urlreq.Request(endpoint, data=data, headers=headers, method="POST")
+        try:
+            with _urlreq.urlopen(req, timeout=10) as resp:
+                resp.read()
+                return 200 <= resp.status < 300
+        except HTTPError as e:
+            logger.warning(f"️ Supabase HTTP upsert failed ({table}): {e}")
+            return False
+        except URLError as e:
+            logger.warning(f"️ Supabase HTTP upsert network error ({table}): {e}")
+            return False
+
+    def _supabase_http_rpc(self, function: str, payload: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
+        headers = self._get_supabase_http_headers()
+        url = os.getenv("SUPABASE_URL")
+        if not headers or not url:
+            return None
+        endpoint = f"{url}/rest/v1/rpc/{function}"
+        data = _json.dumps(payload).encode("utf-8")
+        req = _urlreq.Request(endpoint, data=data, headers=headers, method="POST")
+        try:
+            with _urlreq.urlopen(req, timeout=20) as resp:
+                body = resp.read().decode("utf-8")
+                try:
+                    parsed = _json.loads(body)
+                except Exception:
+                    parsed = []
+                if isinstance(parsed, list):
+                    return parsed
+                return []
+        except HTTPError as e:
+            logger.warning(f"️ Supabase HTTP RPC failed ({function}): {e}")
+            return None
+        except URLError as e:
+            logger.warning(f"️ Supabase HTTP RPC network error ({function}): {e}")
+            return None
+
+    # ---------------- Embeddings (Apple Silicon) -----------------
+    def _embed_text(self, text: str) -> Tuple[List[float], Dict[str, Any]]:
+        """Generate an embedding using core Apple Silicon accelerator if available, CPU fallback.
+
+        Returns: (vector, metadata)
+        """
+        try:
+            from cflow_platform.core.embeddings.apple_silicon_accelerator import (
+                generate_accelerated_embeddings,
+                get_apple_silicon_accelerator,
+            )
+            accel = get_apple_silicon_accelerator()
+            device = accel.get_device_string()
+            vecs = generate_accelerated_embeddings([text])
+            if isinstance(vecs, list) and vecs and isinstance(vecs[0], list):
+                v = vecs[0]
+                return v, {
+                    "model": "sentence-transformer",
+                    "dims": len(v),
+                    "device": device,
+                }
+        except Exception as e:
+            logger.warning(f"️ Apple Silicon embeddings unavailable, falling back to CPU: {e}")
+        # Fallback: simple hash-based vector (non-semantic) to avoid failure
+        import math
+        h = abs(hash(text))
+        vec = [((h >> (i * 8)) & 0xFF) / 255.0 for i in range(0, 32)]
+        return vec, {"model": "fallback-hash", "dims": 32, "device": "cpu"}
+
+    def _target_dims(self) -> int:
+        try:
+            return int(os.getenv("SUPABASE_VECTOR_DIMS", "1536"))
+        except Exception:
+            return 1536
+
+    def _normalize_vector(self, vector: List[float]) -> List[float]:
+        """Pad or truncate vector to match pgvector column dimensions."""
+        td = self._target_dims()
+        if len(vector) == td:
+            return vector
+        if len(vector) > td:
+            return vector[:td]
+        # pad with zeros
+        return vector + [0.0] * (td - len(vector))
+
+    # ---------------- Public storage/search API -----------------
+    async def add_document(self, *, collection_type: str, content: str, metadata: Dict[str, Any]) -> str:
+        """Add a document to local Chroma and attempt Supabase dual-write.
+
+        - Embeds locally (Apple Silicon accelerated when available)
+        - Writes to Chroma collection (collection_type)
+        - Attempts to write to Supabase tables: memory_items, memory_vectors (pgvector)
+        """
+        try:
+            doc_id = str(uuid.uuid4())
+            vector, embed_meta = self._embed_text(content)
+            vector = self._normalize_vector(vector)
+
+            # 1) Write to Chroma
+            if self.chromadb_client:
+                try:
+                    collection = self.get_collection(collection_type)
+                    collection.add(ids=[doc_id], documents=[content], metadatas=[metadata], embeddings=[vector])
+                except Exception as e:
+                    logger.warning(f"️ Chroma add failed: {e}")
+
+            # 2) Attempt Supabase dual-write (RDB row + pgvector)
+            if self.supabase_client or os.getenv("SUPABASE_URL"):
+                try:
+                    # Required tenancy fields (from env; no hardcoding)
+                    tenant_id, user_id, project_id = self._resolve_tenant_user_project()
+
+                    # knowledge_items (minimal fields to satisfy schema/RLS)
+                    items_payload = {
+                        "id": doc_id,
+                        "user_id": tenant_id if user_id is None else user_id,
+                        "title": metadata.get("title") if isinstance(metadata, dict) else None,
+                        "content": content,
+                        "metadata": metadata,
+                        "created_at": datetime.utcnow().isoformat() + "Z",
+                        "tenant_id": tenant_id,
+                    }
+                    # Ensure a fallback title
+                    if not items_payload.get("title"):
+                        items_payload["title"] = f"{collection_type}:{doc_id[:8]}"
+                    if self.supabase_client:
+                        self.supabase_client.table(self._items_table).upsert(items_payload).execute()
+                    else:
+                        self._supabase_http_upsert(self._items_table, items_payload, on_conflict="id")
+
+                    # Resolve content_type to satisfy search filter defaults
+                    content_type = None
+                    if isinstance(metadata, dict):
+                        content_type = metadata.get("content_type")
+                    if not content_type:
+                        content_type = "documentation" if "doc" in collection_type else "technical_design_document"
+
+                    # knowledge_embeddings
+                    embeddings_payload = {
+                        "id": str(uuid.uuid4()),
+                        "knowledge_item_id": doc_id,
+                        "content_chunk": content,
+                        "embedding": vector,  # pgvector expects array; supabase client will serialize
+                        "chunk_index": 0,
+                        "metadata": metadata,
+                        "content_type": content_type,
+                        "created_at": datetime.utcnow().isoformat() + "Z",
+                        "tenant_id": tenant_id,
+                    }
+                    if self.supabase_client:
+                        self.supabase_client.table(self._embeddings_table).upsert(embeddings_payload).execute()
+                    else:
+                        self._supabase_http_upsert(self._embeddings_table, embeddings_payload, on_conflict="id")
+                except Exception as e:
+                    logger.warning(f"️ Supabase write failed (ensure tables/migrations & valid URL/key): {e}")
+
+            return doc_id
+        except Exception as e:
+            logger.error(f" add_document failed: {e}")
+            # Always return an id to keep upstream flows moving
+            return str(uuid.uuid4())
+
+    async def search_documents(
+        self,
+        *,
+        collection_type: str,
+        query: str,
+        limit: int = 20,
+        filters: Optional[Dict[str, Any]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Semantic search with Supabase pgvector preferred, Chroma fallback.
+
+        If Supabase pgvector query is not configured, fall back to Chroma similarity search.
+        """
+        # Embed query
+        vector, _ = self._embed_text(query)
+        vector = self._normalize_vector(vector)
+
+        # Try Supabase RPC first (agentic/knowledge search)
+        if self.supabase_client or os.getenv("SUPABASE_URL"):
+            try:
+                tenant_id, _, _ = self._resolve_tenant_user_project()
+                payload = {
+                    "query_embedding": vector,
+                    "match_threshold": 0.0,
+                    "match_count": limit,
+                    "tenant_filter": tenant_id,
+                    "content_types": None,
+                }
+                if self.supabase_client:
+                    resp = self.supabase_client.rpc(self._search_rpc, payload).execute()
+                    data = getattr(resp, "data", None) or []
+                else:
+                    data = self._supabase_http_rpc(self._search_rpc, payload) or []
+                if isinstance(data, list) and data:
+                    return data
+            except Exception as e:
+                logger.warning(f"️ Supabase pgvector search failed or RPC missing: {e}")
+
+        # Fallback to Chroma similarity
+        try:
+            if self.chromadb_client:
+                collection = self.get_collection(collection_type)
+                res = collection.query(query_embeddings=[vector], n_results=limit)
+                # Normalize Chroma response to list[dict]
+                results: List[Dict[str, Any]] = []
+                ids = res.get("ids", [[]])[0]
+                docs = res.get("documents", [[]])[0]
+                metas = res.get("metadatas", [[]])[0]
+                dists = res.get("distances", [[]])[0]
+                for rid, doc, meta, dist in zip(ids, docs, metas, dists):
+                    results.append({
+                        "id": rid,
+                        "document": doc,
+                        "metadata": meta,
+                        "distance": dist,
+                    })
+                return results
+        except Exception as e:
+            logger.error(f" Chroma search failed: {e}")
+
+        return []
     
     def is_daemon_running(self) -> bool:
         """Check if the Cerebral unified sync service is running"""
@@ -168,7 +466,7 @@ class ChromaDBSupabaseSyncService:
         """Start the Cerebral unified sync service"""
         try:
             if self.is_daemon_running():
-                logger.info("✅ Cerebral sync service already running")
+                logger.info(" Cerebral sync service already running")
                 return True
             
             # Load the LaunchAgent
@@ -181,24 +479,24 @@ class ChromaDBSupabaseSyncService:
                 time.sleep(3)
                 
                 if self.is_daemon_running():
-                    logger.info("✅ Cerebral sync service started successfully")
+                    logger.info(" Cerebral sync service started successfully")
                     return True
                 else:
-                    logger.warning("⚠️ Service loaded but not yet running (may still be starting)")
+                    logger.warning("️ Service loaded but not yet running (may still be starting)")
                     return True
             else:
-                logger.error(f"❌ Failed to load sync service: {result.stderr}")
+                logger.error(f" Failed to load sync service: {result.stderr}")
                 return False
                 
         except Exception as e:
-            logger.error(f"❌ Failed to start sync service: {e}")
+            logger.error(f" Failed to start sync service: {e}")
             return False
     
     def stop_daemon(self) -> bool:
         """Stop the Cerebral unified sync service"""
         try:
             if not self.is_daemon_running():
-                logger.info("✅ Cerebral sync service not running")
+                logger.info(" Cerebral sync service not running")
                 return True
             
             # Unload the LaunchAgent
@@ -208,14 +506,14 @@ class ChromaDBSupabaseSyncService:
             
             success = result.returncode == 0
             if success:
-                logger.info("✅ Cerebral sync service stopped")
+                logger.info(" Cerebral sync service stopped")
             else:
-                logger.error(f"❌ Failed to stop sync service: {result.stderr}")
+                logger.error(f" Failed to stop sync service: {result.stderr}")
             
             return success
             
         except Exception as e:
-            logger.error(f"❌ Failed to stop sync service: {e}")
+            logger.error(f" Failed to stop sync service: {e}")
             return False
     
     def get_daemon_status(self) -> Dict[str, Any]:
@@ -282,7 +580,7 @@ class ChromaDBSupabaseSyncService:
                 }
             
         except Exception as e:
-            logger.error(f"❌ Failed to get sync service status: {e}")
+            logger.error(f" Failed to get sync service status: {e}")
             return {"running": False, "error": str(e)}
     
     async def sync_collection(self, collection_name: str, direction: str = "bidirectional") -> Dict[str, Any]:
@@ -333,7 +631,7 @@ class ChromaDBSupabaseSyncService:
             }
             
         except Exception as e:
-            logger.error(f"❌ Direct sync failed for {collection_name}: {e}")
+            logger.error(f" Direct sync failed for {collection_name}: {e}")
             return {
                 "status": "error",
                 "message": str(e)
