@@ -302,3 +302,9 @@
 2025-08-31 23:36:53,031 INFO discovered tasks table: cerebraflow_tasks
 2025-08-31 23:36:53,124 INFO discovered docs table: documentation_files
 2025-08-31 23:36:53,651 INFO vector targets tasks=cerebraflow_tasks docs=documentation_files column=embeddings
+2025-09-02 16:55:59,870 INFO embedding initialized: cflow_core_apple_silicon
+2025-09-02 16:55:59,872 INFO vector_sync_enabled=True vector_column=embeddings
+2025-09-02 16:55:59,872 INFO UnifiedSync starting
+2025-09-02 16:55:59,872 DEBUG run loop tick start
+2025-09-02 16:55:59,872 DEBUG sync_once start
+2025-09-02 16:56:00,578 INFO discovered tasks table: cerebraflow_tasks
