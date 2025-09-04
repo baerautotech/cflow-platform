@@ -140,6 +140,25 @@ class ToolRegistry:
             tool("memory_stats", "Get memory system stats"),
         ]
 
+        # Internet search (DuckDuckGo)
+        tools += [
+            tool(
+                "internet_search",
+                "Perform internet search with DuckDuckGo and return a summary with sources",
+                {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string"},
+                        "max_results": {"type": "integer"},
+                        "limit": {"type": "integer"},
+                        "region": {"type": "string"},
+                        "safe": {"type": "boolean"},
+                    },
+                    "required": ["query"]
+                },
+            ),
+        ]
+
         return tools
 
     @staticmethod
