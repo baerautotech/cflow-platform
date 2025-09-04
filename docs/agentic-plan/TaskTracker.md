@@ -71,16 +71,16 @@
   - [x] 9.1 Enforce iteration wall‑clock and step budgets
   - [x] 9.2 Restart on oscillation (same failures across N iterations) or repeated no‑op edits
 
-- [ ] Phase 5: Platform Integration & Documentation
+- [x] Phase 5: Platform Integration & Documentation
   - [x] 5.1 Dev workflow integration (no duplication)
   - [x] 5.2 Documentation (examples, governance)
-  - [ ] 5.3 Telemetry and guardrails (opt‑in)
+  - [x] 5.3 Telemetry and guardrails (opt‑in)
 
 - [ ] Phase 8: Post‑run System Updates & Auto‑commit (optional)
   - [ ] 8.1 Update Cursor artifacts after successful runs (`AGENTS.md`, `.cursor/rules/**`, `docs/*.mdc`, `commands/*`)
-  - [ ] 8.2 Optional safe auto‑commit cadence gated by pre‑commit
-    - [ ] 8.2.1 `core/git_ops.py` for atomic commits when tests green and hooks pass
-    - [ ] 8.2.2 Env flag `CFLOW_AUTOCOMMIT=1`; message template includes task id and plan step
+  - [x] 8.2 Optional safe auto‑commit cadence gated by pre‑commit
+    - [x] 8.2.1 `core/git_ops.py` for atomic commits when tests green and hooks pass
+    - [x] 8.2.2 Env flag `CFLOW_AUTOCOMMIT=1`; message template includes task id and plan step
 
 - [ ] Phase 4: Optional Packs (Off by default)
   - [ ] 4.1 Provider portability (document non-default cloud packs)
@@ -122,7 +122,7 @@ Rationale: memory & sync (Phase 6) precedes orchestration (Phase 7) to ensure su
 - [ ] Gate VEC: Apple Silicon MPS embedder used locally; vectors stored in Chroma + pgvector; model/dims recorded
 - [x] Gate RDB: Relational retrieval via Supabase; referential integrity and indices verified; realtime healthy
 - [x] Gate R: restart budgets enforced; structured restart reasons emitted; no infinite loops
-- [ ] Gate Cmt: commits only when hooks pass and tests green; disabled by default
+- [x] Gate Cmt: commits only when hooks pass and tests green; disabled by default
 
 Reference: `https://martinfowler.com/articles/build-own-coding-agent.html?utm_source=tldrai`
 

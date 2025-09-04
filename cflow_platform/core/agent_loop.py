@@ -22,6 +22,7 @@ from .memory.checkpointer import checkpoint_iteration
 from cflow_platform.hooks.pre_commit_runner import main as run_pre_commit_main  # type: ignore
 from .minimal_edit_applier import EditPlan, ApplyOptions, apply_minimal_edits
 from .profiles import InstructionProfile, resolve_profile
+from .git_ops import attempt_auto_commit
 
 
  # Using InstructionProfile from profiles module
@@ -361,6 +362,39 @@ def loop(
             pass
         if stage_result.get("status") == "success":
             log_event("agent_loop.iteration.success", {"iteration": i + 1})
+            # Optional auto-commit when tests and lint/hooks are green
+            try:
+                if os.getenv("CFLOW_AUTOCOMMIT", "").strip().lower() in {"1", "true", "yes"}:
+                    task_id = os.getenv("CFLOW_TASK_ID", "")
+                    plan_step = None
+                    try:
+                        steps = (p or {}).get("plan", [])
+                        if steps:
+                            plan_step = steps[-1].get("action")
+                    except Exception:
+                        plan_step = None
+                    msg_parts: List[str] = []
+                    if task_id:
+                        msg_parts.append(f"Task {task_id}")
+                    if plan_step:
+                        msg_parts.append(f"step:{plan_step}")
+                    msg_parts.append("tests+lint:green")
+                    commit_msg = "cflow:auto-commit - " + " ".join(msg_parts)
+                    commit_res = attempt_auto_commit(message=commit_msg)
+                    # Attach commit info into checkpoint memory for traceability
+                    try:
+                        checkpoint_iteration(
+                            iteration_index=i + 1,
+                            plan=p,
+                            verify={**v, "auto_commit": commit_res, "apply": apply_result},
+                            run_id=os.getenv("CFLOW_RUN_ID", "local-run"),
+                            task_id=task_id,
+                            extra_metadata={"profile": profile.name},
+                        )
+                    except Exception:
+                        pass
+            except Exception:
+                pass
             break
         # Post-iteration budget check on steps (in case budgets were reached due to per-iteration step cost)
         if step_budget is not None and steps_used >= step_budget:
