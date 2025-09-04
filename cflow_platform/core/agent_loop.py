@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 
 from .public_api import get_direct_client_executor
+from .orchestrator import run_iteration
 from .test_runner import run_tests
 from .docs_context7 import (
     build_failure_report_from_test_result,
@@ -197,8 +198,15 @@ def loop(profile_name: str, max_iterations: int = 1) -> Dict[str, Any]:
     executor = get_direct_client_executor()
     history: List[Dict[str, Any]] = []
     for i in range(max_iterations):
-        p = plan(profile)
-        history.append({"iteration": i + 1, "planning": p})
+        # Run Plan → Implement → Verify with fresh per-stage contexts
+        stage_result = run_iteration(
+            plan_fn=plan,
+            implement_fn=apply_edits_if_present,
+            verify_fn=verify,
+            profile=profile,
+        )
+        p = stage_result.get("planning", {})
+        history.append({"iteration": i + 1, **{k: v for k, v in stage_result.items() if k != "status"}})
         # Persist procedure definition and a simple planning memory (best-effort)
         try:
             import asyncio
@@ -238,11 +246,8 @@ def loop(profile_name: str, max_iterations: int = 1) -> Dict[str, Any]:
             )
         except Exception:
             pass
-        # Attempt to apply edits (if present) before verification
-        apply_result = apply_edits_if_present()
-        v = verify(profile)
-        history[-1]["verify"] = v
-        history[-1]["apply"] = apply_result
+        v = stage_result.get("verify", {})
+        apply_result = stage_result.get("apply", {})
         # Persist checkpoint to Cursor artifacts + CerebralMemory (best-effort)
         try:
             checkpoint_iteration(
@@ -255,9 +260,9 @@ def loop(profile_name: str, max_iterations: int = 1) -> Dict[str, Any]:
             )
         except Exception:
             pass
-        if v.get("status") == "success":
+        if stage_result.get("status") == "success":
             break
-    return {"status": history[-1]["verify"].get("status", "error"), "iterations": len(history), "history": history}
+    return {"status": history[-1].get("verify", {}).get("status", "error"), "iterations": len(history), "history": history}
 
 
 def cli() -> int:

@@ -45,7 +45,7 @@
     - [x] 3.3.1 Server wiring and allowlist
     - [x] 3.3.2 Result summarization + sources
 
-- [ ] Phase 6: Memory & Supabase Sync (RDB + Vectors)
+- [x] Phase 6: Memory & Supabase Sync (RDB + Vectors)
   - [x] 6.1 Supabase connectivity validation CLI (`cflow-memory-check`)
     - [x] 6.1.1 Validate `SUPABASE_URL`/`SUPABASE_ANON_KEY`; RPC availability; read/write
     - [x] 6.1.2 `.env` loader precedence (repo `/.env` then `/.cerebraflow/.env`) and warnings on invalid URL
@@ -65,7 +65,7 @@
 - [ ] Phase 7: Sub‑agents & Orchestration
   - [ ] 7.1 Define `PlanAgent`, `ImplementAgent`, `TestAgent` with explicit I/O contracts
   - [ ] 7.2 Orchestrator composes Plan → Implement (edits) → Test (pytest) with fresh contexts per stage
-  - [ ] 7.3 Each sub‑agent runnable independently
+  - [x] 7.3 Each sub‑agent runnable independently
 
 - [ ] Phase 9: Restart Heuristics & Budgets
   - [ ] 9.1 Enforce iteration wall‑clock and step budgets
