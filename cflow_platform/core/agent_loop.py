@@ -191,13 +191,69 @@ def apply_edits_if_present() -> Dict[str, Any]:
     return result
 
 
-def loop(profile_name: str, max_iterations: int = 1) -> Dict[str, Any]:
+def _parse_int_env(var_names: List[str]) -> Optional[int]:
+    for name in var_names:
+        try:
+            val = os.getenv(name)
+            if val is None:
+                continue
+            val = val.strip()
+            if not val:
+                continue
+            parsed = int(val)
+            if parsed >= 0:
+                return parsed
+        except Exception:
+            continue
+    return None
+
+
+def loop(
+    profile_name: str,
+    max_iterations: int = 1,
+    wallclock_limit_sec: Optional[int] = None,
+    step_budget: Optional[int] = None,
+) -> Dict[str, Any]:
     profile = resolve_profile(profile_name)
     if not profile:
         return {"status": "error", "message": f"Unknown profile {profile_name}"}
+    # Resolve budgets from args or environment (args take precedence)
+    if wallclock_limit_sec is None:
+        wallclock_limit_sec = _parse_int_env([
+            "CFLOW_WALLCLOCK_LIMIT_SEC",
+            "CFLOW_MAX_WALLCLOCK_SEC",
+            "CFLOW_MAX_WALLCLOCK_SECONDS",
+        ])
+    if step_budget is None:
+        step_budget = _parse_int_env(["CFLOW_STEP_BUDGET", "CFLOW_MAX_STEPS"])
+
     executor = get_direct_client_executor()
     history: List[Dict[str, Any]] = []
+    start_time = time.time()
+    steps_used = 0
+    stop_info: Optional[Dict[str, Any]] = None
+
     for i in range(max_iterations):
+        # Pre-iteration budget checks (fail-closed to avoid infinite loops)
+        if wallclock_limit_sec is not None:
+            elapsed = time.time() - start_time
+            if elapsed >= wallclock_limit_sec:
+                stop_info = {
+                    "reason": "budget_exhausted",
+                    "budget_kind": "wallclock",
+                    "elapsed_sec": int(elapsed),
+                    "limit_sec": int(wallclock_limit_sec),
+                }
+                break
+        if step_budget is not None and steps_used >= step_budget:
+            stop_info = {
+                "reason": "budget_exhausted",
+                "budget_kind": "steps",
+                "steps_used": int(steps_used),
+                "step_budget": int(step_budget),
+            }
+            break
+
         # Run Plan → Implement → Verify with fresh per-stage contexts
         stage_result = run_iteration(
             plan_fn=plan,
@@ -207,6 +263,8 @@ def loop(profile_name: str, max_iterations: int = 1) -> Dict[str, Any]:
         )
         p = stage_result.get("planning", {})
         history.append({"iteration": i + 1, **{k: v for k, v in stage_result.items() if k != "status"}})
+        # Each iteration currently runs exactly 3 steps (plan, implement, verify)
+        steps_used += 3
         # Persist procedure definition and a simple planning memory (best-effort)
         try:
             import asyncio
@@ -262,7 +320,33 @@ def loop(profile_name: str, max_iterations: int = 1) -> Dict[str, Any]:
             pass
         if stage_result.get("status") == "success":
             break
-    return {"status": history[-1].get("verify", {}).get("status", "error"), "iterations": len(history), "history": history}
+        # Post-iteration budget check on steps (in case budgets were reached due to per-iteration step cost)
+        if step_budget is not None and steps_used >= step_budget:
+            stop_info = {
+                "reason": "budget_exhausted",
+                "budget_kind": "steps",
+                "steps_used": int(steps_used),
+                "step_budget": int(step_budget),
+            }
+            break
+
+    final_status = history[-1].get("verify", {}).get("status", "error") if history else "error"
+    result: Dict[str, Any] = {
+        "status": final_status,
+        "iterations": len(history),
+        "history": history,
+    }
+    # Attach structured stop info and budgets when applicable
+    if stop_info is not None:
+        result["stop"] = stop_info
+    budgets: Dict[str, Any] = {}
+    if wallclock_limit_sec is not None:
+        budgets["wallclock_limit_sec"] = int(wallclock_limit_sec)
+    if step_budget is not None:
+        budgets["step_budget"] = int(step_budget)
+    if budgets:
+        result["budgets"] = budgets
+    return result
 
 
 def cli() -> int:
@@ -270,9 +354,16 @@ def cli() -> int:
     parser = argparse.ArgumentParser(description="Unified CLI agent loop for cflow-platform")
     parser.add_argument("--profile", default="quick", help="Instruction profile name")
     parser.add_argument("--max-iter", type=int, default=1, help="Maximum loop iterations")
+    parser.add_argument("--wallclock-sec", type=int, default=None, help="Wall-clock budget in seconds for the loop")
+    parser.add_argument("--step-budget", type=int, default=None, help="Maximum number of steps (plan+apply+verify counts as 3)")
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON result")
     args = parser.parse_args()
-    result = loop(args.profile, max_iterations=args.max_iter)
+    result = loop(
+        args.profile,
+        max_iterations=args.max_iter,
+        wallclock_limit_sec=args.wallclock_sec,
+        step_budget=args.step_budget,
+    )
     if args.json:
         print(json.dumps(result))
     else:
