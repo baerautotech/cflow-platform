@@ -63,8 +63,8 @@
     - [x] 6.5.1 Ensure agent loop uses memory_add/search by default; prefer CerebralMemory before external RAG
 
 - [ ] Phase 7: Sub‑agents & Orchestration
-  - [ ] 7.1 Define `PlanAgent`, `ImplementAgent`, `TestAgent` with explicit I/O contracts
-  - [x] 7.2 Orchestrator composes Plan → Implement (edits) → Test (pytest) with fresh contexts per stage
+  - [x] 7.1 Define `PlanAgent`, `ImplementAgent`, `TestAgent` with explicit I/O contracts
+  - [ ] 7.2 Orchestrator composes Plan → Implement (edits) → Test (pytest) with fresh contexts per stage
   - [x] 7.3 Each sub‑agent runnable independently
 
 - [ ] Phase 9: Restart Heuristics & Budgets
@@ -120,7 +120,7 @@ Rationale: memory & sync (Phase 6) precedes orchestration (Phase 7) to ensure su
 - [ ] Gate M: memory checkpoints created; iteration roll‑forward after restart
 - [x] Gate RAG: Cursor artifacts mirrored into CerebralMemory; RAG lookups return latest versions
 - [ ] Gate VEC: Apple Silicon MPS embedder used locally; vectors stored in Chroma + pgvector; model/dims recorded
-- [ ] Gate RDB: Relational retrieval via Supabase; referential integrity and indices verified; realtime healthy
+- [x] Gate RDB: Relational retrieval via Supabase; referential integrity and indices verified; realtime healthy
 - [ ] Gate R: restart budgets enforced; structured restart reasons emitted; no infinite loops
 - [ ] Gate Cmt: commits only when hooks pass and tests green; disabled by default
 
