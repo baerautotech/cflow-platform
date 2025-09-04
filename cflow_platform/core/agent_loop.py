@@ -13,26 +13,10 @@ from .test_runner import run_tests
 from .memory.checkpointer import checkpoint_iteration
 from cflow_platform.hooks.pre_commit_runner import main as run_pre_commit_main  # type: ignore
 from .minimal_edit_applier import EditPlan, ApplyOptions, apply_minimal_edits
+from .profiles import InstructionProfile, resolve_profile
 
 
-@dataclass
-class InstructionProfile:
-    name: str
-    description: str
-    goals: List[str]
-    test_paths: List[str]
-    verify_mode: str = "tests"
-
-
-DEFAULT_PROFILES: Dict[str, InstructionProfile] = {
-    "quick": InstructionProfile(
-        name="quick",
-        description="Fast feedback profile running unit tests",
-        goals=["plan", "apply", "verify"],
-        test_paths=["cflow_platform/tests"],
-        verify_mode="tests",
-    ),
-}
+ # Using InstructionProfile from profiles module
 
 
 def plan(profile: InstructionProfile) -> Dict[str, Any]:
@@ -145,7 +129,7 @@ def apply_edits_if_present() -> Dict[str, Any]:
 
 
 def loop(profile_name: str, max_iterations: int = 1) -> Dict[str, Any]:
-    profile = DEFAULT_PROFILES.get(profile_name)
+    profile = resolve_profile(profile_name)
     if not profile:
         return {"status": "error", "message": f"Unknown profile {profile_name}"}
     executor = get_direct_client_executor()
