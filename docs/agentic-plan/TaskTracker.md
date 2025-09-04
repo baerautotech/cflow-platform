@@ -112,7 +112,7 @@ Rationale: memory & sync (Phase 6) precedes orchestration (Phase 7) to ensure su
 
 ### Validation Gates
 - [x] Gate A: tests runner + failure parser validated
-- [ ] Gate B: end‑to‑end fix via minimal edit + lint + re‑run → green
+- [x] Gate B: end‑to‑end fix via minimal edit + lint + re‑run → green
 - [ ] Gate C: reasoning profiles + bounded plans with success checks
 - [ ] Gate D: sandbox policy enforced (limits; no network)
 - [ ] Gate E: docs/search integration shows sources; pre‑commit green; telemetry opt‑in
