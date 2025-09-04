@@ -8,6 +8,11 @@ import shutil
 import subprocess
 import sys
 import time
+try:  # robust import when collected as a test module
+    from cflow_platform.core.telemetry import log_event
+except Exception:
+    def log_event(event: str, payload: dict | None = None) -> None:  # type: ignore[func-returns-value]
+        return None
 
 
 def _build_pytest_args(paths: Optional[List[str]], k: Optional[str], m: Optional[str], maxfail: int, verbose: bool, extra: Optional[List[str]] | None) -> List[str]:
@@ -117,7 +122,7 @@ def run_tests(
         duration = time.perf_counter() - start
         test_results = plugin.results
         status = "success" if code == 0 else "failure"
-        return {
+        result = {
             "status": status,
             "summary": {
                 **summary,
@@ -127,6 +132,19 @@ def run_tests(
             "duration_sec": duration,
             "tests": test_results,
         }
+        try:
+            log_event(
+                "tests.completed",
+                {
+                    "mode": "in_process",
+                    "status": status,
+                    "duration_sec": duration,
+                    "summary": result.get("summary"),
+                },
+            )
+        except Exception:
+            pass
+        return result
 
     cmd: List[str] = []
     if use_uv and shutil.which("uv"):
@@ -164,7 +182,7 @@ def run_tests(
     output = proc.stdout + "\n" + proc.stderr
     summary = _parse_summary_from_text(output)
     status = "success" if proc.returncode == 0 else "failure"
-    return {
+    result = {
         "status": status,
         "summary": {
             **summary,
@@ -175,6 +193,19 @@ def run_tests(
         "stdout": proc.stdout,
         "stderr": proc.stderr,
     }
+    try:
+        log_event(
+            "tests.completed",
+            {
+                "mode": "subprocess",
+                "status": status,
+                "duration_sec": duration,
+                "summary": result.get("summary"),
+            },
+        )
+    except Exception:
+        pass
+    return result
 
 
 def cli() -> int:

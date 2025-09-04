@@ -1,0 +1,16 @@
+{"ts": 1757009347.6713119, "event": "agent_loop.start", "payload": {"profile": "quick", "max_iterations": 1}}
+{"ts": 1757009347.671525, "event": "agent_loop.iteration.begin", "payload": {"iteration": 1}}
+{"ts": 1757009347.7390652, "event": "agent_loop.start", "payload": {"profile": "quick", "max_iterations": 1}}
+{"ts": 1757009347.739161, "event": "agent_loop.iteration.begin", "payload": {"iteration": 1}}
+{"ts": 1757009367.105537, "event": "agent_loop.iteration.success", "payload": {"iteration": 1}}
+{"ts": 1757009367.105813, "event": "agent_loop.end", "payload": {"status": "success", "iterations": 1, "budgets": null, "stop": null}}
+{"ts": 1757009367.107193, "event": "agent_loop.start", "payload": {"profile": "quick", "max_iterations": 1}}
+{"ts": 1757009367.107252, "event": "agent_loop.iteration.begin", "payload": {"iteration": 1}}
+{"ts": 1757009383.1547132, "event": "agent_loop.end", "payload": {"status": "error", "iterations": 1, "budgets": null, "stop": null}}
+{"ts": 1757009383.426683, "event": "tests.completed", "payload": {"mode": "subprocess", "status": "failure", "duration_sec": 0.1746064170729369, "summary": {"passed": 0, "failed": 1, "errors": 0, "skipped": 0, "xfailed": 0, "xpassed": 0, "total": 1, "exit_code": 1}}}
+{"ts": 1757009383.5652428, "event": "tests.completed", "payload": {"mode": "subprocess", "status": "success", "duration_sec": 0.13743899995461106, "summary": {"passed": 1, "failed": 0, "errors": 0, "skipped": 0, "xfailed": 0, "xpassed": 0, "total": 1, "exit_code": 0}}}
+{"ts": 1757009384.918026, "event": "tests.completed", "payload": {"mode": "subprocess", "status": "failure", "duration_sec": 0.14270162500906736, "summary": {"passed": 0, "failed": 0, "errors": 0, "skipped": 0, "xfailed": 0, "xpassed": 0, "total": 0, "exit_code": 5}}}
+{"ts": 1757009385.1121972, "event": "tests.completed", "payload": {"mode": "subprocess", "status": "success", "duration_sec": 0.19206808309536427, "summary": {"passed": 1, "failed": 0, "errors": 0, "skipped": 0, "xfailed": 0, "xpassed": 0, "total": 1, "exit_code": 0}}}
+{"ts": 1757009387.0366058, "event": "tests.completed", "payload": {"mode": "in_process", "status": "success", "duration_sec": 39.365092249936424, "summary": {"passed": 29, "failed": 0, "errors": 0, "skipped": 0, "xfailed": 0, "xpassed": 0, "total": 29, "exit_code": 0}}}
+{"ts": 1757009387.093484, "event": "agent_loop.iteration.success", "payload": {"iteration": 1}}
+{"ts": 1757009387.093581, "event": "agent_loop.end", "payload": {"status": "success", "iterations": 1, "budgets": null, "stop": null}}

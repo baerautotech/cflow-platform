@@ -67,14 +67,17 @@
   - [x] 7.2 Orchestrator composes Plan → Implement (edits) → Test (pytest) with fresh contexts per stage
   - [x] 7.3 Each sub‑agent runnable independently
 
-- [ ] Phase 9: Restart Heuristics & Budgets
+- [x] Phase 9: Restart Heuristics & Budgets
   - [x] 9.1 Enforce iteration wall‑clock and step budgets
   - [x] 9.2 Restart on oscillation (same failures across N iterations) or repeated no‑op edits
 
 - [ ] Phase 5: Platform Integration & Documentation
-  - [ ] 5.1 Dev workflow integration (no duplication)
-  - [ ] 5.2 Documentation (examples, governance)
-  - [ ] 5.3 Telemetry and guardrails (opt‑in)
+  - [x] 5.1 Dev workflow integration (no duplication)
+  - [x] 5.2 Documentation (examples, governance)
+    - [x] 5.2.1 Add `Examples.md` with SDK, Core API, CLI, Memory/Sync, and Sandbox usage
+    - [x] 5.2.2 Add `Governance.md` for ownership, change workflow, duplication rules, and validation
+    - [x] 5.2.3 Update `docs/agentic-plan/README.md` to include links to Examples and Governance
+  - [x] 5.3 Telemetry and guardrails (opt‑in)
 
 - [ ] Phase 8: Post‑run System Updates & Auto‑commit (optional)
   - [ ] 8.1 Update Cursor artifacts after successful runs (`AGENTS.md`, `.cursor/rules/**`, `docs/*.mdc`, `commands/*`)
