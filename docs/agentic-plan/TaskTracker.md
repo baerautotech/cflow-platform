@@ -41,9 +41,9 @@
     - [x] 3.2.1 Symbol extraction from traces
     - [x] 3.2.2 Context7 fetch + summarization
     - [x] 3.2.3 Toggle + tests
-  - [ ] 3.3 Internet search MCP integration (DuckDuckGo)
-    - [ ] 3.3.1 Server wiring and allowlist
-    - [ ] 3.3.2 Result summarization + sources
+  - [x] 3.3 Internet search MCP integration (DuckDuckGo)
+    - [x] 3.3.1 Server wiring and allowlist
+    - [x] 3.3.2 Result summarization + sources
 
 - [ ] Phase 6: Memory & Supabase Sync (RDB + Vectors)
   - [ ] 6.1 Supabase connectivity validation CLI (`cflow-memory-check`)
@@ -115,7 +115,7 @@ Rationale: memory & sync (Phase 6) precedes orchestration (Phase 7) to ensure su
 - [x] Gate B: end‑to‑end fix via minimal edit + lint + re‑run → green
 - [ ] Gate C: reasoning profiles + bounded plans with success checks
 - [x] Gate D: sandbox policy enforced (limits; no network)
-- [ ] Gate E: docs/search integration shows sources; pre‑commit green; telemetry opt‑in
+- [x] Gate E: docs/search integration shows sources; pre‑commit green; telemetry opt‑in
 - [ ] Gate P: provider configured for Cerebral Server cluster; local fallback validated
 - [ ] Gate M: memory checkpoints created; iteration roll‑forward after restart
 - [ ] Gate RAG: Cursor artifacts mirrored into CerebralMemory; RAG lookups return latest versions
