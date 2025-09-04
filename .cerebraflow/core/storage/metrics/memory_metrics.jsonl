@@ -206,3 +206,19 @@
 {"ts": 1757001346.579309, "name": "memory_add", "value": 1, "latency_ms": 2439.34, "content_length": 198}
 {"ts": 1757001348.964121, "name": "memory_add", "value": 1, "latency_ms": 2345.51, "content_length": 285}
 {"ts": 1757001349.1887648, "name": "memory_add", "value": 1, "latency_ms": 194.33, "content_length": 733}
+{"ts": 1757001837.89425, "name": "memory_add", "value": 1, "latency_ms": 6064.21, "content_length": 6879}
+{"ts": 1757001846.8490229, "name": "memory_add", "value": 1, "latency_ms": 5785.77, "content_length": 6879}
+{"ts": 1757001867.986513, "name": "memory_search", "value": 0, "latency_ms": 7456.82, "min_similarity": 0.72, "requested_limit": 5, "final_k": 0}
+{"ts": 1757001879.525345, "name": "memory_add", "value": 1, "latency_ms": 41579.19, "content_length": 37291699}
+{"ts": 1757001886.589409, "name": "memory_add", "value": 1, "latency_ms": 6119.57, "content_length": 313}
+{"ts": 1757001889.208216, "name": "memory_add", "value": 1, "latency_ms": 2585.52, "content_length": 370}
+{"ts": 1757001910.4559119, "name": "memory_search", "value": 0, "latency_ms": 7733.92, "min_similarity": 0.72, "requested_limit": 5, "final_k": 0}
+{"ts": 1757001929.384641, "name": "memory_add", "value": 1, "latency_ms": 40135.51, "content_length": 37291699}
+{"ts": 1757001932.154165, "name": "memory_add", "value": 1, "latency_ms": 2730.78, "content_length": 435}
+{"ts": 1757001934.958339, "name": "memory_add", "value": 1, "latency_ms": 2769.0, "content_length": 446}
+{"ts": 1757001937.732428, "name": "memory_add", "value": 1, "latency_ms": 2738.27, "content_length": 286}
+{"ts": 1757001940.505353, "name": "memory_add", "value": 1, "latency_ms": 2739.12, "content_length": 170}
+{"ts": 1757001943.2578292, "name": "memory_add", "value": 1, "latency_ms": 2719.08, "content_length": 556}
+{"ts": 1757001945.965525, "name": "memory_add", "value": 1, "latency_ms": 2673.57, "content_length": 451}
+{"ts": 1757001948.763856, "name": "memory_add", "value": 1, "latency_ms": 2764.19, "content_length": 297}
+{"ts": 1757001951.6228428, "name": "memory_add", "value": 1, "latency_ms": 2822.21, "content_length": 353}
