@@ -49,13 +49,13 @@
   - [x] 6.1 Supabase connectivity validation CLI (`cflow-memory-check`)
     - [x] 6.1.1 Validate `SUPABASE_URL`/`SUPABASE_ANON_KEY`; RPC availability; read/write
     - [x] 6.1.2 `.env` loader precedence (repo `/.env` then `/.cerebraflow/.env`) and warnings on invalid URL
-  - [ ] 6.2 Migrations & schemas
-    - [ ] 6.2.1 Tables (preferred): `knowledge_items`, `knowledge_embeddings`; legacy `memory_*` view compatibility
-    - [ ] 6.2.2 Indices: HNSW on vector_cosine_ops; optional IVFFlat; ANALYZE after bulk load
-    - [ ] 6.2.3 RPC: `search_agentic_embeddings` with tenant/content filters; grant execute
-  - [ ] 6.3 Dual‑write pipeline
-    - [ ] 6.3.1 Implement dual‑write in `ChromaDBSupabaseSyncService`
-    - [ ] 6.3.2 On write: local embed + Chroma, raw content/metadata in RDB, embedding in pgvector, realtime event emit
+  - [x] 6.2 Migrations & schemas
+    - [x] 6.2.1 Tables (preferred): `knowledge_items`, `knowledge_embeddings`; legacy `memory_*` view compatibility
+    - [x] 6.2.2 Indices: HNSW on vector_cosine_ops; optional IVFFlat; ANALYZE after bulk load
+    - [x] 6.2.3 RPC: `search_agentic_embeddings` with tenant/content filters; grant execute
+  - [x] 6.3 Dual‑write pipeline
+    - [x] 6.3.1 Implement dual‑write in `ChromaDBSupabaseSyncService`
+    - [x] 6.3.2 On write: local embed + Chroma, raw content/metadata in RDB, embedding in pgvector, realtime event emit
   - [ ] 6.4 Filesystem ingestion (Cursor artifacts)
     - [ ] 6.4.1 `cflow-memory-watch` watches `AGENTS.md`, `.cursor/rules/**`, `docs/**/*.mdc`, `commands/**`
     - [ ] 6.4.2 Pre‑commit integration to enqueue ingestion for changed artifacts
