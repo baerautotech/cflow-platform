@@ -5,6 +5,7 @@ from pathlib import Path
 import json
 import os
 import datetime as _dt
+import re
 
 from ..public_api import get_direct_client_executor
 
@@ -107,4 +108,36 @@ def checkpoint_iteration(
         "metadata": meta,
     }
 
+
+# Utilities
+
+_ITER_RE = re.compile(r"^iteration_(\d+)\.mdc$")
+
+
+def latest_checkpoint_index(repo_root: Optional[Path] = None) -> int:
+    """Return the highest iteration_<n>.mdc index, or 0 if none exist.
+
+    This enables roll-forward after a restart by continuing from last + 1.
+    """
+    root = (repo_root or Path.cwd()).resolve()
+    progress_dir = root / ".cerebraflow" / "progress"
+    if not progress_dir.exists() or not progress_dir.is_dir():
+        return 0
+    max_idx = 0
+    try:
+        for entry in progress_dir.iterdir():
+            if not entry.is_file():
+                continue
+            m = _ITER_RE.match(entry.name)
+            if not m:
+                continue
+            try:
+                idx = int(m.group(1))
+                if idx > max_idx:
+                    max_idx = idx
+            except Exception:
+                continue
+    except Exception:
+        return 0
+    return max_idx
 
