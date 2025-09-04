@@ -5,7 +5,7 @@
   - [ ] 0.2 Model provider abstraction (Cerebral Server cluster; local fallback; env-driven)
   - [ ] 0.3 Iteration budgets and restart heuristics (timeouts, max steps)
 
-- [ ] Phase 1: Cflow Core Agent Loop
+- [x] Phase 1: Cflow Core Agent Loop
   - [x] 1.1 MCP tool: testing.run_pytest
     - [x] 1.1.1 Design spec
     - [x] 1.1.2 Implement executor
@@ -21,16 +21,16 @@
   - [x] 1.5 Dry‑run edits + diff presentation
   - [x] 1.6 E2E on a seeded failing test (turns suite green)
 
-- [ ] Phase 2: Reasoning + Instruction Profiles
-  - [ ] 2.1 Instruction profiles loader
+- [x] Phase 2: Reasoning + Instruction Profiles
+  - [x] 2.1 Instruction profiles loader
     - [x] 2.1.1 Schema + discovery
     - [x] 2.1.2 Loader + precedence (project > defaults)
     - [x] 2.1.3 Unit tests
-  - [ ] 2.2 MCP tool: code_reasoning.plan
-    - [ ] 2.2.1 Plan schema (bounded SRP steps + success checks)
-    - [ ] 2.2.2 Implement tool
-    - [ ] 2.2.3 Minimal‑edit constraints
-    - [ ] 2.2.4 Unit tests
+  - [x] 2.2 MCP tool: code_reasoning.plan
+    - [x] 2.2.1 Plan schema (bounded SRP steps + success checks)
+    - [x] 2.2.2 Implement tool
+    - [x] 2.2.3 Minimal‑edit constraints
+    - [x] 2.2.4 Unit tests
 
 - [ ] Phase 3: MCP Servers & Docs/Search
   - [ ] 3.1 Sandboxed execution: sandbox.run_python

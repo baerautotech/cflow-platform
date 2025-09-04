@@ -19,6 +19,6 @@ def test_unified_enterprise_rag_build_index_payload_smoke():
         assert isinstance(vecs[0], list) and len(vecs[0]) > 0
         assert isinstance(metas, list) and len(metas) == 2
 
-    asyncio.get_event_loop().run_until_complete(_run())
+    asyncio.run(_run())
 
 
