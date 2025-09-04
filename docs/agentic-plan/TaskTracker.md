@@ -68,7 +68,7 @@
   - [x] 7.3 Each sub‑agent runnable independently
 
 - [ ] Phase 9: Restart Heuristics & Budgets
-  - [ ] 9.1 Enforce iteration wall‑clock and step budgets
+  - [x] 9.1 Enforce iteration wall‑clock and step budgets
   - [ ] 9.2 Restart on oscillation (same failures across N iterations) or repeated no‑op edits
 
 - [ ] Phase 5: Platform Integration & Documentation
@@ -121,7 +121,7 @@ Rationale: memory & sync (Phase 6) precedes orchestration (Phase 7) to ensure su
 - [x] Gate RAG: Cursor artifacts mirrored into CerebralMemory; RAG lookups return latest versions
 - [ ] Gate VEC: Apple Silicon MPS embedder used locally; vectors stored in Chroma + pgvector; model/dims recorded
 - [x] Gate RDB: Relational retrieval via Supabase; referential integrity and indices verified; realtime healthy
-- [ ] Gate R: restart budgets enforced; structured restart reasons emitted; no infinite loops
+- [x] Gate R: restart budgets enforced; structured restart reasons emitted; no infinite loops
 - [ ] Gate Cmt: commits only when hooks pass and tests green; disabled by default
 
 Reference: `https://martinfowler.com/articles/build-own-coding-agent.html?utm_source=tldrai`
