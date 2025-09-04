@@ -37,10 +37,10 @@
     - [x] 3.1.1 Sandbox policy (no network; CPU/mem/time caps; FS allowlist)
     - [x] 3.1.2 Executor
     - [x] 3.1.3 Policy tests
-  - [ ] 3.2 Up‑to‑date docs (Context7) in loop
-    - [ ] 3.2.1 Symbol extraction from traces
-    - [ ] 3.2.2 Context7 fetch + summarization
-    - [ ] 3.2.3 Toggle + tests
+  - [x] 3.2 Up‑to‑date docs (Context7) in loop
+    - [x] 3.2.1 Symbol extraction from traces
+    - [x] 3.2.2 Context7 fetch + summarization
+    - [x] 3.2.3 Toggle + tests
   - [ ] 3.3 Internet search MCP integration (DuckDuckGo)
     - [ ] 3.3.1 Server wiring and allowlist
     - [ ] 3.3.2 Result summarization + sources
