@@ -32,7 +32,7 @@
     - [x] 2.2.3 Minimal‑edit constraints
     - [x] 2.2.4 Unit tests
 
-- [ ] Phase 3: MCP Servers & Docs/Search
+- [x] Phase 3: MCP Servers & Docs/Search
   - [x] 3.1 Sandboxed execution: sandbox.run_python
     - [x] 3.1.1 Sandbox policy (no network; CPU/mem/time caps; FS allowlist)
     - [x] 3.1.2 Executor
@@ -46,9 +46,9 @@
     - [x] 3.3.2 Result summarization + sources
 
 - [ ] Phase 6: Memory & Supabase Sync (RDB + Vectors)
-  - [ ] 6.1 Supabase connectivity validation CLI (`cflow-memory-check`)
-    - [ ] 6.1.1 Validate `SUPABASE_URL`/`SUPABASE_ANON_KEY`; RPC availability; read/write
-    - [ ] 6.1.2 `.env` loader precedence (repo `/.env` then `/.cerebraflow/.env`) and warnings on invalid URL
+  - [x] 6.1 Supabase connectivity validation CLI (`cflow-memory-check`)
+    - [x] 6.1.1 Validate `SUPABASE_URL`/`SUPABASE_ANON_KEY`; RPC availability; read/write
+    - [x] 6.1.2 `.env` loader precedence (repo `/.env` then `/.cerebraflow/.env`) and warnings on invalid URL
   - [ ] 6.2 Migrations & schemas
     - [ ] 6.2.1 Tables (preferred): `knowledge_items`, `knowledge_embeddings`; legacy `memory_*` view compatibility
     - [ ] 6.2.2 Indices: HNSW on vector_cosine_ops; optional IVFFlat; ANALYZE after bulk load
