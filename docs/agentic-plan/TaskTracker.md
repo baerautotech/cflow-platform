@@ -76,8 +76,8 @@
   - [x] 5.2 Documentation (examples, governance)
   - [x] 5.3 Telemetry and guardrails (opt‑in)
 
-- [ ] Phase 8: Post‑run System Updates & Auto‑commit (optional)
-  - [ ] 8.1 Update Cursor artifacts after successful runs (`AGENTS.md`, `.cursor/rules/**`, `docs/*.mdc`, `commands/*`)
+- [x] Phase 8: Post‑run System Updates & Auto‑commit (optional)
+  - [x] 8.1 Update Cursor artifacts after successful runs (`AGENTS.md`, `.cursor/rules/**`, `docs/*.mdc`, `commands/*`)
   - [x] 8.2 Optional safe auto‑commit cadence gated by pre‑commit
     - [x] 8.2.1 `core/git_ops.py` for atomic commits when tests green and hooks pass
     - [x] 8.2.2 Env flag `CFLOW_AUTOCOMMIT=1`; message template includes task id and plan step

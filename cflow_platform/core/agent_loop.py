@@ -18,11 +18,12 @@ from .docs_context7 import (
     fetch_context7_docs_for_symbols,
     summarize_docs,
 )
-from .memory.checkpointer import checkpoint_iteration
+from .memory.checkpointer import checkpoint_iteration, latest_checkpoint_index
 from cflow_platform.hooks.pre_commit_runner import main as run_pre_commit_main  # type: ignore
 from .minimal_edit_applier import EditPlan, ApplyOptions, apply_minimal_edits
 from .profiles import InstructionProfile, resolve_profile
 from .git_ops import attempt_auto_commit
+from .post_run_updates import update_cursor_artifacts
 
 
  # Using InstructionProfile from profiles module
@@ -274,8 +275,19 @@ def loop(
     consecutive_same_failure_count = 0
     consecutive_noop_edits = 0
 
+    # Resume support: continue from the next iteration after the latest checkpoint when enabled
+    start_index_offset = 0
+    try:
+        if os.getenv("CFLOW_RESUME", "").strip().lower() in {"1", "true", "yes"}:
+            last_idx = latest_checkpoint_index()
+            if last_idx > 0:
+                start_index_offset = last_idx
+    except Exception:
+        start_index_offset = 0
+
     for i in range(max_iterations):
-        log_event("agent_loop.iteration.begin", {"iteration": i + 1})
+        iteration_number = start_index_offset + i + 1
+        log_event("agent_loop.iteration.begin", {"iteration": iteration_number})
         # Pre-iteration budget checks (fail-closed to avoid infinite loops)
         if wallclock_limit_sec is not None:
             elapsed = time.time() - start_time
@@ -304,7 +316,7 @@ def loop(
             profile=profile,
         )
         p = stage_result.get("planning", {})
-        history.append({"iteration": i + 1, **{k: v for k, v in stage_result.items() if k != "status"}})
+        history.append({"iteration": iteration_number, **{k: v for k, v in stage_result.items() if k != "status"}})
         # Each iteration currently runs exactly 3 steps (plan, implement, verify)
         steps_used += 3
         # Persist procedure definition and a simple planning memory (best-effort)
@@ -335,11 +347,11 @@ def loop(
             asyncio.get_event_loop().run_until_complete(
                 executor(
                     "memory_add",
-                    content=json.dumps({"iteration": i + 1, "plan": steps}, indent=2),
+                    content=json.dumps({"iteration": iteration_number, "plan": steps}, indent=2),
                     userId=os.getenv("CFLOW_USER_ID", "system"),
                     metadata={
                         "type": "plan",
-                        "iteration": i + 1,
+                        "iteration": iteration_number,
                         "profile": profile.name,
                     },
                 )
@@ -351,7 +363,7 @@ def loop(
         # Persist checkpoint to Cursor artifacts + CerebralMemory (best-effort)
         try:
             checkpoint_iteration(
-                iteration_index=i + 1,
+                iteration_index=iteration_number,
                 plan=p,
                 verify={**v, "apply": apply_result},
                 run_id=os.getenv("CFLOW_RUN_ID", "local-run"),
@@ -361,7 +373,21 @@ def loop(
         except Exception:
             pass
         if stage_result.get("status") == "success":
-            log_event("agent_loop.iteration.success", {"iteration": i + 1})
+            log_event("agent_loop.iteration.success", {"iteration": iteration_number})
+            # Phase 8.1: Update Cursor artifacts after successful runs (best-effort)
+            try:
+                update_cursor_artifacts(
+                    {
+                        "task_id": os.getenv("CFLOW_TASK_ID", ""),
+                        "profile": profile.name,
+                        "iterations": iteration_number,
+                        "status": "success",
+                        "tests": v,
+                        "apply": apply_result,
+                    }
+                )
+            except Exception:
+                pass
             # Optional auto-commit when tests and lint/hooks are green
             try:
                 if os.getenv("CFLOW_AUTOCOMMIT", "").strip().lower() in {"1", "true", "yes"}:
@@ -384,7 +410,7 @@ def loop(
                     # Attach commit info into checkpoint memory for traceability
                     try:
                         checkpoint_iteration(
-                            iteration_index=i + 1,
+                            iteration_index=iteration_number,
                             plan=p,
                             verify={**v, "auto_commit": commit_res, "apply": apply_result},
                             run_id=os.getenv("CFLOW_RUN_ID", "local-run"),
