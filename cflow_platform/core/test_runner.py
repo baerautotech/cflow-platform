@@ -135,6 +135,11 @@ def run_tests(
     else:
         cmd.extend([sys.executable, "-m", "pytest"]) 
     cmd.extend(_build_pytest_args(paths, k, m, maxfail, verbose, extra_pytest_args))
+    # Ensure project root is importable with highest precedence to avoid site-packages shadowing
+    env = {**os.environ, **(env_overrides or {})}
+    if cwd:
+        existing_pp = env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = (cwd + (os.pathsep + existing_pp if existing_pp else ""))
     try:
         proc = subprocess.run(
             cmd,
@@ -144,7 +149,7 @@ def run_tests(
             text=True,
             timeout=timeout_sec,
             check=False,
-            env={**os.environ, **(env_overrides or {})},
+            env=env,
         )
     except subprocess.TimeoutExpired as te:
         duration = time.perf_counter() - start
