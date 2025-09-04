@@ -64,7 +64,7 @@
 
 - [ ] Phase 7: Sub‑agents & Orchestration
   - [ ] 7.1 Define `PlanAgent`, `ImplementAgent`, `TestAgent` with explicit I/O contracts
-  - [ ] 7.2 Orchestrator composes Plan → Implement (edits) → Test (pytest) with fresh contexts per stage
+  - [x] 7.2 Orchestrator composes Plan → Implement (edits) → Test (pytest) with fresh contexts per stage
   - [x] 7.3 Each sub‑agent runnable independently
 
 - [ ] Phase 9: Restart Heuristics & Budgets
