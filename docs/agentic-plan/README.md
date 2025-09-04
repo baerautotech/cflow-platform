@@ -21,6 +21,9 @@ This folder organizes the CerebraFlow agent plan per `docs/ProjectBuildGuide.md`
 - Tasking & Validation
   - AEMI + VEG Task Tracker: `./TaskTracker.md`
   - Validation Gates: `./ValidationGates.md`
+- User-Facing Docs
+  - Examples: `./Examples.md`
+  - Governance: `./Governance.md`
 - Domain‑specific Notes
   - Apple Silicon Accelerator: `./AppleSiliconAccelerator.md`
   - Memory & Supabase Sync: `./MemoryAndSync.md`

@@ -1,4 +1,4 @@
-# Iteration 1 — 2025-09-04T13:42:08
+# Iteration 1 — 2025-09-04T14:09:47
 
 
 ## Plan
@@ -30,16 +30,171 @@
 
 ```json
 {
-  "status": "error",
+  "status": "success",
   "verification": {
     "status": "success",
     "summary": {
+      "passed": 29,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "xpassed": 0,
+      "total": 29,
       "exit_code": 0
-    }
+    },
+    "duration_sec": 39.365092249936424,
+    "tests": [
+      {
+        "nodeid": "cflow_platform/tests/test_agent_loop_lint_gate.py::test_agent_loop_respects_pre_commit_gate_success",
+        "outcome": "passed",
+        "duration_sec": 19.367223625071347
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_agent_loop_lint_gate.py::test_agent_loop_respects_pre_commit_gate_failure",
+        "outcome": "passed",
+        "duration_sec": 16.047994334017858
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_contracts.py::test_core_public_api_surfaces",
+        "outcome": "passed",
+        "duration_sec": 0.0010220829863101244
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_contracts.py::test_direct_client_exec_unknown_tool",
+        "outcome": "passed",
+        "duration_sec": 0.00015245797112584114
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_contracts.py::test_tool_dispatch_families",
+        "outcome": "passed",
+        "duration_sec": 0.09255945798940957
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_e2e_seeded_fix.py::test_e2e_seeded_failing_test_turns_green",
+        "outcome": "passed",
+        "duration_sec": 0.3144989579450339
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_embeddings_core.py::test_core_accelerator_generates_embeddings_without_hf_optin",
+        "outcome": "passed",
+        "duration_sec": 0.04663412505760789
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_failure_parser.py::test_parse_pytest_failures_from_sample_output",
+        "outcome": "passed",
+        "duration_sec": 0.00039062497671693563
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_minimal_edit_applier.py::test_dry_run_and_diff",
+        "outcome": "passed",
+        "duration_sec": 0.0004492080770432949
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_minimal_edit_applier.py::test_allowlist_blocks_edits",
+        "outcome": "passed",
+        "duration_sec": 0.0004569999873638153
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_minimal_edit_applier.py::test_conflict_detection_multiple_matches",
+        "outcome": "passed",
+        "duration_sec": 0.0003469999646767974
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_minimal_edit_applier.py::test_atomic_batch_aborts_on_conflict_without_writes",
+        "outcome": "passed",
+        "duration_sec": 0.0006984999636188149
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_minimal_edit_applier.py::test_rollback_restores_from_backups",
+        "outcome": "passed",
+        "duration_sec": 0.0006401250138878822
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_profiles.py::test_load_profiles_includes_builtin",
+        "outcome": "passed",
+        "duration_sec": 0.00021058309357613325
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_profiles.py::test_project_profile_overrides_builtin",
+        "outcome": "passed",
+        "duration_sec": 0.0009114170679822564
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_profiles.py::test_policies_only_profile_is_accepted",
+        "outcome": "passed",
+        "duration_sec": 0.0007245410233736038
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_profiles.py::test_resolve_profile_case_insensitive",
+        "outcome": "passed",
+        "duration_sec": 0.0006755000213161111
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_reasoning_plan.py::test_code_reasoning_plan_basic",
+        "outcome": "passed",
+        "duration_sec": 0.0016640840331092477
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_sandbox.py::test_sandbox_runs_basic_code",
+        "outcome": "passed",
+        "duration_sec": 0.036190041922964156
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_sandbox.py::test_sandbox_denies_network",
+        "outcome": "passed",
+        "duration_sec": 0.03713579196482897
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_sandbox.py::test_sandbox_fs_allowlist_blocks_outside_access",
+        "outcome": "passed",
+        "duration_sec": 0.03438700002152473
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_sandbox.py::test_sandbox_time_limit_enforced",
+        "outcome": "passed",
+        "duration_sec": 1.0383544159121811
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_parse_pytest_output_extracts_summary_and_failures",
+        "outcome": "passed",
+        "duration_sec": 0.00010283291339874268
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_no_tests_path_returns_nonzero",
+        "outcome": "passed",
+        "duration_sec": 0.14411933301016688
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_with_passing_test_succeeds",
+        "outcome": "passed",
+        "duration_sec": 0.1939260419458151
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_unified_rag_core.py::test_extract_symbols_from_synthetic_failure_report",
+        "outcome": "passed",
+        "duration_sec": 0.00048462499398738146
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_unified_rag_core.py::test_build_failure_report_from_structured_test_result",
+        "outcome": "passed",
+        "duration_sec": 8.49580392241478e-05
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_unified_rag_core.py::test_fetch_context7_docs_fake_mode",
+        "outcome": "passed",
+        "duration_sec": 7.883307989686728e-05
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_unified_rag_core.py::test_unified_enterprise_rag_build_index_payload_smoke",
+        "outcome": "passed",
+        "duration_sec": 1.5589567499700934
+      }
+    ]
   },
   "lint": {
-    "status": "error",
-    "simulated": true
+    "status": "success",
+    "exit_code": 0
   },
   "apply": {
     "status": "skipped",

@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 
 from .public_api import get_direct_client_executor
+from .telemetry import log_event, telemetry_enabled
 from .orchestrator import run_iteration
 from .test_runner import run_tests
 from .docs_context7 import (
@@ -252,6 +253,14 @@ def loop(
         step_budget = _parse_int_env(["CFLOW_STEP_BUDGET", "CFLOW_MAX_STEPS"])
 
     executor = get_direct_client_executor()
+    # Telemetry: run start
+    log_event(
+        "agent_loop.start",
+        {
+            "profile": profile.name if profile else None,
+            "max_iterations": int(max_iterations),
+        },
+    )
     history: List[Dict[str, Any]] = []
     start_time = time.time()
     steps_used = 0
@@ -265,6 +274,7 @@ def loop(
     consecutive_noop_edits = 0
 
     for i in range(max_iterations):
+        log_event("agent_loop.iteration.begin", {"iteration": i + 1})
         # Pre-iteration budget checks (fail-closed to avoid infinite loops)
         if wallclock_limit_sec is not None:
             elapsed = time.time() - start_time
@@ -350,6 +360,7 @@ def loop(
         except Exception:
             pass
         if stage_result.get("status") == "success":
+            log_event("agent_loop.iteration.success", {"iteration": i + 1})
             break
         # Post-iteration budget check on steps (in case budgets were reached due to per-iteration step cost)
         if step_budget is not None and steps_used >= step_budget:
@@ -399,6 +410,7 @@ def loop(
                     "consecutive": int(consecutive_same_failure_count),
                     "limit": int(oscillation_limit),
                 }
+                log_event("agent_loop.stop.oscillation", stop_info)
                 break
             if noop_limit > 0 and consecutive_noop_edits >= noop_limit:
                 stop_info = {
@@ -407,6 +419,7 @@ def loop(
                     "consecutive": int(consecutive_noop_edits),
                     "limit": int(noop_limit),
                 }
+                log_event("agent_loop.stop.noop", stop_info)
                 break
 
     final_status = history[-1].get("verify", {}).get("status", "error") if history else "error"
@@ -425,6 +438,15 @@ def loop(
         budgets["step_budget"] = int(step_budget)
     if budgets:
         result["budgets"] = budgets
+    log_event(
+        "agent_loop.end",
+        {
+            "status": result.get("status"),
+            "iterations": int(result.get("iterations", 0)),
+            "budgets": result.get("budgets"),
+            "stop": result.get("stop"),
+        },
+    )
     return result
 
 
