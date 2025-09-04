@@ -208,3 +208,28 @@ GRANT EXECUTE ON FUNCTION public.search_agentic_embeddings(vector, int, uuid, te
 -- Note: For large bulk loads, run ANALYZE to help the planner. This is intentionally left manual.
 -- ANALYZE public.knowledge_embeddings;
 
+-- Realtime publication (guarded)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime'
+  ) THEN
+    CREATE PUBLICATION supabase_realtime;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'knowledge_items'
+  ) THEN
+    EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.knowledge_items';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'knowledge_embeddings'
+  ) THEN
+    EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.knowledge_embeddings';
+  END IF;
+END
+$$;
+
