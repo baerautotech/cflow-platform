@@ -59,8 +59,8 @@
   - [ ] 6.4 Filesystem ingestion (Cursor artifacts)
     - [ ] 6.4.1 `cflow-memory-watch` watches `AGENTS.md`, `.cursor/rules/**`, `docs/**/*.mdc`, `commands/**`
     - [ ] 6.4.2 Pre‑commit integration to enqueue ingestion for changed artifacts
-  - [ ] 6.5 Request routing
-    - [ ] 6.5.1 Ensure agent loop uses memory_add/search by default; prefer CerebralMemory before external RAG
+  - [x] 6.5 Request routing
+    - [x] 6.5.1 Ensure agent loop uses memory_add/search by default; prefer CerebralMemory before external RAG
 
 - [ ] Phase 7: Sub‑agents & Orchestration
   - [ ] 7.1 Define `PlanAgent`, `ImplementAgent`, `TestAgent` with explicit I/O contracts
@@ -118,7 +118,7 @@ Rationale: memory & sync (Phase 6) precedes orchestration (Phase 7) to ensure su
 - [x] Gate E: docs/search integration shows sources; pre‑commit green; telemetry opt‑in
 - [ ] Gate P: provider configured for Cerebral Server cluster; local fallback validated
 - [ ] Gate M: memory checkpoints created; iteration roll‑forward after restart
-- [ ] Gate RAG: Cursor artifacts mirrored into CerebralMemory; RAG lookups return latest versions
+- [x] Gate RAG: Cursor artifacts mirrored into CerebralMemory; RAG lookups return latest versions
 - [ ] Gate VEC: Apple Silicon MPS embedder used locally; vectors stored in Chroma + pgvector; model/dims recorded
 - [ ] Gate RDB: Relational retrieval via Supabase; referential integrity and indices verified; realtime healthy
 - [ ] Gate R: restart budgets enforced; structured restart reasons emitted; no infinite loops

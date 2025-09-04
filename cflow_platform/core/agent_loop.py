@@ -47,22 +47,62 @@ def verify(profile: InstructionProfile) -> Dict[str, Any]:
             # Avoid in-process recursion when invoked from pytest-based tests
             in_process_exec = not under_pytest
             result = run_tests(paths=profile.test_paths, use_uv=False, in_process=in_process_exec)
-            # 3.2 Context7 docs integration (toggle via CFLOW_ENABLE_CONTEXT7=1)
-            enable_docs = os.getenv("CFLOW_ENABLE_CONTEXT7", "").strip().lower() in {"1", "true", "yes"}
-            if enable_docs and result.get("status") != "success":
-                failure_report = build_failure_report_from_test_result(result)
-                symbols = extract_symbols_from_failure_report(failure_report)
-                if symbols:
-                    per_symbol_limit = int(os.getenv("CFLOW_CONTEXT7_PER_SYMBOL_LIMIT", "2") or "2")
-                    docs = fetch_context7_docs_for_symbols(symbols, per_symbol_limit=per_symbol_limit)
-                    summary_text = summarize_docs(docs.get("notes", []))
-                    result["docs"] = {
+            # Memory-first retrieval when tests fail
+            if result.get("status") != "success":
+                try:
+                    failure_report = build_failure_report_from_test_result(result)
+                except Exception:
+                    failure_report = ""
+                try:
+                    symbols = extract_symbols_from_failure_report(failure_report)
+                except Exception:
+                    symbols = []
+                # Prefer CerebralMemory before external RAG
+                try:
+                    exec_fn = get_direct_client_executor()
+                    import asyncio  # local import to avoid global dependency during tests
+                    query_parts = []
+                    if symbols:
+                        query_parts.append(" ".join([str(s) for s in symbols]))
+                    if failure_report:
+                        # keep report short to avoid excessive payloads
+                        query_parts.append(str(failure_report)[:1000])
+                    query = "\n".join([p for p in query_parts if p]).strip() or "test failures"
+                    mem_limit = int(os.getenv("CFLOW_MEMORY_SEARCH_LIMIT", "20") or "20")
+                    mem_res = asyncio.get_event_loop().run_until_complete(
+                        exec_fn(
+                            "memory_search",
+                            query=query,
+                            userId=os.getenv("CFLOW_USER_ID", "system"),
+                            limit=mem_limit,
+                        )
+                    )
+                    result["memory"] = {
                         "enabled": True,
-                        "symbols": symbols,
-                        "notes": docs.get("notes", []),
-                        "summary": summary_text,
-                        "sources": docs.get("sources", []),
+                        "query": query,
+                        "count": mem_res.get("count", 0),
+                        "results": mem_res.get("results", []),
                     }
+                except Exception:
+                    # Non-fatal if memory lookup fails
+                    result["memory"] = {"enabled": False}
+
+                # 3.2 Context7 docs integration (toggle via CFLOW_ENABLE_CONTEXT7=1); runs after memory
+                enable_docs = os.getenv("CFLOW_ENABLE_CONTEXT7", "").strip().lower() in {"1", "true", "yes"}
+                if enable_docs:
+                    try:
+                        per_symbol_limit = int(os.getenv("CFLOW_CONTEXT7_PER_SYMBOL_LIMIT", "2") or "2")
+                        docs = fetch_context7_docs_for_symbols(symbols or [], per_symbol_limit=per_symbol_limit)
+                        summary_text = summarize_docs(docs.get("notes", []))
+                        result["docs"] = {
+                            "enabled": True,
+                            "symbols": symbols or [],
+                            "notes": docs.get("notes", []),
+                            "summary": summary_text,
+                            "sources": docs.get("sources", []),
+                        }
+                    except Exception:
+                        result["docs"] = {"enabled": False}
         # After tests, enforce lint/pre-commit gating (fail-closed)
         lint = run_lint_and_hooks()
         overall_status = "success" if (result.get("status") == "success" and lint.get("status") == "success") else "error"
@@ -159,6 +199,45 @@ def loop(profile_name: str, max_iterations: int = 1) -> Dict[str, Any]:
     for i in range(max_iterations):
         p = plan(profile)
         history.append({"iteration": i + 1, "planning": p})
+        # Persist procedure definition and a simple planning memory (best-effort)
+        try:
+            import asyncio
+            steps = p.get("plan", []) or []
+            proc_steps = []
+            for s in steps:
+                try:
+                    proc_steps.append({
+                        "order": int(s.get("step", len(proc_steps) + 1)),
+                        "instruction": str(s.get("action", "")).strip(),
+                        "notes": None,
+                    })
+                except Exception:
+                    continue
+            if proc_steps:
+                asyncio.get_event_loop().run_until_complete(
+                    executor(
+                        "memory_store_procedure",
+                        title=f"Agent Loop Procedure (profile {profile.name})",
+                        steps=proc_steps,
+                        justification="Automated plan capture from agent loop",
+                        source="agent_loop.plan",
+                    )
+                )
+            # Lightweight planning snapshot as a general memory
+            asyncio.get_event_loop().run_until_complete(
+                executor(
+                    "memory_add",
+                    content=json.dumps({"iteration": i + 1, "plan": steps}, indent=2),
+                    userId=os.getenv("CFLOW_USER_ID", "system"),
+                    metadata={
+                        "type": "plan",
+                        "iteration": i + 1,
+                        "profile": profile.name,
+                    },
+                )
+            )
+        except Exception:
+            pass
         # Attempt to apply edits (if present) before verification
         apply_result = apply_edits_if_present()
         v = verify(profile)

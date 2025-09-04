@@ -92,6 +92,34 @@ async def _run_once(paths: List[Path]) -> Dict[str, object]:
     return {"ingested": len(results), "results": results}
 
 
+def ingest_paths(paths: List[str]) -> Dict[str, object]:
+    """Synchronous helper to ingest specific paths (used by pre-commit)."""
+    file_paths: List[Path] = []
+    for s in paths:
+        try:
+            p = Path(s)
+            if p.exists() and p.is_file():
+                file_paths.append(p)
+        except Exception:
+            continue
+    loop = asyncio.get_event_loop()
+    try:
+        if loop.is_running():
+            # In rare cases pre-commit may already have a loop; create a new one
+            new_loop = asyncio.new_event_loop()
+            try:
+                asyncio.set_event_loop(new_loop)
+                return new_loop.run_until_complete(_run_once(file_paths))
+            finally:
+                new_loop.close()
+                asyncio.set_event_loop(loop)
+        else:
+            return loop.run_until_complete(_run_once(file_paths))
+    except RuntimeError:
+        # No loop
+        return asyncio.run(_run_once(file_paths))
+
+
 def _watch_loop(interval_sec: float = 2.0) -> None:
     from cflow_platform.core.public_api import get_direct_client_executor
 
@@ -103,7 +131,7 @@ def _watch_loop(interval_sec: float = 2.0) -> None:
             sp = str(p)
             if state.get(sp, 0) < m:
                 try:
-                    asyncio.get_event_loop().run_until_complete(_ingest_file(exec_fn, p))
+                    await _ingest_file(exec_fn, p)
                     state[sp] = m
                 except Exception:
                     # non-fatal
@@ -134,18 +162,22 @@ def cli() -> int:
     parser = argparse.ArgumentParser(description="Ingest Cursor artifacts into CerebralMemory (and optional watch mode)")
     parser.add_argument("--watch", action="store_true", help="Watch files for changes and ingest on modify")
     parser.add_argument("--json", action="store_true", help="Emit JSON status for one-shot mode")
+    parser.add_argument("--paths", nargs="+", help="Specific file paths to ingest (one-shot mode only)")
     args = parser.parse_args()
 
     if args.watch:
         _watch_loop()
         return 0
 
-    paths = _glob_many(ARTIFACT_PATTERNS)
-    out = asyncio.get_event_loop().run_until_complete(_run_once(paths))
+    if args.paths:
+        out = ingest_paths(args.paths)
+    else:
+        paths = _glob_many(ARTIFACT_PATTERNS)
+        out = asyncio.get_event_loop().run_until_complete(_run_once(paths))
     if args.json:
         print(json.dumps(out))
     else:
-        print(f"Ingested {out.get('ngested', len(paths))} artifacts")
+        print(f"Ingested {out.get('ingested', len(paths))} artifacts")
     return 0
 
 
