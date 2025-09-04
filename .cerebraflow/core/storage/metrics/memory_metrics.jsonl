@@ -241,3 +241,16 @@
 {"ts": 1757002153.780904, "name": "memory_add", "value": 1, "latency_ms": 3325.8, "content_length": 198}
 {"ts": 1757002156.715203, "name": "memory_add", "value": 1, "latency_ms": 2903.38, "content_length": 285}
 {"ts": 1757002156.971436, "name": "memory_add", "value": 1, "latency_ms": 224.38, "content_length": 733}
+{"ts": 1757002174.559547, "name": "memory_add", "value": 1, "latency_ms": 6218.76, "content_length": 6879}
+{"ts": 1757002177.486762, "name": "memory_add", "value": 1, "latency_ms": 2892.04, "content_length": 7082}
+{"ts": 1757002184.884437, "name": "memory_add", "value": 1, "latency_ms": 6462.42, "content_length": 198}
+{"ts": 1757002188.085481, "name": "memory_add", "value": 1, "latency_ms": 3167.32, "content_length": 285}
+{"ts": 1757002188.3285818, "name": "memory_add", "value": 1, "latency_ms": 204.08, "content_length": 737}
+{"ts": 1757002191.516074, "name": "memory_add", "value": 1, "latency_ms": 3150.61, "content_length": 198}
+{"ts": 1757002194.613413, "name": "memory_add", "value": 1, "latency_ms": 3056.09, "content_length": 285}
+{"ts": 1757002194.8544152, "name": "memory_add", "value": 1, "latency_ms": 206.46, "content_length": 733}
+{"ts": 1757002219.347183, "name": "memory_add", "value": 1, "latency_ms": 41814.96, "content_length": 37293173}
+{"ts": 1757002227.528886, "name": "memory_add", "value": 1, "latency_ms": 6575.39, "content_length": 313}
+{"ts": 1757002230.65985, "name": "memory_add", "value": 1, "latency_ms": 3098.71, "content_length": 370}
+{"ts": 1757002272.666215, "name": "memory_add", "value": 1, "latency_ms": 41963.25, "content_length": 37294647}
+{"ts": 1757002276.123638, "name": "memory_add", "value": 1, "latency_ms": 3413.54, "content_length": 435}
