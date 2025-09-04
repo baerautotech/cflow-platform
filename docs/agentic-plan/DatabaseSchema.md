@@ -32,3 +32,49 @@ ON memory_vectors USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100)
 - Row-Level Security scoped to project; anon insert/select with project key.
 - RPC: `match_memory_vectors(query_embedding vector, match_count int)` for similarity search.
 
+
+### Enterprise Knowledge Graph Schema (preferred for knowledgeRAG/GRAPH)
+
+- knowledge_items(id uuid pk, user_id uuid, tenant_id uuid, title text, content text, metadata jsonb, created_at timestamptz)
+- knowledge_embeddings(id uuid pk, knowledge_item_id uuid fk -> knowledge_items(id) on delete cascade, content_chunk text, embedding vector(1536), chunk_index int, content_type text, metadata jsonb, tenant_id uuid, created_at timestamptz)
+- RPC: `search_agentic_embeddings(query_embedding vector(1536), match_count int, tenant_filter uuid, content_types text[]) returns setof record` (server-side similarity search)
+
+Indexes (cosine recommended):
+```sql
+create extension if not exists vector;
+create index if not exists ke_embedding_hnsw
+on public.knowledge_embeddings using hnsw (embedding vector_cosine_ops);
+-- For very large datasets, consider IVFFlat
+-- create index if not exists ke_embedding_ivfflat
+-- on public.knowledge_embeddings using ivfflat (embedding vector_cosine_ops) with (lists = 100);
+```
+
+RLS (development defaults; tighten for production):
+```sql
+alter table public.knowledge_items enable row level security;
+alter table public.knowledge_embeddings enable row level security;
+
+-- Minimal dev policy (adjust later): allow service/anon inserts and selects
+create policy if not exists anon_select_items on public.knowledge_items for select to anon using (true);
+create policy if not exists anon_insert_items on public.knowledge_items for insert to anon with check (true);
+create policy if not exists anon_select_embeddings on public.knowledge_embeddings for select to anon using (true);
+create policy if not exists anon_insert_embeddings on public.knowledge_embeddings for insert to anon with check (true);
+```
+
+Realtime (optional):
+```sql
+begin; drop publication if exists supabase_realtime; create publication supabase_realtime; commit;
+alter publication supabase_realtime add table public.knowledge_items;
+alter publication supabase_realtime add table public.knowledge_embeddings;
+```
+
+Notes:
+- Vector dimensions default to 1536; configure via `SUPABASE_VECTOR_DIMS`. Apple Silicon MPS vectors must be padded/truncated to match column dims.
+- Use cosine ops per Supabase docs. HNSW is generally recommended; IVFFlat for very large datasets.
+
+References:
+- HNSW/IVFFlat and operator classes: `https://github.com/supabase/supabase/blob/master/apps/docs/content/guides/ai/vector-indexes/hnsw-indexes.mdx`
+- IVFFlat indexes: `https://github.com/supabase/supabase/blob/master/apps/docs/content/guides/ai/vector-indexes/ivf-indexes.mdx`
+- pgvector extension: `https://github.com/supabase/supabase/blob/master/apps/docs/content/guides/database/extensions/pgvector.mdx`
+- RLS basics: `https://github.com/supabase/supabase/blob/master/apps/docs/content/guides/database/postgres/row-level-security.mdx`
+- Realtime publication: `https://github.com/supabase/supabase/blob/master/apps/docs/content/guides/realtime/postgres-changes.mdx`

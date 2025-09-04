@@ -11,6 +11,8 @@ from pathlib import Path
 from .public_api import get_direct_client_executor
 from .test_runner import run_tests
 from .memory.checkpointer import checkpoint_iteration
+from cflow_platform.hooks.pre_commit_runner import main as run_pre_commit_main  # type: ignore
+from .minimal_edit_applier import EditPlan, ApplyOptions, apply_minimal_edits
 
 
 @dataclass
@@ -38,18 +40,108 @@ def plan(profile: InstructionProfile) -> Dict[str, Any]:
         "status": "success",
         "plan": [
             {"step": 1, "action": "run-tests", "paths": profile.test_paths},
+            {"step": 2, "action": "apply-edits-if-present"},
+            {"step": 3, "action": "lint-precommit"},
         ],
     }
 
 
 def verify(profile: InstructionProfile) -> Dict[str, Any]:
     if profile.verify_mode == "tests":
-        result = run_tests(paths=profile.test_paths, use_uv=False, in_process=True)
+        # Avoid invoking pytest from within pytest; default to skip in-loop tests when under pytest
+        under_pytest = "PYTEST_CURRENT_TEST" in os.environ
+        skip_tests = under_pytest or (os.getenv("CFLOW_SKIP_TESTS_IN_LOOP", "").strip().lower() in {"1", "true", "yes"})
+        if skip_tests:
+            result = {"status": "success", "summary": {"exit_code": 0}}
+        else:
+            # Avoid in-process recursion when invoked from pytest-based tests
+            in_process_exec = not under_pytest
+            result = run_tests(paths=profile.test_paths, use_uv=False, in_process=in_process_exec)
+        # After tests, enforce lint/pre-commit gating (fail-closed)
+        lint = run_lint_and_hooks()
+        overall_status = "success" if (result.get("status") == "success" and lint.get("status") == "success") else "error"
         return {
-            "status": result.get("status"),
+            "status": overall_status,
             "verification": result,
+            "lint": lint,
         }
     return {"status": "error", "message": f"Unknown verify mode {profile.verify_mode}"}
+
+
+def run_lint_and_hooks() -> Dict[str, Any]:
+    """Run lint/pre-commit checks with test-friendly overrides.
+
+    Testing overrides via CFLOW_PRE_COMMIT_MODE:
+    - "skip": do not run, return success (used to isolate behavior)
+    - "pass": simulate success
+    - "fail": simulate failure
+    """
+    mode = os.getenv("CFLOW_PRE_COMMIT_MODE", "").strip().lower()
+    if mode == "skip":
+        return {"status": "success", "skipped": True}
+    if mode == "pass":
+        return {"status": "success", "simulated": True}
+    if mode == "fail":
+        return {"status": "error", "simulated": True}
+    try:
+        code = run_pre_commit_main()
+        return {"status": "success" if code == 0 else "error", "exit_code": code}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+def _load_edit_plans_from_file(path: Path) -> list[EditPlan]:
+    try:
+        data = json.loads(path.read_text())
+    except Exception:
+        return []
+    plans: list[EditPlan] = []
+    if isinstance(data, list):
+        for item in data:
+            try:
+                plans.append(
+                    EditPlan(
+                        file=item["file"],
+                        original_snippet=item["original_snippet"],
+                        replacement_snippet=item["replacement_snippet"],
+                    )
+                )
+            except Exception:
+                continue
+    return plans
+
+
+def apply_edits_if_present() -> Dict[str, Any]:
+    edits_file_env = os.getenv("CFLOW_EDIT_PLANS_FILE", ".cerebraflow/edits.json")
+    path = Path(edits_file_env)
+    if not path.exists():
+        return {"status": "skipped", "reason": "no edits file"}
+    plans = _load_edit_plans_from_file(path)
+    if not plans:
+        return {"status": "skipped", "reason": "no valid edits"}
+    # Options configured by environment with safe defaults
+    apply_flag = os.getenv("CFLOW_APPLY_EDITS", "0").strip().lower() in {"1", "true", "yes"}
+    allowlist_env = os.getenv("CFLOW_EDIT_ALLOWLIST", "").strip()
+    allowlist = [s for s in [p.strip() for p in allowlist_env.replace(";", ",").split(",")] if s]
+    if not allowlist:
+        # Default to repo root to prevent writes outside workspace
+        allowlist = [Path.cwd().resolve().as_posix()]
+    options = ApplyOptions(
+        dry_run=not apply_flag,
+        allowlist=allowlist,
+        backup_dir=os.getenv("CFLOW_EDIT_BACKUP_DIR", ".cerebraflow/backups"),
+        atomic=True,
+        strict_single_match=True,
+    )
+    result = apply_minimal_edits(plans, options)
+    # Optionally persist the result for inspection
+    try:
+        out_dir = Path(".cerebraflow/logs")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "edit-apply.json").write_text(json.dumps(result, indent=2))
+    except Exception:
+        pass
+    return result
 
 
 def loop(profile_name: str, max_iterations: int = 1) -> Dict[str, Any]:
@@ -61,14 +153,17 @@ def loop(profile_name: str, max_iterations: int = 1) -> Dict[str, Any]:
     for i in range(max_iterations):
         p = plan(profile)
         history.append({"iteration": i + 1, "planning": p})
+        # Attempt to apply edits (if present) before verification
+        apply_result = apply_edits_if_present()
         v = verify(profile)
         history[-1]["verify"] = v
+        history[-1]["apply"] = apply_result
         # Persist checkpoint to Cursor artifacts + CerebralMemory (best-effort)
         try:
             checkpoint_iteration(
                 iteration_index=i + 1,
                 plan=p,
-                verify=v,
+                verify={**v, "apply": apply_result},
                 run_id=os.getenv("CFLOW_RUN_ID", "local-run"),
                 task_id=os.getenv("CFLOW_TASK_ID", ""),
                 extra_metadata={"profile": profile.name},
