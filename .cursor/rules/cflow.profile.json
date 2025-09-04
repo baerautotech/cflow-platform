@@ -4,6 +4,9 @@
   "policies": {
     "minimal_edits": true,
     "fail_closed_lint": true,
-    "sandbox_python": true
+    "sandbox_python": true,
+    "memory_first": true,
+    "rag_order": ["cerebral_memory", "external_docs"],
+    "preferred_tools": ["memory_search", "memory_add", "memory_store_procedure", "internet_search"]
   }
 }
