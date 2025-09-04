@@ -10,6 +10,12 @@ from pathlib import Path
 
 from .public_api import get_direct_client_executor
 from .test_runner import run_tests
+from .docs_context7 import (
+    build_failure_report_from_test_result,
+    extract_symbols_from_failure_report,
+    fetch_context7_docs_for_symbols,
+    summarize_docs,
+)
 from .memory.checkpointer import checkpoint_iteration
 from cflow_platform.hooks.pre_commit_runner import main as run_pre_commit_main  # type: ignore
 from .minimal_edit_applier import EditPlan, ApplyOptions, apply_minimal_edits
@@ -41,6 +47,22 @@ def verify(profile: InstructionProfile) -> Dict[str, Any]:
             # Avoid in-process recursion when invoked from pytest-based tests
             in_process_exec = not under_pytest
             result = run_tests(paths=profile.test_paths, use_uv=False, in_process=in_process_exec)
+            # 3.2 Context7 docs integration (toggle via CFLOW_ENABLE_CONTEXT7=1)
+            enable_docs = os.getenv("CFLOW_ENABLE_CONTEXT7", "").strip().lower() in {"1", "true", "yes"}
+            if enable_docs and result.get("status") != "success":
+                failure_report = build_failure_report_from_test_result(result)
+                symbols = extract_symbols_from_failure_report(failure_report)
+                if symbols:
+                    per_symbol_limit = int(os.getenv("CFLOW_CONTEXT7_PER_SYMBOL_LIMIT", "2") or "2")
+                    docs = fetch_context7_docs_for_symbols(symbols, per_symbol_limit=per_symbol_limit)
+                    summary_text = summarize_docs(docs.get("notes", []))
+                    result["docs"] = {
+                        "enabled": True,
+                        "symbols": symbols,
+                        "notes": docs.get("notes", []),
+                        "summary": summary_text,
+                        "sources": docs.get("sources", []),
+                    }
         # After tests, enforce lint/pre-commit gating (fail-closed)
         lint = run_lint_and_hooks()
         overall_status = "success" if (result.get("status") == "success" and lint.get("status") == "success") else "error"
