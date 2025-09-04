@@ -26,6 +26,30 @@ from .profiles import InstructionProfile, resolve_profile
  # Using InstructionProfile from profiles module
 
 
+def _compute_failure_signature(verification_result: Dict[str, Any]) -> str:
+    """
+    Build a stable signature string from the verification result's failures.
+
+    Two iterations are considered oscillating if their signatures match.
+    """
+    try:
+        from .docs_context7 import build_failure_report_from_test_result  # local import
+        report = build_failure_report_from_test_result(verification_result or {})
+        failures = report.get("failures", []) or []
+        if not failures:
+            return ""
+        parts: List[str] = []
+        for f in failures:
+            file_path = str(f.get("file_path", ""))
+            node_id = str(f.get("node_id", ""))
+            error_type = str(f.get("error_type", ""))
+            message = str(f.get("message", ""))
+            parts.append("|".join([file_path, node_id, error_type, message])[:512])
+        return "\n".join(parts)
+    except Exception:
+        return ""
+
+
 def plan(profile: InstructionProfile) -> Dict[str, Any]:
     return {
         "status": "success",
@@ -232,6 +256,13 @@ def loop(
     start_time = time.time()
     steps_used = 0
     stop_info: Optional[Dict[str, Any]] = None
+    # 9.2 Restart heuristics (oscillation and repeated no-op edits)
+    disable_heuristics = os.getenv("CFLOW_DISABLE_RESTART_HEURISTICS", "").strip().lower() in {"1", "true", "yes"}
+    oscillation_limit = int(os.getenv("CFLOW_OSCILLATION_LIMIT", "2") or "2")
+    noop_limit = int(os.getenv("CFLOW_NOOP_LIMIT", "2") or "2")
+    last_failure_signature: str = ""
+    consecutive_same_failure_count = 0
+    consecutive_noop_edits = 0
 
     for i in range(max_iterations):
         # Pre-iteration budget checks (fail-closed to avoid infinite loops)
@@ -329,6 +360,54 @@ def loop(
                 "step_budget": int(step_budget),
             }
             break
+
+        # 9.2 Restart heuristics evaluation (only if not disabled)
+        if not disable_heuristics:
+            # Oscillation: same failure signature across consecutive iterations
+            try:
+                verification_payload = v.get("verification", {}) if isinstance(v, dict) else {}
+                sig = _compute_failure_signature(verification_payload)
+                if sig:
+                    if sig == last_failure_signature:
+                        consecutive_same_failure_count += 1
+                    else:
+                        last_failure_signature = sig
+                        consecutive_same_failure_count = 1
+                else:
+                    # No failures resets oscillation counter
+                    consecutive_same_failure_count = 0
+            except Exception:
+                pass
+
+            # No-op detection: no edits applied or only skipped/noop results; treat dry-run as no-op
+            try:
+                apply_status = str(apply_result.get("status", "")) if isinstance(apply_result, dict) else ""
+                results = (apply_result or {}).get("results", []) if isinstance(apply_result, dict) else []
+                apply_flag = os.getenv("CFLOW_APPLY_EDITS", "0").strip().lower() in {"1", "true", "yes"}
+                any_applied = any(r.get("status") == "applied" for r in results)
+                only_no_effect = (len(results) > 0) and all(r.get("status") in {"noop", "skipped", "dry-run"} for r in results)
+                is_noop = (apply_status == "skipped") or (only_no_effect) or (not any_applied and not apply_flag)
+                consecutive_noop_edits = consecutive_noop_edits + 1 if is_noop else 0
+            except Exception:
+                pass
+
+            # Threshold checks
+            if oscillation_limit > 0 and consecutive_same_failure_count >= oscillation_limit:
+                stop_info = {
+                    "reason": "restart_heuristic",
+                    "kind": "oscillation",
+                    "consecutive": int(consecutive_same_failure_count),
+                    "limit": int(oscillation_limit),
+                }
+                break
+            if noop_limit > 0 and consecutive_noop_edits >= noop_limit:
+                stop_info = {
+                    "reason": "restart_heuristic",
+                    "kind": "no_op_edits",
+                    "consecutive": int(consecutive_noop_edits),
+                    "limit": int(noop_limit),
+                }
+                break
 
     final_status = history[-1].get("verify", {}).get("status", "error") if history else "error"
     result: Dict[str, Any] = {

@@ -3,7 +3,7 @@
 - [ ] Phase 0: Foundation (CLI + Configuration)
   - [x] 0.1 CLI bootstrap: `cflow agent` entrypoint and loop shell
   - [ ] 0.2 Model provider abstraction (Cerebral Server cluster; local fallback; env-driven)
-  - [ ] 0.3 Iteration budgets and restart heuristics (timeouts, max steps)
+  - [x] 0.3 Iteration budgets and restart heuristics (timeouts, max steps)
 
 - [x] Phase 1: Cflow Core Agent Loop
   - [x] 1.1 MCP tool: testing.run_pytest
@@ -69,7 +69,7 @@
 
 - [ ] Phase 9: Restart Heuristics & Budgets
   - [x] 9.1 Enforce iteration wall‑clock and step budgets
-  - [ ] 9.2 Restart on oscillation (same failures across N iterations) or repeated no‑op edits
+  - [x] 9.2 Restart on oscillation (same failures across N iterations) or repeated no‑op edits
 
 - [ ] Phase 5: Platform Integration & Documentation
   - [ ] 5.1 Dev workflow integration (no duplication)
