@@ -152,7 +152,7 @@ def _build_wrapper_script(
         TIME_LIMIT_SEC = int({time_limit_sec})
         CPU_LIMIT_SEC = int({cpu_limit_sec})
         MEM_LIMIT_MB = int({mem_limit_mb})
-        FS_ALLOWLIST = json.loads({json.dumps(allowlist_json)})
+        FS_ALLOWLIST = json.loads({allowlist_json!r})
 
         def _is_path_allowed(path: str) -> bool:
             try:
@@ -214,6 +214,16 @@ def _build_wrapper_script(
                 raise PermissionError(errno.EPERM, f'File access denied by sandbox: {{path}}')
             return _os_open(file, flags, mode)
         os.open = _guarded_os_open  # type: ignore
+
+        # Guard pathlib Path.open/read_text explicitly as well
+        import pathlib as _pathlib
+        _path_open = _pathlib.Path.open
+        def _guarded_path_open(self, *args, **kwargs):
+            path = str(self)
+            if not _is_path_allowed(path):
+                raise PermissionError(errno.EPERM, f'File access denied by sandbox: {{path}}')
+            return _path_open(self, *args, **kwargs)
+        _pathlib.Path.open = _guarded_path_open  # type: ignore
 
         # Set CWD to a temporary working directory path (already set by caller)
         # Execute the user code

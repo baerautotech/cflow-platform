@@ -4,7 +4,7 @@
 
 - code_reasoning.plan (planned): Produces a bounded, SRP plan with steps, file scopes, and explicit success checks
 
-- sandbox.run_python (planned): Sandboxed Python execution with CPU/memory/time limits, filesystem allowlist, no network
+- sandbox.run_python: Sandboxed Python execution with CPU/memory/time limits, filesystem allowlist, no network
 
 - memory_add / memory_search (planned integration): Read/Write CerebralMemory; retrieval should prefer CerebralMemory before external docs
 

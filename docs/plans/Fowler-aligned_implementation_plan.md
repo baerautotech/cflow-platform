@@ -88,11 +88,11 @@ Implement a cohesive developer agent loop for CerebraFlow that mirrors the artic
   - [ ] 2.3 Lint and pre‑commit integration step
     - [ ] 2.3.1 Lint step integration; fail‑closed behavior
 
-- [ ] Phase 3: Sandboxed Execution + Docs Auto‑Assist
-  - [ ] 3.1 MCP tool: sandbox.run_python
-    - [ ] 3.1.1 Sandbox policy (limits, FS allowlist)
-    - [ ] 3.1.2 Implement sandbox.run_python executor
-    - [ ] 3.1.3 Policy enforcement tests
+- [x] Phase 3: Sandboxed Execution + Docs Auto‑Assist
+  - [x] 3.1 MCP tool: sandbox.run_python
+    - [x] 3.1.1 Sandbox policy (limits, FS allowlist)
+    - [x] 3.1.2 Implement sandbox.run_python executor
+    - [x] 3.1.3 Policy enforcement tests
   - [ ] 3.2 Context7 auto‑docs in loop
     - [ ] 3.2.1 Error → symbol extraction for docs lookup
     - [ ] 3.2.2 Integrate Context7 fetch + summarization
@@ -278,7 +278,7 @@ Merged into the AEMI + VEG Task Tracker above for single-source sequencing and s
 - [x] Gate A: 1.1 + 1.3 pass; `testing.run_pytest` returns structured JSON with correct pass/fail and truncation markers.
 - [ ] Gate B: 1.2 e2e: a known failing test is fixed via minimal edit + lint + re‑run → green.
 - [ ] Gate C: 2.x reasoning: plans are bounded, SRP‑compliant, reproducible; steps include success checks.
-- [ ] Gate D: 3.x sandbox: limits enforced; no network; FS allowlist respected; policy tests pass.
+- [x] Gate D: 3.x sandbox: limits enforced; no network; FS allowlist respected; policy tests pass.
 - [ ] Gate E: Docs complete; pre‑commit green; telemetry disabled by default with clear opt‑in.
 
 ---
