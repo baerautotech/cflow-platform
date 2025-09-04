@@ -23,9 +23,9 @@
 
 - [ ] Phase 2: Reasoning + Instruction Profiles
   - [ ] 2.1 Instruction profiles loader
-    - [ ] 2.1.1 Schema + discovery
-    - [ ] 2.1.2 Loader + precedence (project > defaults)
-    - [ ] 2.1.3 Unit tests
+    - [x] 2.1.1 Schema + discovery
+    - [x] 2.1.2 Loader + precedence (project > defaults)
+    - [x] 2.1.3 Unit tests
   - [ ] 2.2 MCP tool: code_reasoning.plan
     - [ ] 2.2.1 Plan schema (bounded SRP steps + success checks)
     - [ ] 2.2.2 Implement tool
