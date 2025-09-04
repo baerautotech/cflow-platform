@@ -56,9 +56,9 @@
   - [x] 6.3 Dual‑write pipeline
     - [x] 6.3.1 Implement dual‑write in `ChromaDBSupabaseSyncService`
     - [x] 6.3.2 On write: local embed + Chroma, raw content/metadata in RDB, embedding in pgvector, realtime event emit
-  - [ ] 6.4 Filesystem ingestion (Cursor artifacts)
-    - [ ] 6.4.1 `cflow-memory-watch` watches `AGENTS.md`, `.cursor/rules/**`, `docs/**/*.mdc`, `commands/**`
-    - [ ] 6.4.2 Pre‑commit integration to enqueue ingestion for changed artifacts
+  - [x] 6.4 Filesystem ingestion (Cursor artifacts)
+    - [x] 6.4.1 `cflow-memory-watch` watches `AGENTS.md`, `.cursor/rules/**`, `docs/**/*.mdc`, `commands/**`
+    - [x] 6.4.2 Pre‑commit integration to enqueue ingestion for changed artifacts
   - [x] 6.5 Request routing
     - [x] 6.5.1 Ensure agent loop uses memory_add/search by default; prefer CerebralMemory before external RAG
 
