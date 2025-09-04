@@ -128,6 +128,20 @@ def main() -> int:
     if not check_rag_chunk_guard(staged_all):
         return 2
 
+    # Ingest changed Cursor artifacts into CerebralMemory (best-effort, non-blocking failure)
+    try:
+        artifact_like = []
+        for f in staged_all:
+            if f == "AGENTS.md" or f.startswith(".cursor/rules/") or f.startswith("docs/") or f.startswith("commands/"):
+                artifact_like.append(str(repo_root / f))
+        if artifact_like:
+            # Use the CLI helper to ingest specific paths
+            from cflow_platform.cli import memory_watch as _mw  # type: ignore
+            _ = _mw.ingest_paths(artifact_like)
+    except Exception:
+        # Non-fatal; continue commit
+        pass
+
     return 0
 
 
