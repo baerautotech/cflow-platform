@@ -5,6 +5,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import difflib
 from pathlib import Path
 import fnmatch
+import os
+import time
 
 
 @dataclass
@@ -121,6 +123,12 @@ def apply_minimal_edits(edits: List[EditPlan], options: Optional[ApplyOptions] =
     # Write changes if not dry-run
     if not options.dry_run:
         for path, before, after, diff in staged_changes:
+            # Capture mtime before write to ensure we can bump it past cached .pyc resolution
+            try:
+                before_stat = path.stat()
+                before_mtime = int(before_stat.st_mtime)
+            except Exception:
+                before_mtime = int(time.time())
             # Backups: keep relative structure under backup_root
             if backup_root is not None:
                 try:
@@ -133,6 +141,14 @@ def apply_minimal_edits(edits: List[EditPlan], options: Optional[ApplyOptions] =
                 backups.append(str(backup_path))
             try:
                 path.write_text(after)
+                # Ensure mtime increases by at least 1 second to bypass bytecode cache staleness
+                try:
+                    current_mtime = int(path.stat().st_mtime)
+                    if current_mtime <= before_mtime:
+                        os.utime(path, (time.time() + 1.5, time.time() + 1.5))
+                except Exception:
+                    # Best effort; ignore if cannot bump mtime
+                    pass
                 wrote_any = True
                 results.append({"file": str(path), "status": "applied", "diff": diff})
             except Exception as e:

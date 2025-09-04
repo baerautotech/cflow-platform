@@ -18,8 +18,8 @@
     - [x] 1.3.1 Safety checks (allowlist, rollback)
   - [x] 1.4 Lint/pre‑commit integration
     - [x] 1.4.1 Fail‑closed before re‑testing; honor hooks
-  - [ ] 1.5 Dry‑run edits + diff presentation
-  - [ ] 1.6 E2E on a seeded failing test (turns suite green)
+  - [x] 1.5 Dry‑run edits + diff presentation
+  - [x] 1.6 E2E on a seeded failing test (turns suite green)
 
 - [ ] Phase 2: Reasoning + Instruction Profiles
   - [ ] 2.1 Instruction profiles loader
