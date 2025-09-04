@@ -131,6 +131,10 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             "memory_stats": handler.handle_memory_stats,
         }
         return await mapping[tool_name](kwargs or {})
+    if tool_name == "code_reasoning.plan":
+        mod = load_handler_module("reasoning_handlers")
+        handler = mod.ReasoningHandlers()  # type: ignore[attr-defined]
+        return await handler.handle_code_reasoning_plan(kwargs or {})
     return {"status": "error", "message": f"Unknown tool: {tool_name}"}
 
 

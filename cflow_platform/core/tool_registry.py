@@ -94,6 +94,43 @@ class ToolRegistry:
             tool("test_confidence", "Test confidence report"),
         ]
 
+        # Sandbox execution
+        tools += [
+            tool(
+                "sandbox.run_python",
+                "Execute Python in a sandbox with CPU/mem/time caps, FS allowlist, and no network",
+                {
+                    "type": "object",
+                    "properties": {
+                        "code": {"type": "string"},
+                        "time_limit_sec": {"type": "integer"},
+                        "cpu_limit_sec": {"type": "integer"},
+                        "mem_limit_mb": {"type": "integer"},
+                        "fs_allowlist": {"type": "array", "items": {"type": "string"}},
+                    },
+                    "required": ["code"],
+                },
+            )
+        ]
+
+        # Reasoning / planning
+        tools += [
+            tool(
+                "code_reasoning.plan",
+                "Produce a bounded minimal-edit plan with success checks",
+                {
+                    "type": "object",
+                    "properties": {
+                        "parsed_failures": {"type": "array", "items": {"type": "object"}},
+                        "suspect_files": {"type": "array", "items": {"type": "string"}},
+                        "max_steps": {"type": "integer"},
+                        "profile_name": {"type": "string"},
+                    },
+                    "required": [],
+                },
+            )
+        ]
+
         # Memory (CerebralMemory)
         tools += [
             tool("memory_add", "Add a memory to CerebralMemory", {"type": "object", "properties": {"content": {"type": "string"}, "userId": {"type": "string"}, "metadata": {"type": "object"}}, "required": ["content"]}),
