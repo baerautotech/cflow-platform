@@ -33,10 +33,10 @@
     - [x] 2.2.4 Unit tests
 
 - [ ] Phase 3: MCP Servers & Docs/Search
-  - [ ] 3.1 Sandboxed execution: sandbox.run_python
-    - [ ] 3.1.1 Sandbox policy (no network; CPU/mem/time caps; FS allowlist)
-    - [ ] 3.1.2 Executor
-    - [ ] 3.1.3 Policy tests
+  - [x] 3.1 Sandboxed execution: sandbox.run_python
+    - [x] 3.1.1 Sandbox policy (no network; CPU/mem/time caps; FS allowlist)
+    - [x] 3.1.2 Executor
+    - [x] 3.1.3 Policy tests
   - [ ] 3.2 Up‑to‑date docs (Context7) in loop
     - [ ] 3.2.1 Symbol extraction from traces
     - [ ] 3.2.2 Context7 fetch + summarization
@@ -114,7 +114,7 @@ Rationale: memory & sync (Phase 6) precedes orchestration (Phase 7) to ensure su
 - [x] Gate A: tests runner + failure parser validated
 - [x] Gate B: end‑to‑end fix via minimal edit + lint + re‑run → green
 - [ ] Gate C: reasoning profiles + bounded plans with success checks
-- [ ] Gate D: sandbox policy enforced (limits; no network)
+- [x] Gate D: sandbox policy enforced (limits; no network)
 - [ ] Gate E: docs/search integration shows sources; pre‑commit green; telemetry opt‑in
 - [ ] Gate P: provider configured for Cerebral Server cluster; local fallback validated
 - [ ] Gate M: memory checkpoints created; iteration roll‑forward after restart

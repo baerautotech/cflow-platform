@@ -110,6 +110,10 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             "doc_comply": handler.handle_doc_comply,
         }
         return await mapping[tool_name](kwargs or {})
+    if tool_name in {"sandbox.run_python"}:
+        mod = load_handler_module("sandbox_handlers")
+        handler = mod.SandboxHandlers()  # type: ignore[attr-defined]
+        return await handler.handle_run_python(kwargs or {})
     if tool_name in {"sys_stats", "sys_debug", "sys_version"}:
         mod = load_handler_module("system_handlers")
         tm = TaskManagerClient()
