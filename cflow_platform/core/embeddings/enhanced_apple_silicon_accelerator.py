@@ -496,8 +496,11 @@ class EnhancedAppleSiliconAccelerator:
         return devices
     
     def _select_optimal_device(self) -> AcceleratorDevice:
-        """Select optimal device based on hardware profile"""
-        if AcceleratorDevice.MPS in self.available_devices:
+        """Select optimal device based on hardware profile.
+        Prefer MPS on Apple Silicon by default; allow explicit skip via CFLOW_SKIP_APPLE_MPS.
+        """
+        skip_mps = os.environ.get("CFLOW_SKIP_APPLE_MPS", "0").lower() in {"1", "true", "yes"}
+        if AcceleratorDevice.MPS in self.available_devices and not skip_mps:
             return AcceleratorDevice.MPS
         elif AcceleratorDevice.NEURAL_ENGINE in self.available_devices:
             return AcceleratorDevice.NEURAL_ENGINE

@@ -159,6 +159,23 @@ class ToolRegistry:
             ),
         ]
 
+        # Desktop notifications (optional, off by default)
+        tools += [
+            tool(
+                "desktop.notify",
+                "Send a local desktop notification (macOS only; disabled by default)",
+                {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "subtitle": {"type": "string"},
+                        "message": {"type": "string"},
+                    },
+                    "required": ["message"],
+                },
+            )
+        ]
+
         return tools
 
     @staticmethod

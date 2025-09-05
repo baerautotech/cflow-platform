@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "aws-docs": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@aws-labs/mcp-aws-docs@latest"
+      ],
+      "env": {
+        "AWS_PROFILE": "",
+        "AWS_REGION": "",
+        "AWS_DEFAULT_REGION": ""
+      }
+    },
+    "aws-cli": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@aws-labs/mcp-aws-cli@latest"
+      ],
+      "env": {
+        "AWS_PROFILE": "",
+        "AWS_REGION": "",
+        "AWS_DEFAULT_REGION": ""
+      }
+    }
+  }
+}

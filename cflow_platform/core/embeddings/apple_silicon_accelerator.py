@@ -119,19 +119,22 @@ class CerebraFlowAppleSiliconAccelerator:
         devices = [AcceleratorDevice.CPU]
         if not TORCH_AVAILABLE:
             return devices
+        # Allow skipping Apple MPS path via env for stability in CI/pre-commit
+        skip_mps = os.environ.get("CFLOW_SKIP_APPLE_MPS", "0").lower() in {"1", "true", "yes"}
+        if torch.backends.mps.is_available() and not skip_mps:  # type: ignore[attr-defined]
+            devices.append(AcceleratorDevice.MPS)
         if self.system_info["neural_engine_available"]:
             devices.append(AcceleratorDevice.NEURAL_ENGINE)
-        if torch.backends.mps.is_available():  # type: ignore[attr-defined]
-            devices.append(AcceleratorDevice.MPS)
         if hasattr(torch, "cuda") and torch.cuda.is_available():  # type: ignore[attr-defined]
             devices.append(AcceleratorDevice.CUDA)
         return devices
 
     def _select_optimal_device(self) -> AcceleratorDevice:
-        if AcceleratorDevice.NEURAL_ENGINE in self.available_devices:
-            return AcceleratorDevice.NEURAL_ENGINE
+        # Prefer Apple MPS locally when available; otherwise gracefully fall back
         if AcceleratorDevice.MPS in self.available_devices:
             return AcceleratorDevice.MPS
+        if AcceleratorDevice.NEURAL_ENGINE in self.available_devices:
+            return AcceleratorDevice.NEURAL_ENGINE
         if AcceleratorDevice.CUDA in self.available_devices:
             return AcceleratorDevice.CUDA
         return AcceleratorDevice.CPU

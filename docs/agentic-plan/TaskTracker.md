@@ -82,10 +82,10 @@
     - [x] 8.2.1 `core/git_ops.py` for atomic commits when tests green and hooks pass
     - [x] 8.2.2 Env flag `CFLOW_AUTOCOMMIT=1`; message template includes task id and plan step
 
-- [ ] Phase 4: Optional Packs (Off by default)
-  - [ ] 4.1 Provider portability (document non-default cloud packs)
-    - [ ] 4.1.1 Document AWS MCP profile as non-default (not used on Cerebral cluster)
-    - [ ] 4.1.2 Safeguards and documentation for portability only
+- [x] Phase 4: Optional Packs (Off by default)
+  - [x] 4.1 Provider portability (document non-default cloud packs)
+    - [x] 4.1.1 Document AWS MCP profile as non-default (not used on Cerebral cluster)
+    - [x] 4.1.2 Safeguards and documentation for portability only
   - [ ] 4.2 Desktop notifications bridge (desktop_commander)
     - [ ] 4.2.1 Minimal notifier wiring
     - [ ] 4.2.2 Usage docs
@@ -117,7 +117,6 @@ Rationale: memory & sync (Phase 6) precedes orchestration (Phase 7) to ensure su
 - [x] Gate D: sandbox policy enforced (limits; no network)
 - [x] Gate E: docs/search integration shows sources; pre‑commit green; telemetry opt‑in
 - [ ] Gate P: provider configured for Cerebral Server cluster; local fallback validated
-- [ ] Gate M: memory checkpoints created; iteration roll‑forward after restart
 - [x] Gate M: memory checkpoints created; iteration roll‑forward after restart
 - [x] Gate RAG: Cursor artifacts mirrored into CerebralMemory; RAG lookups return latest versions
 - [ ] Gate VEC: Apple Silicon MPS embedder used locally; vectors stored in Chroma + pgvector; model/dims recorded

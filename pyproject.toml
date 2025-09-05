@@ -52,6 +52,7 @@ cflow-migrate-supabase = "cflow_platform.cli.migrate_supabase:cli"
 cflow-docs-backfill = "cflow_platform.cli.docs_backfill:cli"
 cflow-chroma-reset = "cflow_platform.cli.chroma_reset:cli"
 cflow-tasks-backfill = "cflow_platform.cli.tasks_backfill:cli"
+cflow-desktop-notify = "cflow_platform.cli.desktop_commander:cli"
 
 
 
