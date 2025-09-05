@@ -315,12 +315,21 @@ class ChromaDBSupabaseSyncService:
             doc_id = str(uuid.uuid4())
             vector, embed_meta = self._embed_text(content)
             vector = self._normalize_vector(vector)
+            # Merge embedding metadata into provided metadata for downstream visibility
+            try:
+                merged_metadata: Dict[str, Any] = dict(metadata) if isinstance(metadata, dict) else {}
+            except Exception:
+                merged_metadata = {}
+            merged_metadata.setdefault("embedding_model", embed_meta.get("model"))
+            merged_metadata.setdefault("embedding_dims", embed_meta.get("dims"))
+            merged_metadata.setdefault("embedding_device", embed_meta.get("device"))
+            merged_metadata.setdefault("embedding_target_dims", self._target_dims())
 
             # 1) Write to Chroma
             if self.chromadb_client:
                 try:
                     collection = self.get_collection(collection_type)
-                    collection.add(ids=[doc_id], documents=[content], metadatas=[metadata], embeddings=[vector])
+                    collection.add(ids=[doc_id], documents=[content], metadatas=[merged_metadata], embeddings=[vector])
                 except Exception as e:
                     logger.warning(f"️ Chroma add failed: {e}")
 
@@ -336,7 +345,7 @@ class ChromaDBSupabaseSyncService:
                         "user_id": tenant_id if user_id is None else user_id,
                         "title": metadata.get("title") if isinstance(metadata, dict) else None,
                         "content": content,
-                        "metadata": metadata,
+                        "metadata": merged_metadata,
                         "created_at": datetime.utcnow().isoformat() + "Z",
                         "tenant_id": tenant_id,
                     }
@@ -362,7 +371,7 @@ class ChromaDBSupabaseSyncService:
                         "content_chunk": content,
                         "embedding": vector,  # pgvector expects array; supabase client will serialize
                         "chunk_index": 0,
-                        "metadata": metadata,
+                        "metadata": merged_metadata,
                         "content_type": content_type,
                         "created_at": datetime.utcnow().isoformat() + "Z",
                         "tenant_id": tenant_id,

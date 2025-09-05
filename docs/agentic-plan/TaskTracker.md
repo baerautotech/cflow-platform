@@ -92,7 +92,7 @@
 
 - [x] Phase 10: Apple Silicon Embeddings Acceptance
   - [x] 10.1 Ensure Apple Silicon MPS embedder is default provider locally; CPU fallback
-  - [ ] 10.2 Record model/dims in metadata; performance SLOs for local vectors; enforce padding/truncation to dims
+  - [x] 10.2 Record model/dims in metadata; performance SLOs for local vectors; enforce padding/truncation to dims
 
 ### Stair-step Build Order Adjustments
 
@@ -120,6 +120,7 @@ Rationale: memory & sync (Phase 6) precedes orchestration (Phase 7) to ensure su
 - [x] Gate M: memory checkpoints created; iteration roll‑forward after restart
 - [x] Gate RAG: Cursor artifacts mirrored into CerebralMemory; RAG lookups return latest versions
 - [ ] Gate VEC: Apple Silicon MPS embedder used locally; vectors stored in Chroma + pgvector; model/dims recorded
+- [x] Gate VEC: Apple Silicon MPS embedder used locally; vectors stored in Chroma + pgvector; model/dims recorded
 - [x] Gate RDB: Relational retrieval via Supabase; referential integrity and indices verified; realtime healthy
 - [x] Gate R: restart budgets enforced; structured restart reasons emitted; no infinite loops
 - [x] Gate Cmt: commits only when hooks pass and tests green; disabled by default
