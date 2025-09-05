@@ -82,13 +82,13 @@
     - [x] 8.2.1 `core/git_ops.py` for atomic commits when tests green and hooks pass
     - [x] 8.2.2 Env flag `CFLOW_AUTOCOMMIT=1`; message template includes task id and plan step
 
-- [ ] Phase 4: Optional Packs (Off by default)
+- [x] Phase 4: Optional Packs (Off by default)
   - [x] 4.1 Provider portability (document non-default cloud packs)
     - [x] 4.1.1 Document AWS MCP profile as non-default (not used on Cerebral cluster)
     - [x] 4.1.2 Safeguards and documentation for portability only
-  - [ ] 4.2 Desktop notifications bridge (desktop_commander)
-    - [ ] 4.2.1 Minimal notifier wiring
-    - [ ] 4.2.2 Usage docs
+  - [x] 4.2 Desktop notifications bridge (desktop_commander)
+    - [x] 4.2.1 Minimal notifier wiring
+    - [x] 4.2.2 Usage docs
 
 - [x] Phase 10: Apple Silicon Embeddings Acceptance
   - [x] 10.1 Ensure Apple Silicon MPS embedder is default provider locally; CPU fallback
