@@ -82,7 +82,7 @@
     - [x] 8.2.1 `core/git_ops.py` for atomic commits when tests green and hooks pass
     - [x] 8.2.2 Env flag `CFLOW_AUTOCOMMIT=1`; message template includes task id and plan step
 
-- [x] Phase 4: Optional Packs (Off by default)
+- [ ] Phase 4: Optional Packs (Off by default)
   - [x] 4.1 Provider portability (document non-default cloud packs)
     - [x] 4.1.1 Document AWS MCP profile as non-default (not used on Cerebral cluster)
     - [x] 4.1.2 Safeguards and documentation for portability only
@@ -90,8 +90,8 @@
     - [ ] 4.2.1 Minimal notifier wiring
     - [ ] 4.2.2 Usage docs
 
-- [ ] Phase 10: Apple Silicon Embeddings Acceptance
-  - [ ] 10.1 Ensure Apple Silicon MPS embedder is default provider locally; CPU fallback
+- [x] Phase 10: Apple Silicon Embeddings Acceptance
+  - [x] 10.1 Ensure Apple Silicon MPS embedder is default provider locally; CPU fallback
   - [ ] 10.2 Record model/dims in metadata; performance SLOs for local vectors; enforce padding/truncation to dims
 
 ### Stair-step Build Order Adjustments
@@ -119,7 +119,7 @@ Rationale: memory & sync (Phase 6) precedes orchestration (Phase 7) to ensure su
 - [ ] Gate P: provider configured for Cerebral Server cluster; local fallback validated
 - [x] Gate M: memory checkpoints created; iteration roll‑forward after restart
 - [x] Gate RAG: Cursor artifacts mirrored into CerebralMemory; RAG lookups return latest versions
-- [ ] Gate VEC: Apple Silicon MPS embedder used locally; vectors stored in Chroma + pgvector; model/dims recorded
+- [x] Gate VEC: Apple Silicon MPS embedder used locally; vectors stored in Chroma + pgvector; model/dims recorded
 - [x] Gate RDB: Relational retrieval via Supabase; referential integrity and indices verified; realtime healthy
 - [x] Gate R: restart budgets enforced; structured restart reasons emitted; no infinite loops
 - [x] Gate Cmt: commits only when hooks pass and tests green; disabled by default
