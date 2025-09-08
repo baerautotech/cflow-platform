@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import subprocess
+from cflow_platform.core.direct_client import execute_mcp_tool
 import sys
 from pathlib import Path
 
@@ -23,7 +24,31 @@ def run_module(module: str, args: list[str]) -> tuple[int, str, str]:
     return proc.returncode, proc.stdout, proc.stderr
 
 
+def _truthy(val: str | None) -> bool:
+    if val is None:
+        return False
+    return val.strip().lower() in {"1", "true", "yes", "on"}
+
+
 def start() -> int:
+    # Optional preflight: provider probe (Gate P)
+    if _truthy(os.getenv("CFLOW_PROVIDER_PROBE")):
+        try:
+            import asyncio
+            res = asyncio.get_event_loop().run_until_complete(
+                execute_mcp_tool(
+                    "llm_provider.probe",
+                    model=os.getenv("CFLOW_PROVIDER_MODEL", ""),
+                    prompt=os.getenv("CFLOW_PROVIDER_PROMPT", "probe"),
+                )
+            )
+            if (res or {}).get("status") != "success":
+                print(json.dumps({"status": "error", "stage": "provider_probe", "result": res}))
+                return 2
+        except Exception as e:
+            print(json.dumps({"status": "error", "stage": "provider_probe", "error": str(e)}))
+            return 2
+
     code, out, err = run_module("caef_unified_orchestrator.py", [])
     if out:
         print(out)
