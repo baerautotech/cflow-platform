@@ -218,6 +218,96 @@ def apply_edits_if_present() -> Dict[str, Any]:
     return result
 
 
+def _env_truthy(name: str) -> bool:
+    val = os.getenv(name)
+    if val is None:
+        return False
+    return val.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _maybe_run_codegen(profile: InstructionProfile) -> Dict[str, Any]:
+    """Optionally run codegen.generate_edits and return its result (or a skipped payload).
+
+    Controlled by CFLOW_ENABLE_CODEGEN. Inputs come from environment to support
+    single-task workflows without changing CLI surfaces.
+    """
+    if not _env_truthy("CFLOW_ENABLE_CODEGEN"):
+        return {"status": "skipped", "reason": "disabled"}
+
+    try:
+        exec_fn = get_direct_client_executor()
+        import asyncio  # local import
+
+        # Task text: prefer CFLOW_TASK or CFLOW_TASK_DESC, else CFLOW_TASK_FILE contents
+        task_text = (os.getenv("CFLOW_TASK") or os.getenv("CFLOW_TASK_DESC") or "").strip()
+        task_file = os.getenv("CFLOW_TASK_FILE", "").strip()
+        if not task_text and task_file:
+            try:
+                from pathlib import Path as _Path
+                p = _Path(task_file)
+                if p.exists() and p.is_file():
+                    task_text = p.read_text(encoding="utf-8")[:10000]
+            except Exception:
+                task_text = task_text or ""
+        if not task_text:
+            # Without a task, do not attempt model calls
+            return {"status": "skipped", "reason": "no task"}
+
+        # Context files list from env (comma/semicolon separated), filter to existing files only
+        ctx_env = os.getenv("CFLOW_CONTEXT_FILES", "")
+        ctx_list = []
+        if ctx_env:
+            raw_parts = [p.strip() for p in ctx_env.replace(";", ",").split(",")]
+            for rp in raw_parts:
+                if not rp:
+                    continue
+                try:
+                    pp = Path(rp)
+                    if pp.exists() and pp.is_file():
+                        ctx_list.append(pp.as_posix())
+                except Exception:
+                    continue
+
+        # Constraints via env overrides
+        allowlist_env = os.getenv("CFLOW_EDIT_ALLOWLIST", "").strip()
+        allowlist = [s for s in [p.strip() for p in allowlist_env.replace(";", ",").split(",")] if s]
+        constraints = {
+            "minimal_edits": not _env_truthy("CFLOW_DISABLE_MINIMAL_EDITS"),
+            "strict_single_match": not _env_truthy("CFLOW_DISABLE_STRICT_MATCH"),
+            "atomic": not _env_truthy("CFLOW_DISABLE_ATOMIC"),
+            "allowlist": allowlist or [Path.cwd().resolve().as_posix()],
+            "max_edits": int(os.getenv("CFLOW_MAX_EDITS", "10") or "10"),
+            "max_snippet_chars": int(os.getenv("CFLOW_MAX_SNIPPET_CHARS", "4000") or "4000"),
+        }
+
+        # Success criteria (optional JSON in env)
+        success_criteria = []
+        sc_env = os.getenv("CFLOW_SUCCESS_CRITERIA", "").strip()
+        if sc_env:
+            try:
+                success_criteria = json.loads(sc_env)
+                if not isinstance(success_criteria, list):
+                    success_criteria = []
+            except Exception:
+                success_criteria = []
+
+        args = {
+            "task": task_text,
+            "context_files": ctx_list,
+            "apis": [],
+            "tests": list(profile.test_paths or []),
+            "constraints": constraints,
+            "success_criteria": success_criteria,
+        }
+
+        res = asyncio.get_event_loop().run_until_complete(
+            exec_fn("codegen.generate_edits", **args)
+        )
+        return res or {"status": "error", "reason": "no response"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
 def _parse_int_env(var_names: List[str]) -> Optional[int]:
     for name in var_names:
         try:
@@ -285,6 +375,9 @@ def loop(
     except Exception:
         start_index_offset = 0
 
+    # Codegen enable flag captured for budgeting and logging
+    enable_codegen = _env_truthy("CFLOW_ENABLE_CODEGEN")
+
     for i in range(max_iterations):
         iteration_number = start_index_offset + i + 1
         log_event("agent_loop.iteration.begin", {"iteration": iteration_number})
@@ -308,17 +401,31 @@ def loop(
             }
             break
 
-        # Run Plan → Implement → Verify with fresh per-stage contexts
+        # Implement function with optional codegen step inserted between plan and apply
+        def _implement_with_codegen() -> Dict[str, Any]:
+            if enable_codegen:
+                # Best-effort: run codegen and persist edits to .cerebraflow/edits.json
+                cg = _maybe_run_codegen(profile)
+                # Persist lightweight log for observability
+                try:
+                    out_dir = Path(".cerebraflow/logs")
+                    out_dir.mkdir(parents=True, exist_ok=True)
+                    (out_dir / "codegen.json").write_text(json.dumps(cg, indent=2))
+                except Exception:
+                    pass
+            return apply_edits_if_present()
+
+        # Run Plan → (Codegen) → Implement → Verify with fresh per-stage contexts
         stage_result = run_iteration(
             plan_fn=plan,
-            implement_fn=apply_edits_if_present,
+            implement_fn=_implement_with_codegen,
             verify_fn=verify,
             profile=profile,
         )
         p = stage_result.get("planning", {})
         history.append({"iteration": iteration_number, **{k: v for k, v in stage_result.items() if k != "status"}})
-        # Each iteration currently runs exactly 3 steps (plan, implement, verify)
-        steps_used += 3
+        # Each iteration runs 3 steps; add 1 when codegen executed
+        steps_used += 3 + (1 if enable_codegen else 0)
         # Persist procedure definition and a simple planning memory (best-effort)
         try:
             import asyncio
