@@ -139,6 +139,10 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
         mod = load_handler_module("internet_search_handlers")
         handler = mod.InternetSearchHandlers()  # type: ignore[attr-defined]
         return await handler.handle_internet_search(kwargs or {})
+    if tool_name in {"llm_provider.probe"}:
+        mod = load_handler_module("llm_provider_handlers")
+        handler = mod.LLMProviderHandlers()  # type: ignore[attr-defined]
+        return await handler.handle_probe(kwargs or {})
     if tool_name == "code_reasoning.plan":
         mod = load_handler_module("reasoning_handlers")
         handler = mod.ReasoningHandlers()  # type: ignore[attr-defined]

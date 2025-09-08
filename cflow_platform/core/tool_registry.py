@@ -159,6 +159,22 @@ class ToolRegistry:
             ),
         ]
 
+        # LLM provider
+        tools += [
+            tool(
+                "llm_provider.probe",
+                "Verify LLM provider connectivity and model readiness",
+                {
+                    "type": "object",
+                    "properties": {
+                        "model": {"type": "string"},
+                        "prompt": {"type": "string"},
+                    },
+                    "required": [],
+                },
+            )
+        ]
+
         return tools
 
     @staticmethod
