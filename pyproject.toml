@@ -55,6 +55,7 @@ cflow-tasks-backfill = "cflow_platform.cli.tasks_backfill:cli"
 cflow-desktop-notify = "cflow_platform.cli.desktop_commander:cli"
 cflow-provider-probe = "cflow_platform.cli.provider_probe:cli"
 cflow-codegen = "cflow_platform.cli.codegen_cli:cli"
+cflow-provider-aws = "cflow_platform.cli.provider_aws:cli"
 
 
 
