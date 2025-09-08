@@ -1,297 +1,6 @@
-# CFlow Planning
-
-Use this file for AI-assisted planning. Iteration checkpoints will mirror here.
-
-# Iteration 1 — 2025-09-01T00:16:20
-
-
-## Plan
-
-```json
-{
-  "status": "success",
-  "plan": [
-    {
-      "step": 1,
-      "action": "run-tests",
-      "paths": [
-        "cflow_platform/tests"
-      ]
-    }
-  ]
-}
-```
-
-## Verify
-
-```json
-{
-  "status": "success",
-  "verification": {
-    "status": "success",
-    "summary": {
-      "passed": 6,
-      "failed": 0,
-      "errors": 0,
-      "skipped": 0,
-      "xfailed": 0,
-      "xpassed": 0,
-      "total": 6,
-      "exit_code": 0
-    },
-    "duration_sec": 0.5993176670745015,
-    "tests": [
-      {
-        "nodeid": "cflow_platform/tests/test_contracts.py::test_core_public_api_surfaces",
-        "outcome": "passed",
-        "duration_sec": 0.0015796659281477332
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_contracts.py::test_direct_client_exec_unknown_tool",
-        "outcome": "passed",
-        "duration_sec": 0.00019695900846272707
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_contracts.py::test_tool_dispatch_families",
-        "outcome": "passed",
-        "duration_sec": 0.20083937502931803
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_parse_pytest_output_extracts_summary_and_failures",
-        "outcome": "passed",
-        "duration_sec": 0.00016387493815273046
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_no_tests_path_returns_nonzero",
-        "outcome": "passed",
-        "duration_sec": 0.12421770801302046
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_with_passing_test_succeeds",
-        "outcome": "passed",
-        "duration_sec": 0.1366612920537591
+d_enterprise_rag.py:12: in <module>\n    from cflow_platform.core.services.enterprise_rag.enterprise_embedding_service import (\ncflow_platform/core/services/enterprise_rag/enterprise_embedding_service.py:13: in <module>\n    from cflow_platform.core.services.ai.embedding_service import get_embedding_service\ncflow_platform/core/services/ai/embedding_service.py:14: in <module>\n    from cflow_platform.core.embeddings.enhanced_apple_silicon_accelerator import (\ncflow_platform/core/embeddings/enhanced_apple_silicon_accelerator.py:46: in <module>\n    import torch\n.venv/lib/python3.11/site-packages/torch/__init__.py:1840: in <module>\n    from torch import storage as storage  # usort: skip\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n.venv/lib/python3.11/site-packages/torch/storage.py:27: in <module>\n    import numpy as np\n.venv/lib/python3.11/site-packages/numpy/__init__.py:112: in <module>\n    from numpy.__config__ import show_config\n.venv/lib/python3.11/site-packages/numpy/__config__.py:4: in <module>\n    from numpy._core._multiarray_umath import (\n.venv/lib/python3.11/site-packages/numpy/_core/__init__.py:22: in <module>\n    from . import multiarray\n<frozen importlib._bootstrap>:1173: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:170: in __enter__\n    ???\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nname = 'numpy._core.multiarray'\n\n>   ???\nE   RecursionError: maximum recursion depth exceeded while calling a Python object\n\n<frozen importlib._bootstrap>:185: RecursionError"
       }
     ]
-  }
-}
-```
-
-## Meta
-
-```json
-{
-  "run_id": "local-run",
-  "task_id": "",
-  "iteration": 1,
-  "profile": "quick"
-}
-```
-
-# Iteration 1 — 2025-09-02T11:39:55
-
-
-## Plan
-
-```json
-{
-  "status": "success",
-  "plan": [
-    {
-      "step": 1,
-      "action": "run-tests",
-      "paths": [
-        "cflow_platform/tests"
-      ]
-    }
-  ]
-}
-```
-
-## Verify
-
-```json
-{
-  "status": "success",
-  "verification": {
-    "status": "success",
-    "summary": {
-      "passed": 9,
-      "failed": 0,
-      "errors": 0,
-      "skipped": 0,
-      "xfailed": 0,
-      "xpassed": 0,
-      "total": 9,
-      "exit_code": 0
-    },
-    "duration_sec": 4.409542000037618,
-    "tests": [
-      {
-        "nodeid": "cflow_platform/tests/test_contracts.py::test_core_public_api_surfaces",
-        "outcome": "passed",
-        "duration_sec": 0.0004640000406652689
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_contracts.py::test_direct_client_exec_unknown_tool",
-        "outcome": "passed",
-        "duration_sec": 0.00023987493477761745
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_contracts.py::test_tool_dispatch_families",
-        "outcome": "passed",
-        "duration_sec": 0.11299804202280939
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_embeddings_core.py::test_core_accelerator_generates_embeddings_without_hf_optin",
-        "outcome": "passed",
-        "duration_sec": 2.7296915830811486
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_failure_parser.py::test_parse_pytest_failures_from_sample_output",
-        "outcome": "passed",
-        "duration_sec": 0.0003612920409068465
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_parse_pytest_output_extracts_summary_and_failures",
-        "outcome": "passed",
-        "duration_sec": 6.237498018890619e-05
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_no_tests_path_returns_nonzero",
-        "outcome": "passed",
-        "duration_sec": 0.13017633301205933
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_with_passing_test_succeeds",
-        "outcome": "passed",
-        "duration_sec": 0.13591900002211332
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_unified_rag_core.py::test_unified_enterprise_rag_build_index_payload_smoke",
-        "outcome": "passed",
-        "duration_sec": 0.9299407080980018
-      }
-    ]
-  }
-}
-```
-
-## Meta
-
-```json
-{
-  "run_id": "local-run",
-  "task_id": "",
-  "iteration": 1,
-  "profile": "quick"
-}
-```
-
-# Iteration 1 — 2025-09-02T18:39:00
-
-
-## Plan
-
-```json
-{
-  "status": "success",
-  "plan": [
-    {
-      "step": 1,
-      "action": "run-tests",
-      "paths": [
-        "cflow_platform/tests"
-      ]
-    },
-    {
-      "step": 2,
-      "action": "lint-precommit"
-    }
-  ]
-}
-```
-
-## Verify
-
-```json
-{
-  "status": "error",
-  "verification": {
-    "status": "failure",
-    "summary": {
-      "passed": 0,
-      "failed": 0,
-      "errors": 0,
-      "skipped": 0,
-      "xfailed": 0,
-      "xpassed": 0,
-      "total": 0,
-      "exit_code": 3
-    },
-    "duration_sec": 0.06296570796985179,
-    "tests": []
-  },
-  "lint": {
-    "status": "success",
-    "simulated": true
-  }
-}
-```
-
-## Meta
-
-```json
-{
-  "run_id": "local-run",
-  "task_id": "",
-  "iteration": 1,
-  "profile": "quick"
-}
-```
-
-# Iteration 1 — 2025-09-02T18:39:00
-
-
-## Plan
-
-```json
-{
-  "status": "success",
-  "plan": [
-    {
-      "step": 1,
-      "action": "run-tests",
-      "paths": [
-        "cflow_platform/tests"
-      ]
-    },
-    {
-      "step": 2,
-      "action": "lint-precommit"
-    }
-  ]
-}
-```
-
-## Verify
-
-```json
-{
-  "status": "error",
-  "verification": {
-    "status": "failure",
-    "summary": {
-      "passed": 0,
-      "failed": 0,
-      "errors": 0,
-      "skipped": 0,
-      "xfailed": 0,
-      "xpassed": 0,
-      "total": 0,
-      "exit_code": 3
-    },
-    "duration_sec": 0.05808729096315801,
-    "tests": []
   },
   "lint": {
     "status": "error",
@@ -311,7 +20,7 @@ Use this file for AI-assisted planning. Iteration checkpoints will mirror here.
 }
 ```
 
-# Iteration 1 — 2025-09-02T18:39:00
+# Iteration 1 — 2025-09-02T18:40:35
 
 
 ## Plan
@@ -352,63 +61,547 @@ Use this file for AI-assisted planning. Iteration checkpoints will mirror here.
       "total": 11,
       "exit_code": 1
     },
-    "duration_sec": 0.5142125419806689,
+    "duration_sec": 4.652726582949981,
     "tests": [
       {
         "nodeid": "cflow_platform/tests/test_agent_loop_lint_gate.py::test_agent_loop_respects_pre_commit_gate_success",
         "outcome": "failed",
-        "duration_sec": 0.06639233301393688,
-        "longrepr": "monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x102e68450>\n\n    def test_agent_loop_respects_pre_commit_gate_success(monkeypatch) -> None:\n        monkeypatch.setenv(\"CFLOW_PRE_COMMIT_MODE\", \"pass\")\n        result = loop(\"quick\", max_iterations=1)\n>       assert result.get(\"status\") == \"success\"\nE       AssertionError: assert 'error' == 'success'\nE         \nE         - success\nE         + error\n\ncflow_platform/tests/test_agent_loop_lint_gate.py:11: AssertionError"
+        "duration_sec": 2.076125624938868,
+        "longrepr": "monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1012292d0>\n\n    def test_agent_loop_respects_pre_commit_gate_success(monkeypatch) -> None:\n        monkeypatch.setenv(\"CFLOW_PRE_COMMIT_MODE\", \"pass\")\n        result = loop(\"quick\", max_iterations=1)\n>       assert result.get(\"status\") == \"success\"\nE       AssertionError: assert 'error' == 'success'\nE         \nE         - success\nE         + error\n\ncflow_platform/tests/test_agent_loop_lint_gate.py:11: AssertionError"
       },
       {
         "nodeid": "cflow_platform/tests/test_agent_loop_lint_gate.py::test_agent_loop_respects_pre_commit_gate_failure",
         "outcome": "passed",
-        "duration_sec": 0.05973700003232807
+        "duration_sec": 2.06562433403451
       },
       {
         "nodeid": "cflow_platform/tests/test_contracts.py::test_core_public_api_surfaces",
         "outcome": "passed",
-        "duration_sec": 0.001318583032116294
+        "duration_sec": 9.379105176776648e-05
       },
       {
         "nodeid": "cflow_platform/tests/test_contracts.py::test_direct_client_exec_unknown_tool",
         "outcome": "passed",
-        "duration_sec": 0.00011341704521328211
+        "duration_sec": 9.837490506470203e-05
       },
       {
         "nodeid": "cflow_platform/tests/test_contracts.py::test_tool_dispatch_families",
         "outcome": "passed",
-        "duration_sec": 0.011354916961863637
+        "duration_sec": 0.08512783306650817
       },
       {
         "nodeid": "cflow_platform/tests/test_embeddings_core.py::test_core_accelerator_generates_embeddings_without_hf_optin",
         "outcome": "passed",
-        "duration_sec": 0.01822770806029439
+        "duration_sec": 0.000415208050981164
       },
       {
         "nodeid": "cflow_platform/tests/test_failure_parser.py::test_parse_pytest_failures_from_sample_output",
         "outcome": "passed",
-        "duration_sec": 0.0003414589446038008
+        "duration_sec": 8.979195263236761e-05
       },
       {
         "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_parse_pytest_output_extracts_summary_and_failures",
         "outcome": "passed",
-        "duration_sec": 6.824999582022429e-05
+        "duration_sec": 6.350001785904169e-05
       },
       {
         "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_no_tests_path_returns_nonzero",
         "outcome": "passed",
-        "duration_sec": 0.11963533400557935
+        "duration_sec": 0.12801870901603252
       },
       {
         "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_with_passing_test_succeeds",
         "outcome": "passed",
-        "duration_sec": 0.1240444160066545
+        "duration_sec": 0.13028483395464718
       },
       {
         "nodeid": "cflow_platform/tests/test_unified_rag_core.py::test_unified_enterprise_rag_build_index_payload_smoke",
         "outcome": "failed",
-        "duration_sec": 0.0021548329386860132,
+        "duration_sec": 0.008320291060954332,
+        "longrepr": "def test_unified_enterprise_rag_build_index_payload_smoke():\n>       from cflow_platform.core.services.unified_enterprise_rag import UnifiedEnterpriseRAG\n\ncflow_platform/tests/test_unified_rag_core.py:7: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ncflow_platform/core/services/unified_enterprise_rag.py:12: in <module>\n    from cflow_platform.core.services.enterprise_rag.enterprise_embedding_service import (\ncflow_platform/core/services/enterprise_rag/enterprise_embedding_service.py:13: in <module>\n    from cflow_platform.core.services.ai.embedding_service import get_embedding_service\ncflow_platform/core/services/ai/embedding_service.py:14: in <module>\n    from cflow_platform.core.embeddings.enhanced_apple_silicon_accelerator import (\ncflow_platform/core/embeddings/enhanced_apple_silicon_accelerator.py:46: in <module>\n    import torch\n.venv/lib/python3.11/site-packages/torch/__init__.py:1840: in <module>\n    from torch import storage as storage  # usort: skip\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n.venv/lib/python3.11/site-packages/torch/storage.py:27: in <module>\n    import numpy as np\n.venv/lib/python3.11/site-packages/numpy/__init__.py:112: in <module>\n    from numpy.__config__ import show_config\n.venv/lib/python3.11/site-packages/numpy/__config__.py:4: in <module>\n    from numpy._core._multiarray_umath import (\n.venv/lib/python3.11/site-packages/numpy/_core/__init__.py:22: in <module>\n    from . import multiarray\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\n    \"\"\"\n    Create the numpy._core.multiarray namespace for backward compatibility.\n    In v1.16 the multiarray and umath c-extension modules were merged into\n    a single _multiarray_umath extension module. So we replicate the old\n    namespace by importing from the extension module.\n    \n    \"\"\"\n    \n    import functools\n    \n>   from . import _multiarray_umath, overrides\nE   RuntimeError: CPU dispatcher tracer already initlized\n\n.venv/lib/python3.11/site-packages/numpy/_core/multiarray.py:11: RuntimeError"
+      }
+    ]
+  },
+  "lint": {
+    "status": "error",
+    "simulated": true
+  }
+}
+```
+
+## Meta
+
+```json
+{
+  "run_id": "local-run",
+  "task_id": "",
+  "iteration": 1,
+  "profile": "quick"
+}
+```
+
+# Iteration 1 — 2025-09-02T18:40:36
+
+
+## Plan
+
+```json
+{
+  "status": "success",
+  "plan": [
+    {
+      "step": 1,
+      "action": "run-tests",
+      "paths": [
+        "cflow_platform/tests"
+      ]
+    },
+    {
+      "step": 2,
+      "action": "lint-precommit"
+    }
+  ]
+}
+```
+
+## Verify
+
+```json
+{
+  "status": "error",
+  "verification": {
+    "status": "failure",
+    "summary": {
+      "passed": 9,
+      "failed": 2,
+      "errors": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "xpassed": 0,
+      "total": 11,
+      "exit_code": 1
+    },
+    "duration_sec": 9.876725125010125,
+    "tests": [
+      {
+        "nodeid": "cflow_platform/tests/test_agent_loop_lint_gate.py::test_agent_loop_respects_pre_commit_gate_success",
+        "outcome": "failed",
+        "duration_sec": 4.708642542012967,
+        "longrepr": "monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10c7f5cd0>\n\n    def test_agent_loop_respects_pre_commit_gate_success(monkeypatch) -> None:\n        monkeypatch.setenv(\"CFLOW_PRE_COMMIT_MODE\", \"pass\")\n        result = loop(\"quick\", max_iterations=1)\n>       assert result.get(\"status\") == \"success\"\nE       AssertionError: assert 'error' == 'success'\nE         \nE         - success\nE         + error\n\ncflow_platform/tests/test_agent_loop_lint_gate.py:11: AssertionError"
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_agent_loop_lint_gate.py::test_agent_loop_respects_pre_commit_gate_failure",
+        "outcome": "passed",
+        "duration_sec": 4.659830958000384
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_contracts.py::test_core_public_api_surfaces",
+        "outcome": "passed",
+        "duration_sec": 9.525008499622345e-05
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_contracts.py::test_direct_client_exec_unknown_tool",
+        "outcome": "passed",
+        "duration_sec": 0.00010879093315452337
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_contracts.py::test_tool_dispatch_families",
+        "outcome": "passed",
+        "duration_sec": 0.08492475003004074
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_embeddings_core.py::test_core_accelerator_generates_embeddings_without_hf_optin",
+        "outcome": "passed",
+        "duration_sec": 0.0004207500023767352
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_failure_parser.py::test_parse_pytest_failures_from_sample_output",
+        "outcome": "passed",
+        "duration_sec": 8.695793803781271e-05
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_parse_pytest_output_extracts_summary_and_failures",
+        "outcome": "passed",
+        "duration_sec": 6.270792800933123e-05
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_no_tests_path_returns_nonzero",
+        "outcome": "passed",
+        "duration_sec": 0.12927558308001608
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_with_passing_test_succeeds",
+        "outcome": "passed",
+        "duration_sec": 0.13028300006408244
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_unified_rag_core.py::test_unified_enterprise_rag_build_index_payload_smoke",
+        "outcome": "failed",
+        "duration_sec": 0.008097333018667996,
+        "longrepr": "def test_unified_enterprise_rag_build_index_payload_smoke():\n>       from cflow_platform.core.services.unified_enterprise_rag import UnifiedEnterpriseRAG\n\ncflow_platform/tests/test_unified_rag_core.py:7: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ncflow_platform/core/services/unified_enterprise_rag.py:12: in <module>\n    from cflow_platform.core.services.enterprise_rag.enterprise_embedding_service import (\ncflow_platform/core/services/enterprise_rag/enterprise_embedding_service.py:13: in <module>\n    from cflow_platform.core.services.ai.embedding_service import get_embedding_service\ncflow_platform/core/services/ai/embedding_service.py:14: in <module>\n    from cflow_platform.core.embeddings.enhanced_apple_silicon_accelerator import (\ncflow_platform/core/embeddings/enhanced_apple_silicon_accelerator.py:46: in <module>\n    import torch\n.venv/lib/python3.11/site-packages/torch/__init__.py:1840: in <module>\n    from torch import storage as storage  # usort: skip\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n.venv/lib/python3.11/site-packages/torch/storage.py:27: in <module>\n    import numpy as np\n.venv/lib/python3.11/site-packages/numpy/__init__.py:112: in <module>\n    from numpy.__config__ import show_config\n.venv/lib/python3.11/site-packages/numpy/__config__.py:4: in <module>\n    from numpy._core._multiarray_umath import (\n.venv/lib/python3.11/site-packages/numpy/_core/__init__.py:22: in <module>\n    from . import multiarray\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\n    \"\"\"\n    Create the numpy._core.multiarray namespace for backward compatibility.\n    In v1.16 the multiarray and umath c-extension modules were merged into\n    a single _multiarray_umath extension module. So we replicate the old\n    namespace by importing from the extension module.\n    \n    \"\"\"\n    \n    import functools\n    \n>   from . import _multiarray_umath, overrides\nE   RuntimeError: CPU dispatcher tracer already initlized\n\n.venv/lib/python3.11/site-packages/numpy/_core/multiarray.py:11: RuntimeError"
+      }
+    ]
+  },
+  "lint": {
+    "status": "error",
+    "simulated": true
+  }
+}
+```
+
+## Meta
+
+```json
+{
+  "run_id": "local-run",
+  "task_id": "",
+  "iteration": 1,
+  "profile": "quick"
+}
+```
+
+# Iteration 1 — 2025-09-02T18:40:36
+
+
+## Plan
+
+```json
+{
+  "status": "success",
+  "plan": [
+    {
+      "step": 1,
+      "action": "run-tests",
+      "paths": [
+        "cflow_platform/tests"
+      ]
+    },
+    {
+      "step": 2,
+      "action": "lint-precommit"
+    }
+  ]
+}
+```
+
+## Verify
+
+```json
+{
+  "status": "error",
+  "verification": {
+    "status": "failure",
+    "summary": {
+      "passed": 9,
+      "failed": 2,
+      "errors": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "xpassed": 0,
+      "total": 11,
+      "exit_code": 1
+    },
+    "duration_sec": 20.39709449990187,
+    "tests": [
+      {
+        "nodeid": "cflow_platform/tests/test_agent_loop_lint_gate.py::test_agent_loop_respects_pre_commit_gate_success",
+        "outcome": "failed",
+        "duration_sec": 10.001143125002272,
+        "longrepr": "monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d0dfa90>\n\n    def test_agent_loop_respects_pre_commit_gate_success(monkeypatch) -> None:\n        monkeypatch.setenv(\"CFLOW_PRE_COMMIT_MODE\", \"pass\")\n        result = loop(\"quick\", max_iterations=1)\n>       assert result.get(\"status\") == \"success\"\nE       AssertionError: assert 'error' == 'success'\nE         \nE         - success\nE         + error\n\ncflow_platform/tests/test_agent_loop_lint_gate.py:11: AssertionError"
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_agent_loop_lint_gate.py::test_agent_loop_respects_pre_commit_gate_failure",
+        "outcome": "passed",
+        "duration_sec": 9.883381665917113
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_contracts.py::test_core_public_api_surfaces",
+        "outcome": "passed",
+        "duration_sec": 9.770900942385197e-05
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_contracts.py::test_direct_client_exec_unknown_tool",
+        "outcome": "passed",
+        "duration_sec": 0.0001118748914450407
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_contracts.py::test_tool_dispatch_families",
+        "outcome": "passed",
+        "duration_sec": 0.0850921249948442
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_embeddings_core.py::test_core_accelerator_generates_embeddings_without_hf_optin",
+        "outcome": "passed",
+        "duration_sec": 0.0004920420469716191
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_failure_parser.py::test_parse_pytest_failures_from_sample_output",
+        "outcome": "passed",
+        "duration_sec": 0.00011183402966707945
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_parse_pytest_output_extracts_summary_and_failures",
+        "outcome": "passed",
+        "duration_sec": 7.724994793534279e-05
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_no_tests_path_returns_nonzero",
+        "outcome": "passed",
+        "duration_sec": 0.12973483302630484
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_with_passing_test_succeeds",
+        "outcome": "passed",
+        "duration_sec": 0.13187554199248552
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_unified_rag_core.py::test_unified_enterprise_rag_build_index_payload_smoke",
+        "outcome": "failed",
+        "duration_sec": 0.007629625033587217,
+        "longrepr": "def test_unified_enterprise_rag_build_index_payload_smoke():\n>       from cflow_platform.core.services.unified_enterprise_rag import UnifiedEnterpriseRAG\n\ncflow_platform/tests/test_unified_rag_core.py:7: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ncflow_platform/core/services/unified_enterprise_rag.py:12: in <module>\n    from cflow_platform.core.services.enterprise_rag.enterprise_embedding_service import (\ncflow_platform/core/services/enterprise_rag/enterprise_embedding_service.py:13: in <module>\n    from cflow_platform.core.services.ai.embedding_service import get_embedding_service\ncflow_platform/core/services/ai/embedding_service.py:14: in <module>\n    from cflow_platform.core.embeddings.enhanced_apple_silicon_accelerator import (\ncflow_platform/core/embeddings/enhanced_apple_silicon_accelerator.py:46: in <module>\n    import torch\n.venv/lib/python3.11/site-packages/torch/__init__.py:1840: in <module>\n    from torch import storage as storage  # usort: skip\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n.venv/lib/python3.11/site-packages/torch/storage.py:27: in <module>\n    import numpy as np\n.venv/lib/python3.11/site-packages/numpy/__init__.py:112: in <module>\n    from numpy.__config__ import show_config\n.venv/lib/python3.11/site-packages/numpy/__config__.py:4: in <module>\n    from numpy._core._multiarray_umath import (\n.venv/lib/python3.11/site-packages/numpy/_core/__init__.py:22: in <module>\n    from . import multiarray\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\n    \"\"\"\n    Create the numpy._core.multiarray namespace for backward compatibility.\n    In v1.16 the multiarray and umath c-extension modules were merged into\n    a single _multiarray_umath extension module. So we replicate the old\n    namespace by importing from the extension module.\n    \n    \"\"\"\n    \n    import functools\n    \n>   from . import _multiarray_umath, overrides\nE   RuntimeError: CPU dispatcher tracer already initlized\n\n.venv/lib/python3.11/site-packages/numpy/_core/multiarray.py:11: RuntimeError"
+      }
+    ]
+  },
+  "lint": {
+    "status": "success",
+    "simulated": true
+  }
+}
+```
+
+## Meta
+
+```json
+{
+  "run_id": "local-run",
+  "task_id": "",
+  "iteration": 1,
+  "profile": "quick"
+}
+```
+
+# Iteration 1 — 2025-09-02T18:40:36
+
+
+## Plan
+
+```json
+{
+  "status": "success",
+  "plan": [
+    {
+      "step": 1,
+      "action": "run-tests",
+      "paths": [
+        "cflow_platform/tests"
+      ]
+    },
+    {
+      "step": 2,
+      "action": "lint-precommit"
+    }
+  ]
+}
+```
+
+## Verify
+
+```json
+{
+  "status": "error",
+  "verification": {
+    "status": "failure",
+    "summary": {
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "xpassed": 0,
+      "total": 0,
+      "exit_code": 3
+    },
+    "duration_sec": 0.12321095902007073,
+    "tests": []
+  },
+  "lint": {
+    "status": "success",
+    "simulated": true
+  }
+}
+```
+
+## Meta
+
+```json
+{
+  "run_id": "local-run",
+  "task_id": "",
+  "iteration": 1,
+  "profile": "quick"
+}
+```
+
+# Iteration 1 — 2025-09-02T18:40:37
+
+
+## Plan
+
+```json
+{
+  "status": "success",
+  "plan": [
+    {
+      "step": 1,
+      "action": "run-tests",
+      "paths": [
+        "cflow_platform/tests"
+      ]
+    },
+    {
+      "step": 2,
+      "action": "lint-precommit"
+    }
+  ]
+}
+```
+
+## Verify
+
+```json
+{
+  "status": "error",
+  "verification": {
+    "status": "failure",
+    "summary": {
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "xpassed": 0,
+      "total": 0,
+      "exit_code": 3
+    },
+    "duration_sec": 0.13774387491866946,
+    "tests": []
+  },
+  "lint": {
+    "status": "error",
+    "simulated": true
+  }
+}
+```
+
+## Meta
+
+```json
+{
+  "run_id": "local-run",
+  "task_id": "",
+  "iteration": 1,
+  "profile": "quick"
+}
+```
+
+# Iteration 1 — 2025-09-02T18:40:37
+
+
+## Plan
+
+```json
+{
+  "status": "success",
+  "plan": [
+    {
+      "step": 1,
+      "action": "run-tests",
+      "paths": [
+        "cflow_platform/tests"
+      ]
+    },
+    {
+      "step": 2,
+      "action": "lint-precommit"
+    }
+  ]
+}
+```
+
+## Verify
+
+```json
+{
+  "status": "error",
+  "verification": {
+    "status": "failure",
+    "summary": {
+      "passed": 9,
+      "failed": 2,
+      "errors": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "xpassed": 0,
+      "total": 11,
+      "exit_code": 1
+    },
+    "duration_sec": 0.781493416056037,
+    "tests": [
+      {
+        "nodeid": "cflow_platform/tests/test_agent_loop_lint_gate.py::test_agent_loop_respects_pre_commit_gate_success",
+        "outcome": "failed",
+        "duration_sec": 0.12728208303451538,
+        "longrepr": "monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b904690>\n\n    def test_agent_loop_respects_pre_commit_gate_success(monkeypatch) -> None:\n        monkeypatch.setenv(\"CFLOW_PRE_COMMIT_MODE\", \"pass\")\n        result = loop(\"quick\", max_iterations=1)\n>       assert result.get(\"status\") == \"success\"\nE       AssertionError: assert 'error' == 'success'\nE         \nE         - success\nE         + error\n\ncflow_platform/tests/test_agent_loop_lint_gate.py:11: AssertionError"
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_agent_loop_lint_gate.py::test_agent_loop_respects_pre_commit_gate_failure",
+        "outcome": "passed",
+        "duration_sec": 0.14187491603661329
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_contracts.py::test_core_public_api_surfaces",
+        "outcome": "passed",
+        "duration_sec": 0.00024270801804959774
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_contracts.py::test_direct_client_exec_unknown_tool",
+        "outcome": "passed",
+        "duration_sec": 0.00011104100849479437
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_contracts.py::test_tool_dispatch_families",
+        "outcome": "passed",
+        "duration_sec": 0.08552179206162691
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_embeddings_core.py::test_core_accelerator_generates_embeddings_without_hf_optin",
+        "outcome": "passed",
+        "duration_sec": 0.00045608310028910637
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_failure_parser.py::test_parse_pytest_failures_from_sample_output",
+        "outcome": "passed",
+        "duration_sec": 0.00010008399840444326
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_parse_pytest_output_extracts_summary_and_failures",
+        "outcome": "passed",
+        "duration_sec": 6.274995394051075e-05
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_no_tests_path_returns_nonzero",
+        "outcome": "passed",
+        "duration_sec": 0.12861304194666445
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_with_passing_test_succeeds",
+        "outcome": "passed",
+        "duration_sec": 0.13468595908489078
+      },
+      {
+        "nodeid": "cflow_platform/tests/test_unified_rag_core.py::test_unified_enterprise_rag_build_index_payload_smoke",
+        "outcome": "failed",
+        "duration_sec": 0.0019387919455766678,
         "longrepr": "def test_unified_enterprise_rag_build_index_payload_smoke():\n>       from cflow_platform.core.services.unified_enterprise_rag import UnifiedEnterpriseRAG\n\ncflow_platform/tests/test_unified_rag_core.py:7: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ncflow_platform/core/services/unified_enterprise_rag.py:12: in <module>\n    from cflow_platform.core.services.enterprise_rag.enterprise_embedding_service import (\ncflow_platform/core/services/enterprise_rag/enterprise_embedding_service.py:13: in <module>\n    from cflow_platform.core.services.ai.embedding_service import get_embedding_service\ncflow_platform/core/services/ai/embedding_service.py:14: in <module>\n    from cflow_platform.core.embeddings.enhanced_apple_silicon_accelerator import (\ncflow_platform/core/embeddings/enhanced_apple_silicon_accelerator.py:46: in <module>\n    import torch\n<frozen importlib._bootstrap>:1176: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1138: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:1078: in _find_spec\n    ???\n.venv/lib/python3.11/site-packages/_pytest/assertion/rewrite.py:100: in find_spec\n    if self._early_rewrite_bailout(name, state):\n       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n.venv/lib/python3.11/site-packages/_pytest/assertion/rewrite.py:218: in _early_rewrite_bailout\n    if fnmatch_ex(pat, path):\n       ^^^^^^^^^^^^^^^^^^^^^\n.venv/lib/python3.11/site-packages/_pytest/pathlib.py:437: in fnmatch_ex\n    path = PurePath(path)\n           ^^^^^^^^^^^^^^\n../../../.local/share/uv/python/cpython-3.11.13-macos-aarch64-none/lib/python3.11/pathlib.py:477: in __new__\n    return cls._from_parts(args)\n           ^^^^^^^^^^^^^^^^^^^^^\n../../../.local/share/uv/python/cpython-3.11.13-macos-aarch64-none/lib/python3.11/pathlib.py:509: in _from_parts\n    drv, root, parts = self._parse_args(args)\n                       ^^^^^^^^^^^^^^^^^^^^^^\n../../../.local/share/uv/python/cpython-3.11.13-macos-aarch64-none/lib/python3.11/pathlib.py:502: in _parse_args\n    return cls._flavour.parse_parts(parts)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <pathlib._PosixFlavour object at 0x10085c6d0>, parts = ['torch.py']\n\n    def parse_parts(self, parts):\n        parsed = []\n        sep = self.sep\n        altsep = self.altsep\n        drv = root = ''\n>       it = reversed(parts)\n             ^^^^^^^^^^^^^^^\nE       RecursionError: maximum recursion depth exceeded while calling a Python object\n\n../../../.local/share/uv/python/cpython-3.11.13-macos-aarch64-none/lib/python3.11/pathlib.py:61: RecursionError"
       }
     ]
@@ -431,7 +624,7 @@ Use this file for AI-assisted planning. Iteration checkpoints will mirror here.
 }
 ```
 
-# Iteration 1 — 2025-09-02T18:39:01
+# Iteration 1 — 2025-09-02T18:40:37
 
 
 ## Plan
@@ -472,7 +665,7 @@ Use this file for AI-assisted planning. Iteration checkpoints will mirror here.
       "total": 0,
       "exit_code": 3
     },
-    "duration_sec": 0.0629586250288412,
+    "duration_sec": 0.12682720797602087,
     "tests": []
   },
   "lint": {
@@ -493,7 +686,7 @@ Use this file for AI-assisted planning. Iteration checkpoints will mirror here.
 }
 ```
 
-# Iteration 1 — 2025-09-02T18:39:01
+# Iteration 1 — 2025-09-02T18:40:37
 
 
 ## Plan
@@ -534,7 +727,7 @@ Use this file for AI-assisted planning. Iteration checkpoints will mirror here.
       "total": 0,
       "exit_code": 3
     },
-    "duration_sec": 0.06328229198697954,
+    "duration_sec": 0.12570374994538724,
     "tests": []
   },
   "lint": {
@@ -555,7 +748,7 @@ Use this file for AI-assisted planning. Iteration checkpoints will mirror here.
 }
 ```
 
-# Iteration 1 — 2025-09-02T18:39:01
+# Iteration 1 — 2025-09-02T18:40:38
 
 
 ## Plan
@@ -596,63 +789,63 @@ Use this file for AI-assisted planning. Iteration checkpoints will mirror here.
       "total": 11,
       "exit_code": 1
     },
-    "duration_sec": 0.4860387910157442,
+    "duration_sec": 0.7720647079404444,
     "tests": [
       {
         "nodeid": "cflow_platform/tests/test_agent_loop_lint_gate.py::test_agent_loop_respects_pre_commit_gate_success",
         "outcome": "failed",
-        "duration_sec": 0.06458791706245393,
-        "longrepr": "monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10a948890>\n\n    def test_agent_loop_respects_pre_commit_gate_success(monkeypatch) -> None:\n        monkeypatch.setenv(\"CFLOW_PRE_COMMIT_MODE\", \"pass\")\n        result = loop(\"quick\", max_iterations=1)\n>       assert result.get(\"status\") == \"success\"\nE       AssertionError: assert 'error' == 'success'\nE         \nE         - success\nE         + error\n\ncflow_platform/tests/test_agent_loop_lint_gate.py:11: AssertionError"
+        "duration_sec": 0.13064899994060397,
+        "longrepr": "monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10c75da50>\n\n    def test_agent_loop_respects_pre_commit_gate_success(monkeypatch) -> None:\n        monkeypatch.setenv(\"CFLOW_PRE_COMMIT_MODE\", \"pass\")\n        result = loop(\"quick\", max_iterations=1)\n>       assert result.get(\"status\") == \"success\"\nE       AssertionError: assert 'error' == 'success'\nE         \nE         - success\nE         + error\n\ncflow_platform/tests/test_agent_loop_lint_gate.py:11: AssertionError"
       },
       {
         "nodeid": "cflow_platform/tests/test_agent_loop_lint_gate.py::test_agent_loop_respects_pre_commit_gate_failure",
         "outcome": "passed",
-        "duration_sec": 0.06464837503153831
+        "duration_sec": 0.1296949159586802
       },
       {
         "nodeid": "cflow_platform/tests/test_contracts.py::test_core_public_api_surfaces",
         "outcome": "passed",
-        "duration_sec": 7.695797830820084e-05
+        "duration_sec": 0.00024262501392513514
       },
       {
         "nodeid": "cflow_platform/tests/test_contracts.py::test_direct_client_exec_unknown_tool",
         "outcome": "passed",
-        "duration_sec": 9.970797691494226e-05
+        "duration_sec": 0.00010733399540185928
       },
       {
         "nodeid": "cflow_platform/tests/test_contracts.py::test_tool_dispatch_families",
         "outcome": "passed",
-        "duration_sec": 0.005789165967144072
+        "duration_sec": 0.08351112494710833
       },
       {
         "nodeid": "cflow_platform/tests/test_embeddings_core.py::test_core_accelerator_generates_embeddings_without_hf_optin",
         "outcome": "passed",
-        "duration_sec": 0.00041266705375164747
+        "duration_sec": 0.00041616696398705244
       },
       {
         "nodeid": "cflow_platform/tests/test_failure_parser.py::test_parse_pytest_failures_from_sample_output",
         "outcome": "passed",
-        "duration_sec": 9.354192297905684e-05
+        "duration_sec": 8.79999715834856e-05
       },
       {
         "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_parse_pytest_output_extracts_summary_and_failures",
         "outcome": "passed",
-        "duration_sec": 6.466696504503489e-05
+        "duration_sec": 6.220804061740637e-05
       },
       {
         "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_no_tests_path_returns_nonzero",
         "outcome": "passed",
-        "duration_sec": 0.12605658394750208
+        "duration_sec": 0.12877000006847084
       },
       {
         "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_with_passing_test_succeeds",
         "outcome": "passed",
-        "duration_sec": 0.12342708290088922
+        "duration_sec": 0.12928633310366422
       },
       {
         "nodeid": "cflow_platform/tests/test_unified_rag_core.py::test_unified_enterprise_rag_build_index_payload_smoke",
         "outcome": "failed",
-        "duration_sec": 0.00152133300434798,
+        "duration_sec": 0.0015622919891029596,
         "longrepr": "def test_unified_enterprise_rag_build_index_payload_smoke():\n>       from cflow_platform.core.services.unified_enterprise_rag import UnifiedEnterpriseRAG\n\ncflow_platform/tests/test_unified_rag_core.py:7: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ncflow_platform/core/services/unified_enterprise_rag.py:12: in <module>\n    from cflow_platform.core.services.enterprise_rag.enterprise_embedding_service import (\ncflow_platform/core/services/enterprise_rag/enterprise_embedding_service.py:13: in <module>\n    from cflow_platform.core.services.ai.embedding_service import get_embedding_service\ncflow_platform/core/services/ai/embedding_service.py:14: in <module>\n    from cflow_platform.core.embeddings.enhanced_apple_silicon_accelerator import (\ncflow_platform/core/embeddings/enhanced_apple_silicon_accelerator.py:46: in <module>\n    import torch\n<frozen importlib._bootstrap>:1176: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1138: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:1078: in _find_spec\n    ???\n.venv/lib/python3.11/site-packages/_pytest/assertion/rewrite.py:100: in find_spec\n    if self._early_rewrite_bailout(name, state):\n       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n.venv/lib/python3.11/site-packages/_pytest/assertion/rewrite.py:218: in _early_rewrite_bailout\n    if fnmatch_ex(pat, path):\n       ^^^^^^^^^^^^^^^^^^^^^\n.venv/lib/python3.11/site-packages/_pytest/pathlib.py:437: in fnmatch_ex\n    path = PurePath(path)\n           ^^^^^^^^^^^^^^\n../../../.local/share/uv/python/cpython-3.11.13-macos-aarch64-none/lib/python3.11/pathlib.py:477: in __new__\n    return cls._from_parts(args)\n           ^^^^^^^^^^^^^^^^^^^^^\n../../../.local/share/uv/python/cpython-3.11.13-macos-aarch64-none/lib/python3.11/pathlib.py:509: in _from_parts\n    drv, root, parts = self._parse_args(args)\n                       ^^^^^^^^^^^^^^^^^^^^^^\n../../../.local/share/uv/python/cpython-3.11.13-macos-aarch64-none/lib/python3.11/pathlib.py:502: in _parse_args\n    return cls._flavour.parse_parts(parts)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <pathlib._PosixFlavour object at 0x10085c6d0>, parts = ['torch.py']\n\n    def parse_parts(self, parts):\n        parsed = []\n        sep = self.sep\n        altsep = self.altsep\n        drv = root = ''\n>       it = reversed(parts)\n             ^^^^^^^^^^^^^^^\nE       RecursionError: maximum recursion depth exceeded while calling a Python object\n\n../../../.local/share/uv/python/cpython-3.11.13-macos-aarch64-none/lib/python3.11/pathlib.py:61: RecursionError"
       }
     ]
@@ -675,7 +868,7 @@ Use this file for AI-assisted planning. Iteration checkpoints will mirror here.
 }
 ```
 
-# Iteration 1 — 2025-09-02T18:39:01
+# Iteration 1 — 2025-09-02T18:40:38
 
 
 ## Plan
@@ -716,63 +909,63 @@ Use this file for AI-assisted planning. Iteration checkpoints will mirror here.
       "total": 11,
       "exit_code": 1
     },
-    "duration_sec": 1.5645759580656886,
+    "duration_sec": 2.086905666976236,
     "tests": [
       {
         "nodeid": "cflow_platform/tests/test_agent_loop_lint_gate.py::test_agent_loop_respects_pre_commit_gate_success",
         "outcome": "failed",
-        "duration_sec": 0.541972583043389,
-        "longrepr": "monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x103262b10>\n\n    def test_agent_loop_respects_pre_commit_gate_success(monkeypatch) -> None:\n        monkeypatch.setenv(\"CFLOW_PRE_COMMIT_MODE\", \"pass\")\n        result = loop(\"quick\", max_iterations=1)\n>       assert result.get(\"status\") == \"success\"\nE       AssertionError: assert 'error' == 'success'\nE         \nE         - success\nE         + error\n\ncflow_platform/tests/test_agent_loop_lint_gate.py:11: AssertionError"
+        "duration_sec": 0.7876130830263719,
+        "longrepr": "monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d119c50>\n\n    def test_agent_loop_respects_pre_commit_gate_success(monkeypatch) -> None:\n        monkeypatch.setenv(\"CFLOW_PRE_COMMIT_MODE\", \"pass\")\n        result = loop(\"quick\", max_iterations=1)\n>       assert result.get(\"status\") == \"success\"\nE       AssertionError: assert 'error' == 'success'\nE         \nE         - success\nE         + error\n\ncflow_platform/tests/test_agent_loop_lint_gate.py:11: AssertionError"
       },
       {
         "nodeid": "cflow_platform/tests/test_agent_loop_lint_gate.py::test_agent_loop_respects_pre_commit_gate_failure",
         "outcome": "passed",
-        "duration_sec": 0.5278455830411986
+        "duration_sec": 0.778301625046879
       },
       {
         "nodeid": "cflow_platform/tests/test_contracts.py::test_core_public_api_surfaces",
         "outcome": "passed",
-        "duration_sec": 0.00014004099648445845
+        "duration_sec": 0.00014329201076179743
       },
       {
         "nodeid": "cflow_platform/tests/test_contracts.py::test_direct_client_exec_unknown_tool",
         "outcome": "passed",
-        "duration_sec": 9.999994654208422e-05
+        "duration_sec": 0.00013308296911418438
       },
       {
         "nodeid": "cflow_platform/tests/test_contracts.py::test_tool_dispatch_families",
         "outcome": "passed",
-        "duration_sec": 0.016899332986213267
+        "duration_sec": 0.08332066598813981
       },
       {
         "nodeid": "cflow_platform/tests/test_embeddings_core.py::test_core_accelerator_generates_embeddings_without_hf_optin",
         "outcome": "passed",
-        "duration_sec": 0.00040545803494751453
+        "duration_sec": 0.0004503329982981086
       },
       {
         "nodeid": "cflow_platform/tests/test_failure_parser.py::test_parse_pytest_failures_from_sample_output",
         "outcome": "passed",
-        "duration_sec": 9.033293463289738e-05
+        "duration_sec": 9.050010703504086e-05
       },
       {
         "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_parse_pytest_output_extracts_summary_and_failures",
         "outcome": "passed",
-        "duration_sec": 6.387499161064625e-05
+        "duration_sec": 6.449990905821323e-05
       },
       {
         "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_no_tests_path_returns_nonzero",
         "outcome": "passed",
-        "duration_sec": 0.12239850009791553
+        "duration_sec": 0.13275041698943824
       },
       {
         "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_with_passing_test_succeeds",
         "outcome": "passed",
-        "duration_sec": 0.12400962505489588
+        "duration_sec": 0.1296364590525627
       },
       {
         "nodeid": "cflow_platform/tests/test_unified_rag_core.py::test_unified_enterprise_rag_build_index_payload_smoke",
         "outcome": "failed",
-        "duration_sec": 0.113838667050004,
+        "duration_sec": 0.0073339579394087195,
         "longrepr": "def test_unified_enterprise_rag_build_index_payload_smoke():\n>       from cflow_platform.core.services.unified_enterprise_rag import UnifiedEnterpriseRAG\n\ncflow_platform/tests/test_unified_rag_core.py:7: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ncflow_platform/core/services/unified_enterprise_rag.py:12: in <module>\n    from cflow_platform.core.services.enterprise_rag.enterprise_embedding_service import (\ncflow_platform/core/services/enterprise_rag/enterprise_embedding_service.py:13: in <module>\n    from cflow_platform.core.services.ai.embedding_service import get_embedding_service\ncflow_platform/core/services/ai/embedding_service.py:14: in <module>\n    from cflow_platform.core.embeddings.enhanced_apple_silicon_accelerator import (\ncflow_platform/core/embeddings/enhanced_apple_silicon_accelerator.py:46: in <module>\n    import torch\n.venv/lib/python3.11/site-packages/torch/__init__.py:1840: in <module>\n    from torch import storage as storage  # usort: skip\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n.venv/lib/python3.11/site-packages/torch/storage.py:27: in <module>\n    import numpy as np\n.venv/lib/python3.11/site-packages/numpy/__init__.py:112: in <module>\n    from numpy.__config__ import show_config\n.venv/lib/python3.11/site-packages/numpy/__config__.py:4: in <module>\n    from numpy._core._multiarray_umath import (\n.venv/lib/python3.11/site-packages/numpy/_core/__init__.py:22: in <module>\n    from . import multiarray\n<frozen importlib._bootstrap>:1173: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:170: in __enter__\n    ???\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nname = 'numpy._core.multiarray'\n\n>   ???\nE   RecursionError: maximum recursion depth exceeded while calling a Python object\n\n<frozen importlib._bootstrap>:185: RecursionError"
       }
     ]
@@ -795,470 +988,4 @@ Use this file for AI-assisted planning. Iteration checkpoints will mirror here.
 }
 ```
 
-# Iteration 1 — 2025-09-02T18:39:02
-
-
-## Plan
-
-```json
-{
-  "status": "success",
-  "plan": [
-    {
-      "step": 1,
-      "action": "run-tests",
-      "paths": [
-        "cflow_platform/tests"
-      ]
-    },
-    {
-      "step": 2,
-      "action": "lint-precommit"
-    }
-  ]
-}
-```
-
-## Verify
-
-```json
-{
-  "status": "error",
-  "verification": {
-    "status": "failure",
-    "summary": {
-      "passed": 0,
-      "failed": 0,
-      "errors": 0,
-      "skipped": 0,
-      "xfailed": 0,
-      "xpassed": 0,
-      "total": 0,
-      "exit_code": 3
-    },
-    "duration_sec": 0.07977000006940216,
-    "tests": []
-  },
-  "lint": {
-    "status": "success",
-    "simulated": true
-  }
-}
-```
-
-## Meta
-
-```json
-{
-  "run_id": "local-run",
-  "task_id": "",
-  "iteration": 1,
-  "profile": "quick"
-}
-```
-
-# Iteration 1 — 2025-09-02T18:39:02
-
-
-## Plan
-
-```json
-{
-  "status": "success",
-  "plan": [
-    {
-      "step": 1,
-      "action": "run-tests",
-      "paths": [
-        "cflow_platform/tests"
-      ]
-    },
-    {
-      "step": 2,
-      "action": "lint-precommit"
-    }
-  ]
-}
-```
-
-## Verify
-
-```json
-{
-  "status": "error",
-  "verification": {
-    "status": "failure",
-    "summary": {
-      "passed": 0,
-      "failed": 0,
-      "errors": 0,
-      "skipped": 0,
-      "xfailed": 0,
-      "xpassed": 0,
-      "total": 0,
-      "exit_code": 3
-    },
-    "duration_sec": 0.0781224169768393,
-    "tests": []
-  },
-  "lint": {
-    "status": "error",
-    "simulated": true
-  }
-}
-```
-
-## Meta
-
-```json
-{
-  "run_id": "local-run",
-  "task_id": "",
-  "iteration": 1,
-  "profile": "quick"
-}
-```
-
-# Iteration 1 — 2025-09-02T18:39:02
-
-
-## Plan
-
-```json
-{
-  "status": "success",
-  "plan": [
-    {
-      "step": 1,
-      "action": "run-tests",
-      "paths": [
-        "cflow_platform/tests"
-      ]
-    },
-    {
-      "step": 2,
-      "action": "lint-precommit"
-    }
-  ]
-}
-```
-
-## Verify
-
-```json
-{
-  "status": "error",
-  "verification": {
-    "status": "failure",
-    "summary": {
-      "passed": 9,
-      "failed": 2,
-      "errors": 0,
-      "skipped": 0,
-      "xfailed": 0,
-      "xpassed": 0,
-      "total": 11,
-      "exit_code": 1
-    },
-    "duration_sec": 0.5389510000823066,
-    "tests": [
-      {
-        "nodeid": "cflow_platform/tests/test_agent_loop_lint_gate.py::test_agent_loop_respects_pre_commit_gate_success",
-        "outcome": "failed",
-        "duration_sec": 0.08211958396714181,
-        "longrepr": "monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10a8f1690>\n\n    def test_agent_loop_respects_pre_commit_gate_success(monkeypatch) -> None:\n        monkeypatch.setenv(\"CFLOW_PRE_COMMIT_MODE\", \"pass\")\n        result = loop(\"quick\", max_iterations=1)\n>       assert result.get(\"status\") == \"success\"\nE       AssertionError: assert 'error' == 'success'\nE         \nE         - success\nE         + error\n\ncflow_platform/tests/test_agent_loop_lint_gate.py:11: AssertionError"
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_agent_loop_lint_gate.py::test_agent_loop_respects_pre_commit_gate_failure",
-        "outcome": "passed",
-        "duration_sec": 0.08029879198875278
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_contracts.py::test_core_public_api_surfaces",
-        "outcome": "passed",
-        "duration_sec": 0.00023783394135534763
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_contracts.py::test_direct_client_exec_unknown_tool",
-        "outcome": "passed",
-        "duration_sec": 0.00011387490667402744
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_contracts.py::test_tool_dispatch_families",
-        "outcome": "passed",
-        "duration_sec": 0.006179749965667725
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_embeddings_core.py::test_core_accelerator_generates_embeddings_without_hf_optin",
-        "outcome": "passed",
-        "duration_sec": 0.00043720798566937447
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_failure_parser.py::test_parse_pytest_failures_from_sample_output",
-        "outcome": "passed",
-        "duration_sec": 0.0001040829811245203
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_parse_pytest_output_extracts_summary_and_failures",
-        "outcome": "passed",
-        "duration_sec": 6.65830448269844e-05
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_no_tests_path_returns_nonzero",
-        "outcome": "passed",
-        "duration_sec": 0.1276064170524478
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_with_passing_test_succeeds",
-        "outcome": "passed",
-        "duration_sec": 0.12471329199615866
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_unified_rag_core.py::test_unified_enterprise_rag_build_index_payload_smoke",
-        "outcome": "failed",
-        "duration_sec": 0.001513458089902997,
-        "longrepr": "def test_unified_enterprise_rag_build_index_payload_smoke():\n>       from cflow_platform.core.services.unified_enterprise_rag import UnifiedEnterpriseRAG\n\ncflow_platform/tests/test_unified_rag_core.py:7: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ncflow_platform/core/services/unified_enterprise_rag.py:12: in <module>\n    from cflow_platform.core.services.enterprise_rag.enterprise_embedding_service import (\ncflow_platform/core/services/enterprise_rag/enterprise_embedding_service.py:13: in <module>\n    from cflow_platform.core.services.ai.embedding_service import get_embedding_service\ncflow_platform/core/services/ai/embedding_service.py:14: in <module>\n    from cflow_platform.core.embeddings.enhanced_apple_silicon_accelerator import (\ncflow_platform/core/embeddings/enhanced_apple_silicon_accelerator.py:46: in <module>\n    import torch\n<frozen importlib._bootstrap>:1176: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1138: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:1078: in _find_spec\n    ???\n.venv/lib/python3.11/site-packages/_pytest/assertion/rewrite.py:100: in find_spec\n    if self._early_rewrite_bailout(name, state):\n       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n.venv/lib/python3.11/site-packages/_pytest/assertion/rewrite.py:218: in _early_rewrite_bailout\n    if fnmatch_ex(pat, path):\n       ^^^^^^^^^^^^^^^^^^^^^\n.venv/lib/python3.11/site-packages/_pytest/pathlib.py:437: in fnmatch_ex\n    path = PurePath(path)\n           ^^^^^^^^^^^^^^\n../../../.local/share/uv/python/cpython-3.11.13-macos-aarch64-none/lib/python3.11/pathlib.py:477: in __new__\n    return cls._from_parts(args)\n           ^^^^^^^^^^^^^^^^^^^^^\n../../../.local/share/uv/python/cpython-3.11.13-macos-aarch64-none/lib/python3.11/pathlib.py:509: in _from_parts\n    drv, root, parts = self._parse_args(args)\n                       ^^^^^^^^^^^^^^^^^^^^^^\n../../../.local/share/uv/python/cpython-3.11.13-macos-aarch64-none/lib/python3.11/pathlib.py:502: in _parse_args\n    return cls._flavour.parse_parts(parts)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <pathlib._PosixFlavour object at 0x10085c6d0>, parts = ['torch.py']\n\n    def parse_parts(self, parts):\n        parsed = []\n        sep = self.sep\n        altsep = self.altsep\n        drv = root = ''\n>       it = reversed(parts)\n             ^^^^^^^^^^^^^^^\nE       RecursionError: maximum recursion depth exceeded while calling a Python object\n\n../../../.local/share/uv/python/cpython-3.11.13-macos-aarch64-none/lib/python3.11/pathlib.py:61: RecursionError"
-      }
-    ]
-  },
-  "lint": {
-    "status": "success",
-    "simulated": true
-  }
-}
-```
-
-## Meta
-
-```json
-{
-  "run_id": "local-run",
-  "task_id": "",
-  "iteration": 1,
-  "profile": "quick"
-}
-```
-
-# Iteration 1 — 2025-09-02T18:39:02
-
-
-## Plan
-
-```json
-{
-  "status": "success",
-  "plan": [
-    {
-      "step": 1,
-      "action": "run-tests",
-      "paths": [
-        "cflow_platform/tests"
-      ]
-    },
-    {
-      "step": 2,
-      "action": "lint-precommit"
-    }
-  ]
-}
-```
-
-## Verify
-
-```json
-{
-  "status": "error",
-  "verification": {
-    "status": "failure",
-    "summary": {
-      "passed": 0,
-      "failed": 0,
-      "errors": 0,
-      "skipped": 0,
-      "xfailed": 0,
-      "xpassed": 0,
-      "total": 0,
-      "exit_code": 3
-    },
-    "duration_sec": 0.08059591590426862,
-    "tests": []
-  },
-  "lint": {
-    "status": "success",
-    "simulated": true
-  }
-}
-```
-
-## Meta
-
-```json
-{
-  "run_id": "local-run",
-  "task_id": "",
-  "iteration": 1,
-  "profile": "quick"
-}
-```
-
-# Iteration 1 — 2025-09-02T18:39:02
-
-
-## Plan
-
-```json
-{
-  "status": "success",
-  "plan": [
-    {
-      "step": 1,
-      "action": "run-tests",
-      "paths": [
-        "cflow_platform/tests"
-      ]
-    },
-    {
-      "step": 2,
-      "action": "lint-precommit"
-    }
-  ]
-}
-```
-
-## Verify
-
-```json
-{
-  "status": "error",
-  "verification": {
-    "status": "failure",
-    "summary": {
-      "passed": 0,
-      "failed": 0,
-      "errors": 0,
-      "skipped": 0,
-      "xfailed": 0,
-      "xpassed": 0,
-      "total": 0,
-      "exit_code": 3
-    },
-    "duration_sec": 0.07783637510146946,
-    "tests": []
-  },
-  "lint": {
-    "status": "error",
-    "simulated": true
-  }
-}
-```
-
-## Meta
-
-```json
-{
-  "run_id": "local-run",
-  "task_id": "",
-  "iteration": 1,
-  "profile": "quick"
-}
-```
-
-# Iteration 1 — 2025-09-02T18:39:03
-
-
-## Plan
-
-```json
-{
-  "status": "success",
-  "plan": [
-    {
-      "step": 1,
-      "action": "run-tests",
-      "paths": [
-        "cflow_platform/tests"
-      ]
-    },
-    {
-      "step": 2,
-      "action": "lint-precommit"
-    }
-  ]
-}
-```
-
-## Verify
-
-```json
-{
-  "status": "error",
-  "verification": {
-    "status": "failure",
-    "summary": {
-      "passed": 9,
-      "failed": 2,
-      "errors": 0,
-      "skipped": 0,
-      "xfailed": 0,
-      "xpassed": 0,
-      "total": 11,
-      "exit_code": 1
-    },
-    "duration_sec": 0.5347702921135351,
-    "tests": [
-      {
-        "nodeid": "cflow_platform/tests/test_agent_loop_lint_gate.py::test_agent_loop_respects_pre_commit_gate_success",
-        "outcome": "failed",
-        "duration_sec": 0.08273850008845329,
-        "longrepr": "monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1032e8e90>\n\n    def test_agent_loop_respects_pre_commit_gate_success(monkeypatch) -> None:\n        monkeypatch.setenv(\"CFLOW_PRE_COMMIT_MODE\", \"pass\")\n        result = loop(\"quick\", max_iterations=1)\n>       assert result.get(\"status\") == \"success\"\nE       AssertionError: assert 'error' == 'success'\nE         \nE         - success\nE         + error\n\ncflow_platform/tests/test_agent_loop_lint_gate.py:11: AssertionError"
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_agent_loop_lint_gate.py::test_agent_loop_respects_pre_commit_gate_failure",
-        "outcome": "passed",
-        "duration_sec": 0.0798533329507336
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_contracts.py::test_core_public_api_surfaces",
-        "outcome": "passed",
-        "duration_sec": 0.00019779207650572062
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_contracts.py::test_direct_client_exec_unknown_tool",
-        "outcome": "passed",
-        "duration_sec": 0.00010516704060137272
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_contracts.py::test_tool_dispatch_families",
-        "outcome": "passed",
-        "duration_sec": 0.005907500046305358
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_embeddings_core.py::test_core_accelerator_generates_embeddings_without_hf_optin",
-        "outcome": "passed",
-        "duration_sec": 0.000411874963901937
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_failure_parser.py::test_parse_pytest_failures_from_sample_output",
-        "outcome": "passed",
-        "duration_sec": 0.00010204105637967587
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_parse_pytest_output_extracts_summary_and_failures",
-        "outcome": "passed",
-        "duration_sec": 6.162503268569708e-05
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_no_tests_path_returns_nonzero",
-        "outcome": "passed",
-        "duration_sec": 0.12388354202266783
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_testing_run_pytest.py::test_run_pytest_with_passing_test_succeeds",
-        "outcome": "passed",
-        "duration_sec": 0.12498137506190687
-      },
-      {
-        "nodeid": "cflow_platform/tests/test_unified_rag_core.py::test_unified_enterprise_rag_build_index_payload_smoke",
-        "outcome": "failed",
-        "duration_sec": 0.001478457939811051,
-        "longrepr": "def test_unified_enterprise_rag_build_index_payload_smoke():\n>       from cflow_platform.core.services.unified_enterprise_rag import UnifiedEnterpriseRAG\n\ncflow_platform/tests/test_unified_rag_core.py:7: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ncflow_platform/core/services/unified_enterprise_rag.py:12: in <module>\n    from cflow_platform.core.services.enterprise_rag.enterprise_embedding_service import (\ncflow_platform/core/services/enterprise_rag/enterprise_embedding_service.py:13: in <module>\n    from cflow_platform.core.services.ai.embedding_service import get_embedding_service\ncflow_platform/core/services/ai/embedding_service.py:14: in <module>\n    from cflow_platform.core.embeddings.enhanced_apple_silicon_accelerator import (\ncflow_platform/core/embeddings/enhanced_apple_silicon_accelerator.py:46: in <module>\n    import torch\n<frozen importlib._bootstrap>:1176: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1138: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:1078: in _find_spec\n    ???\n.venv/lib/python3.11/site-packages/_pytest/assertion/rewrite.py:100: in find_spec\n    if self._early_rewrite_bailout(name, state):\n       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n.venv/lib/python3.11/site-packages/_pytest/assertion/rewrite.py:218: in _early_rewrite_bailout\n    if fnmatch_ex(pat, path):\n       ^^^^^^^^^^^^^^^^^^^^^\n.venv/lib/python3.11/site-packages/_pytest/pathlib.py:437: in fnmatch_ex\n    path = PurePath(path)\n           ^^^^^^^^^^^^^^\n../../../.local/share/uv/python/cpython-3.11.
+# It
