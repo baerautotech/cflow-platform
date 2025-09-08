@@ -9,6 +9,9 @@ This package provides Phase 1 wrappers to allow early consumption of CFlow APIs 
   - `cflow-verify-env` → verifies required env keys per operation via the monorepo verifier
   - `cflow-test-runner` → runs pytest and returns structured JSON (supports uv)
   - `cflow-agent-loop` → unified CLI agent loop with planning/verify cycle
+  - `cflow-codegen` → runs codegen.generate_edits to write `.cerebraflow/edits.json`
+  - `cflow-provider-probe` → probes LLM provider connectivity (Gate P)
+  - `cflow-provider-aws` → optional AWS provider/profile MCP tools (off by default)
   - `cflow-sync` → manage vendored unified realtime sync service (Supabase/MinIO/ChromaDB/SQLite)
   - `cflow-caef` → basic CAEF orchestrator wrapper
 
@@ -46,6 +49,9 @@ cflow-test-runner --verbose --no-in-process cflow_platform/tests
 
 # Agent loop
 cflow-agent-loop --profile quick --max-iter 1 --json
+
+# Optional: insert codegen before implement (M3)
+OPENROUTER_API_KEY=... CFLOW_ENABLE_CODEGEN=1 cflow-agent-loop --profile quick --max-iter 1 --json
 
 # Unified realtime sync (Supabase/MinIO/ChromaDB/SQLite)
 # Required env:

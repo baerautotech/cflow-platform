@@ -24,7 +24,12 @@
   - `CFLOW_TELEMETRY=1` (accepted truthy: `1`, `true`, `yes`, `on`)
   - Optional output override: `CFLOW_TELEMETRY_FILE=/abs/path/to/telemetry.jsonl`
 - Events recorded as JSONL to `.cerebraflow/logs/telemetry.jsonl` by default.
-- Examples of emitted events: `agent_loop.start`, `agent_loop.iteration.begin`, `agent_loop.stop.oscillation`, `tests.completed`.
+- Events emitted:
+  - `agent_loop.start` { profile, max_iterations }
+  - `agent_loop.iteration.begin` { iteration }
+  - `agent_loop.iteration.success` { iteration }
+  - `agent_loop.stop.oscillation` | `agent_loop.stop.noop` { reason, limit, consecutive }
+  - `agent_loop.end` { status, iterations, budgets?, stop? }
 - Guardrails: no sensitive payloads; best-effort logging only; failures never affect run outcome.
 
 Reference: `https://martinfowler.com/articles/build-own-coding-agent.html?utm_source=tldrai`
