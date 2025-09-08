@@ -53,6 +53,7 @@ cflow-docs-backfill = "cflow_platform.cli.docs_backfill:cli"
 cflow-chroma-reset = "cflow_platform.cli.chroma_reset:cli"
 cflow-tasks-backfill = "cflow_platform.cli.tasks_backfill:cli"
 cflow-provider-probe = "cflow_platform.cli.provider_probe:cli"
+cflow-codegen = "cflow_platform.cli.codegen_cli:cli"
 
 
 

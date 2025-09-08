@@ -143,6 +143,10 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
         mod = load_handler_module("llm_provider_handlers")
         handler = mod.LLMProviderHandlers()  # type: ignore[attr-defined]
         return await handler.handle_probe(kwargs or {})
+    if tool_name in {"codegen.generate_edits"}:
+        mod = load_handler_module("codegen_handlers")
+        handler = mod.CodegenHandlers()  # type: ignore[attr-defined]
+        return await handler.handle_generate_edits(kwargs or {})
     if tool_name == "code_reasoning.plan":
         mod = load_handler_module("reasoning_handlers")
         handler = mod.ReasoningHandlers()  # type: ignore[attr-defined]
