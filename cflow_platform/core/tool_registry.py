@@ -175,6 +175,26 @@ class ToolRegistry:
             )
         ]
 
+        # Codegen
+        tools += [
+            tool(
+                "codegen.generate_edits",
+                "Generate minimal EditPlan[] for the task and write .cerebraflow/edits.json",
+                {
+                    "type": "object",
+                    "properties": {
+                        "task": {"type": "string"},
+                        "context_files": {"type": "array", "items": {"type": "string"}},
+                        "apis": {"type": "array", "items": {"type": "object"}},
+                        "tests": {"type": "array", "items": {"type": "string"}},
+                        "constraints": {"type": "object"},
+                        "success_criteria": {"type": "array", "items": {"type": "object"}},
+                    },
+                    "required": ["task"],
+                },
+            )
+        ]
+
         return tools
 
     @staticmethod
