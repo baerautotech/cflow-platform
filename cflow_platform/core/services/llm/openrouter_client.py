@@ -118,4 +118,3 @@ async def probe(model: Optional[str] = None, prompt: Optional[str] = None) -> Di
         "raw": {k: v for k, v in data.items() if k in {"id", "model", "usage"}},
     }
 
-

@@ -37,4 +37,3 @@ def cli() -> int:
     print(json.dumps(result))
     return 0 if str(result.get("status")) == "success" else 2
 
-

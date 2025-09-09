@@ -159,6 +159,7 @@ class ToolRegistry:
             ),
         ]
 
+<<<<<<< HEAD
         # Desktop notifications (optional, off by default)
         tools += [
             tool(
@@ -176,6 +177,8 @@ class ToolRegistry:
             )
         ]
 
+=======
+>>>>>>> cursor/evaluate-deepseek-coder-v2-integration-for-codegen-a1c4
         # LLM provider
         tools += [
             tool(
