@@ -129,6 +129,27 @@ def verify(profile: InstructionProfile) -> Dict[str, Any]:
                             "summary": summary_text,
                             "sources": docs.get("sources", []),
                         }
+                        # Persist doc excerpts to memory for knowledge graph queries
+                        try:
+                            exec_fn = get_direct_client_executor()
+                            import asyncio as _aio
+                            content_text = ("\n\n".join(docs.get("notes", [])) or summary_text or "").strip()
+                            if content_text:
+                                _aio.get_event_loop().run_until_complete(
+                                    exec_fn(
+                                        "memory_add",
+                                        content=content_text,
+                                        userId=os.getenv("CFLOW_USER_ID", "system"),
+                                        metadata={
+                                            "type": "docs",
+                                            "iteration": int(os.getenv("CFLOW_ITER_HINT", "0") or 0),
+                                            "symbols": symbols or [],
+                                            "sources": docs.get("sources", []),
+                                        },
+                                    )
+                                )
+                        except Exception:
+                            pass
                     except Exception:
                         result["docs"] = {"enabled": False}
         # After tests, enforce lint/pre-commit gating (fail-closed)
@@ -450,6 +471,24 @@ def loop(
                         source="agent_loop.plan",
                     )
                 )
+                # Add compact plan summary to improve KG retrieval
+                try:
+                    summary = ", ".join([s.get("instruction", "") for s in proc_steps[:3] if isinstance(s, dict)])
+                    if summary:
+                        asyncio.get_event_loop().run_until_complete(
+                            executor(
+                                "memory_add",
+                                content=f"PLAN SUMMARY: {summary}",
+                                userId=os.getenv("CFLOW_USER_ID", "system"),
+                                metadata={
+                                    "type": "procedure",
+                                    "profile": profile.name,
+                                    "source": "agent_loop.plan_summary",
+                                },
+                            )
+                        )
+                except Exception:
+                    pass
             # Lightweight planning snapshot as a general memory
             asyncio.get_event_loop().run_until_complete(
                 executor(

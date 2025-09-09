@@ -56,6 +56,28 @@ cflow-test-runner --verbose --no-in-process cflow_platform/tests
 cflow-agent-loop --profile quick --max-iter 1 --json
 ```
 
+### Knowledge Graph (KG) quick queries
+
+```bash
+# Search plan summaries or docs excerpts with low similarity threshold
+uv run python -m cflow_platform.cli.kg_query "PLAN SUMMARY" --limit 5 --min-score 0.0
+uv run python -m cflow_platform.cli.kg_query "type:procedure" --limit 5 --min-score 0.0
+uv run python -m cflow_platform.cli.kg_query "Example excerpt" --limit 5 --min-score 0.0
+```
+
+```python
+# Programmatic KG query
+import asyncio, json
+from cflow_platform.core.public_api import get_direct_client_executor
+
+async def main():
+    dc = get_direct_client_executor()
+    res = await dc("memory_search", query="PLAN SUMMARY", userId="system", limit=5, min_score=0.0)
+    print(json.dumps(res, indent=2))
+
+asyncio.run(main())
+```
+
 ### Memory & Sync (Supabase/MinIO/ChromaDB/SQLite)
 
 See `./MemoryAndSync.md` for full details. Minimal examples:

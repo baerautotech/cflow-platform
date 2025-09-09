@@ -55,6 +55,21 @@ class SystemHandlers:
         from cflow_platform.core.tool_registry import ToolRegistry  # type: ignore
         return {"status": "success", "version": ToolRegistry.get_version_info()}
 
+    async def handle_llm_provider_probe(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Probe the configured LLM provider (Gate P)."""
+        try:
+            model = (arguments.get("model") or os.getenv("CFLOW_LLM_MODEL") or "").strip()  # type: ignore[union-attr]
+        except Exception:
+            model = ""
+        prompt = (arguments or {}).get("prompt") if isinstance(arguments, dict) else None
+        try:
+            from cflow_platform.core.services.llm.provider_selector import probe_provider  # type: ignore
+            import asyncio
+            res = asyncio.get_event_loop().run_until_complete(probe_provider(model=model or None, prompt=(prompt or None)))
+            return res
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
+
 
 def json_dump(data: Dict[str, Any]) -> str:
     import json

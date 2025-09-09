@@ -1,0 +1,23 @@
+name: Realtime Agent Health
+
+on:
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  realtime-health:
+    name: Realtime Agent Health Check (macOS)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run realtime agent health script
+        run: |
+          python .cerebraflow/scripts/realtime_agent_health.py
+

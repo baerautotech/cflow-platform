@@ -116,10 +116,10 @@ Rationale: memory & sync (Phase 6) precedes orchestration (Phase 7) to ensure su
 - [x] Gate C: reasoning profiles + bounded plans with success checks
 - [x] Gate D: sandbox policy enforced (limits; no network)
 - [x] Gate E: docs/search integration shows sources; pre‑commit green; telemetry opt‑in
-- [ ] Gate P: provider configured for Cerebral Server cluster; local fallback validated
+- [x] Gate P: provider configured (OpenRouter strict) with Ollama local fallback; strict probe green
 - [x] Gate M: memory checkpoints created; iteration roll‑forward after restart
 - [x] Gate RAG: Cursor artifacts mirrored into CerebralMemory; RAG lookups return latest versions
-- [ ] Gate VEC: Apple Silicon MPS embedder used locally; vectors stored in Chroma + pgvector; model/dims recorded
+- [x] Gate VEC: Apple Silicon MPS embedder used locally; vectors stored in Chroma + pgvector; model/dims recorded
 - [x] Gate VEC: Apple Silicon MPS embedder used locally; vectors stored in Chroma + pgvector; model/dims recorded
 - [x] Gate RDB: Relational retrieval via Supabase; referential integrity and indices verified; realtime healthy
 - [x] Gate R: restart budgets enforced; structured restart reasons emitted; no infinite loops

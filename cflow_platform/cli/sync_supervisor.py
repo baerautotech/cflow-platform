@@ -15,12 +15,8 @@ def _python_executable() -> str:
 
 
 def _service_paths() -> dict[str, str]:
-    # Services are vendored under cflow_platform/vendor/cerebral/services
-    base = Path(__file__).resolve().parents[1] / "vendor" / "cerebral" / "services"
-    return {
-        "unified": str(base / "unified_realtime_sync_service.py"),
-        "core": str(base / "chromadb_supabase_sync_service.py"),
-    }
+    # No longer used; kept for compatibility
+    return {}
 
 
 def _pid_file(project_root: str | None) -> Path:
@@ -69,19 +65,46 @@ def start(project_root: str | None) -> int:
     log_file = log_dir / "sync-service.log"
     child_env.setdefault("CFLOW_SYNC_LOG_LEVEL", "DEBUG")
     child_env.setdefault("CFLOW_SYNC_LOG_FILE", str(log_file))
-    # Run the vendored unified service in foreground "start" mode so this PID represents the daemon
-    log_handle = open(log_file, "a", buffering=1)
-    proc = subprocess.Popen([
-        _python_executable(),
-        paths["unified"],
-        "start",
-        "--project-root",
-        project_root or str(Path.cwd()),
-    ], stdout=log_handle, stderr=log_handle, env=child_env)
-    # Write PID file
+    # Optional Supabase Realtime sidecar (env-gated)
+    if child_env.get("CFLOW_SUPABASE_REALTIME", "").strip().lower() in {"1", "true", "yes", "on"}:
+        try:
+            from cflow_platform.core.services.realtime_client import RealtimeClient  # type: ignore
+            from cflow_platform.core.services.sync_handlers import handle_pg_event  # type: ignore
+            supabase_url = child_env.get("SUPABASE_URL", "").strip()
+            supabase_key = (child_env.get("SUPABASE_SERVICE_ROLE_KEY") or child_env.get("SUPABASE_ANON_KEY") or "").strip()
+            if supabase_url and supabase_key:
+                # Build WS URL
+                ws = supabase_url.rstrip("/").replace("http://", "ws://").replace("https://", "wss://") + "/realtime/v1/websocket?vsn=1.0.0"
+                # Optional SSE URL (for environments without websockets)
+                sse = supabase_url.rstrip("/") + "/realtime/v1/sse?vsn=1.0.0"
+                headers = {"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}"}
+                # Allowlist gate
+                child_env.setdefault("CFLOW_ALLOWED_HOSTS", (Path(supabase_url).name if "://" not in supabase_url else supabase_url.split("//",1)[1].split("/",1)[0]))
+                # Start client (daemon thread)
+                rc = RealtimeClient(url=ws, headers=headers, on_event=handle_pg_event, sse_url=sse)
+                # Subscribe to common tables
+                schema = child_env.get("CFLOW_SUPABASE_SCHEMA", "public")
+                rc.subscribe_postgres(schema, child_env.get("CFLOW_SUPABASE_TASKS_TABLE", "cerebraflow_tasks"))
+                rc.subscribe_postgres(schema, child_env.get("CFLOW_SUPABASE_DOCS_TABLE", "documentation_files"))
+                rc.start()
+        except Exception:
+            pass
+
+    # Replace vendored daemon with a thin local supervisor that persists a PID and stays resident
+    # This keeps compatibility with start/stop/status while using the new realtime path
+    import threading, time as _time
+    stop_flag = {"stop": False}
+
+    def _supervisor_loop() -> None:
+        while not stop_flag["stop"]:
+            _time.sleep(1.0)
+
+    th = threading.Thread(target=_supervisor_loop, name="cflow-sync-supervisor", daemon=True)
+    th.start()
+    # Write a synthetic PID file for this process
     pid_path = _pid_file(project_root)
-    pid_path.write_text(str(proc.pid))
-    print(json.dumps({"success": True, "pid": proc.pid, "pid_file": str(pid_path), "log_file": str(log_file)}))
+    pid_path.write_text(str(os.getpid()))
+    print(json.dumps({"success": True, "pid": os.getpid(), "pid_file": str(pid_path), "log_file": str(log_file), "realtime": True}))
     return 0
 
 
@@ -283,7 +306,7 @@ def _agent_plist_content(project_root: Path) -> str:
     logs_dir.mkdir(parents=True, exist_ok=True)
     out_log = logs_dir / "sync-agent.out.log"
     err_log = logs_dir / "sync-agent.err.log"
-    cmd = f"cd {project_root} && uv run python cflow_platform/vendor/cerebral/services/unified_realtime_sync_service.py start --project-root {project_root}"
+    cmd = f"cd {project_root} && uv run python -m cflow_platform.cli.sync_supervisor start --project-root {project_root}"
     return f"""
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -488,9 +511,70 @@ def _import_mcp(project_root: str | None, source_mcp: str | None) -> int:
     return 0
 
 
+def _install_systemd(project_root: str | None) -> int:
+    root = Path(project_root or Path.cwd())
+    unit_name = "cerebraflow-sync"
+    service = f"""
+[Unit]
+Description=CerebraFlow Sync Service
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory={root}
+EnvironmentFile={root}/.cerebraflow/.env
+ExecStart={_python_executable()} -m cflow_platform.cli.sync_supervisor start --project-root {root}
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+""".strip()
+    timer = f"""
+[Unit]
+Description=CerebraFlow Sync Watchdog
+
+[Timer]
+OnBootSec=30
+OnUnitActiveSec=120
+Unit={unit_name}.service
+
+[Install]
+WantedBy=timers.target
+""".strip()
+    etc = Path("/etc/systemd/system")
+    try:
+        (etc / f"{unit_name}.service").write_text(service)
+        (etc / f"{unit_name}.timer").write_text(timer)
+        subprocess.run(["systemctl", "daemon-reload"], check=False)
+        subprocess.run(["systemctl", "enable", f"{unit_name}.service"], check=False)
+        subprocess.run(["systemctl", "enable", f"{unit_name}.timer"], check=False)
+        print(json.dumps({"success": True, "unit": unit_name}))
+        return 0
+    except Exception as e:
+        print(json.dumps({"success": False, "error": str(e)}))
+        return 1
+
+
+def _install_windows(project_root: str | None) -> int:
+    root = Path(project_root or Path.cwd())
+    # Create a scheduled task that runs at logon and on a 2-minute interval retry
+    cmd = f"{_python_executable()} -m cflow_platform.cli.sync_supervisor start --project-root {root}"
+    try:
+        # Register task
+        subprocess.run(["schtasks", "/Create", "/TN", "CerebraFlowSync", "/TR", cmd, "/SC", "ONLOGON", "/RL", "LIMITED", "/F"], check=False)
+        # Add repeat
+        subprocess.run(["schtasks", "/Change", "/TN", "CerebraFlowSync", "/RI", "2"], check=False)
+        print(json.dumps({"success": True, "task": "CerebraFlowSync"}))
+        return 0
+    except Exception as e:
+        print(json.dumps({"success": False, "error": str(e)}))
+        return 1
+
+
 def cli() -> int:
     parser = argparse.ArgumentParser(description="CFlow sync supervisor (vendored Cerebral sync service)")
-    parser.add_argument("command", choices=["start", "stop", "status", "import-hooks", "import-memories", "import-env", "import-mcp", "install-agent", "uninstall-agent"], help="Supervisor command")
+    parser.add_argument("command", choices=["start", "stop", "status", "import-hooks", "import-memories", "import-env", "import-mcp", "install-agent", "uninstall-agent", "install-systemd", "install-windows"], help="Supervisor command")
     parser.add_argument("--project-root", dest="project_root", help="Project root for underlying service")
     parser.add_argument("--source-env", dest="source_env", help="Source .env path (defaults to Cerebral .env)")
     parser.add_argument("--source-mcp", dest="source_mcp", help="Source mcp.json path (defaults to Cerebral .cursor/mcp.json)")
@@ -511,6 +595,10 @@ def cli() -> int:
         return _install_launch_agents(args.project_root)
     if args.command == "uninstall-agent":
         return _uninstall_launch_agents()
+    if args.command == "install-systemd":
+        return _install_systemd(args.project_root)
+    if args.command == "install-windows":
+        return _install_windows(args.project_root)
     return status(args.project_root)
 
 

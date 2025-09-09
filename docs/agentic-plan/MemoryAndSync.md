@@ -5,26 +5,27 @@
 - Dual‑write: add/search perform local embedding → store in Chroma + RDB + vector
 - Realtime: optional signals to trigger incremental pulls (off by default)
 
-### Concrete Integration (ChromaDBSupabaseSyncService)
+### Concrete Integration (Unified Memory)
 
 - Add Document flow:
   - Generate embedding with Apple Silicon accelerator; pad/truncate to dims
   - Chroma: `collection.add(ids, documents, metadatas, embeddings)`
-  - Supabase: upsert to `knowledge_items`; upsert to `knowledge_embeddings` with `content_chunk`, `embedding`, `chunk_index=0`, `content_type`
+  - Supabase (SDK-only): upsert to `knowledge_items`; upsert to `knowledge_embeddings` with `content_chunk`, `embedding`, `chunk_index=0`, `content_type`
   - Tenancy metadata: resolve `{tenant_id, user_id, project_id}` from env
 
 - Search flow:
-  - Embed query; attempt RPC `search_agentic_embeddings` with `{query_embedding, match_count, tenant_filter}`
-  - On RPC failure/missing: fallback to Chroma `collection.query`
+  - Embed query; attempt RPC `search_agentic_embeddings` with `{query_embedding, match_count, tenant_filter}` via SDK
+  - If vector path yields no rows, fallback to keyword search on `knowledge_items` via Postgrest SDK
 
 - Connectivity check CLI: `cflow-memory-check`
   - Loads `.env` and `.cerebraflow/.env`
-  - Validates `SUPABASE_URL`/key presence and runs add→search probe
+  - Validates `SUPABASE_URL`/key presence via SDK and RPC probe (no raw REST)
 
 ### Realtime (optional)
 
 - Enable publication `supabase_realtime`; add `knowledge_*` tables
 - Off by default; wire incremental pulls only when enabled
+- Pre-commit and CI enforce preference for system LaunchAgent; vendored daemon is deprecated
 
 ### Safety & Performance
 

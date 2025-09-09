@@ -23,7 +23,7 @@ def test_core_accelerator_generates_embeddings_without_hf_optin():
 
 def test_vector_padding_truncation_and_dims_metadata_roundtrip(monkeypatch):
     # Use the sync service to generate and normalize vectors; ensure dims metadata recorded
-    from cflow_platform.vendor.cerebral.services.chromadb_supabase_sync_service import (
+    from cflow_platform.core.services.chroma_sync_service import (
         ChromaDBSupabaseSyncService,
     )
 

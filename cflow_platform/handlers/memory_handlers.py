@@ -59,7 +59,12 @@ class MemoryHandlers:
             return {"success": False, "error": "query is required"}
         user_id = str(arguments.get("userId", "system"))
         limit = int(arguments.get("limit", 20))
-        results = await mem.search_memories(query=query, user_id=user_id, limit=limit)
+        # Optional tuning
+        min_score = arguments.get("min_score")
+        kwargs = {}
+        if isinstance(min_score, (int, float)):
+            kwargs["min_similarity_score"] = float(min_score)
+        results = await mem.search_memories(query=query, user_id=user_id, limit=limit, **kwargs)
         return {"success": True, "count": len(results), "results": results}
 
     async def handle_memory_store_procedure(self, arguments: Dict[str, Any]) -> Dict[str, Any]:

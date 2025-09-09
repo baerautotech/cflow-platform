@@ -1,27 +1,18 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
-import os
-
-from cflow_platform.core.services.llm.openrouter_client import probe as or_probe
+from typing import Any, Dict
 
 
 class LLMProviderHandlers:
     """Handlers for LLM provider operations (e.g., provider probe/gate P)."""
 
     async def handle_probe(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        # Ensure required env present
-        api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
-        if not api_key:
-            return {"status": "error", "message": "OPENROUTER_API_KEY missing"}
-
-        model: Optional[str] = arguments.get("model") or os.environ.get("CFLOW_LLM_MODEL", "deepseek/deepseek-coder-v2")
-        prompt: Optional[str] = arguments.get("prompt")
-
         try:
-            res = await or_probe(model=model, prompt=prompt)
-            return res
+            from cflow_platform.core.services.llm.provider_selector import probe_provider  # type: ignore
+            model = (arguments.get("model") or None) if isinstance(arguments, dict) else None
+            prompt = (arguments.get("prompt") or None) if isinstance(arguments, dict) else None
+            return await probe_provider(model=model, prompt=prompt)
         except Exception as e:
-            return {"status": "error", "message": str(e)}
+            return {"status": "error", "error": str(e)}
 
 

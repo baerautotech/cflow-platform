@@ -56,6 +56,8 @@ cflow-desktop-notify = "cflow_platform.cli.desktop_commander:cli"
 cflow-provider-probe = "cflow_platform.cli.provider_probe:cli"
 cflow-codegen = "cflow_platform.cli.codegen_cli:cli"
 cflow-provider-aws = "cflow_platform.cli.provider_aws:cli"
+cflow-chroma-tools = "cflow_platform.cli.chroma_tools:cli"
+cflow-supabase-backfill = "cflow_platform.cli.supabase_backfill:cli"
 
 
 

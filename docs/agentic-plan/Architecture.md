@@ -4,7 +4,7 @@
 - Test Runner: `cflow_platform/core/test_runner.py` provides in‑process and uv subprocess execution.
 - Failure Parser: `cflow_platform/core/failure_parser.py` parses pytest output into structured failures.
 - Minimal Edit Applier: `cflow_platform/core/minimal_edit_applier.py` applies scoped diffs (to integrate).
-- Memory/Sync: Local Chroma; remote Supabase RDB + pgvector via vendor sync services.
+- Memory/Sync: Local Chroma; remote Supabase RDB + pgvector via SDK-only access (no raw REST). Realtime preference is the system LaunchAgent (`com.cerebral.unified-sync`).
 - Apple Silicon: `core/embeddings/*` Vectorization path with MPS accelerator.
 
 ### MCP Servers (Extensibility)
@@ -27,6 +27,7 @@ Reference: `https://martinfowler.com/articles/build-own-coding-agent.html?utm_so
 ### Model Provider Abstraction
 
 - Default provider: Cerebral Server (private cluster). Configure via environment variables and provider selector.
-- Local fallback: run locally when cluster is unavailable; maintain identical interfaces for portability.
+- Local fallback: OpenRouter (strict probe) then Ollama (local) via unified selector.
+- Provider probe: strict "ok" check with prompt retry.
 - Cloud providers: not required. AWS-specific MCPs are not part of the default stack in this environment.
 

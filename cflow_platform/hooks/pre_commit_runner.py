@@ -8,10 +8,13 @@ Exit codes:
 - 0: all checks passed
 - 1: file organization violation
 - 2: RAG chunk guard violation
+- 4: realtime agent health failed
+- 5: gate registry not green
 """
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
@@ -35,7 +38,7 @@ def get_repo_root() -> Path:
 
 def get_staged_files(filter_flags: str) -> List[str]:
     try:
-        out = run(["git", "diff", "--cached", "--name-only", filter_flags])
+        out = run(["git", "%s" % "diff", "--cached", "--name-only", filter_flags])
         return [line for line in out.splitlines() if line]
     except Exception:
         return []
@@ -70,6 +73,55 @@ def check_rag_chunk_guard(staged_all: List[str]) -> bool:
     print("If you intentionally need to commit them (rare):")
     print("  ALLOW_RAG_CHUNK_COMMIT=1 git commit -m '...'")
     return False
+
+
+def check_realtime_health(repo_root: Path) -> bool:
+    script = repo_root / ".cerebraflow" / "scripts" / "realtime_agent_health.py"
+    if not script.exists():
+        return True
+    try:
+        proc = subprocess.run([sys.executable, str(script)], capture_output=True, text=True, timeout=8)
+        if proc.returncode != 0:
+            try:
+                print("REALTIME AGENT HEALTH:", proc.stdout.strip() or proc.stderr.strip())
+            except Exception:
+                pass
+            return False
+        # Log summary
+        try:
+            payload = json.loads(proc.stdout.strip().splitlines()[-1])
+            print("Realtime agent:", payload)
+        except Exception:
+            pass
+        return True
+    except Exception:
+        return False
+
+
+def check_gate_registry(repo_root: Path) -> bool:
+    """Check gates from .cerebraflow/validation/gates.json; return True if all gates are True.
+
+    Absent file -> do not block (return True).
+    """
+    gates_file = repo_root / ".cerebraflow" / "validation" / "gates.json"
+    try:
+        if not gates_file.exists():
+            return True
+        data = json.loads(gates_file.read_text(encoding="utf-8"))
+        gates = data.get("gates", {}) if isinstance(data, dict) else {}
+        if not gates:
+            return True
+        failed = [k for k, v in gates.items() if not bool(v)]
+        if failed:
+            print("GATE REGISTRY NOT GREEN:")
+            for g in failed:
+                print(f"  {g}: false")
+            return False
+        return True
+    except Exception as e:
+        print("Gate registry check error:", e)
+        # Fail safe: block commit if gates file is unreadable
+        return False
 
 
 def main() -> int:
@@ -127,6 +179,14 @@ def main() -> int:
     staged_all = staged_all or get_staged_files("--diff-filter=ACM")
     if not check_rag_chunk_guard(staged_all):
         return 2
+
+    # Realtime agent health
+    if not check_realtime_health(repo_root):
+        return 4
+
+    # Gate registry enforcement
+    if not check_gate_registry(repo_root):
+        return 5
 
     # Ingest changed Cursor artifacts into CerebralMemory (best-effort, non-blocking failure)
     try:
