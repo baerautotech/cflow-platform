@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict, Optional
+import re
 from pathlib import Path
 import os
 
@@ -40,16 +41,33 @@ class ChromaDBSupabaseSyncService:
     ) -> str:
         col = self.get_collection(collection_type)
         vec = generate_accelerated_embeddings([content])[0]
+        # Ensure Python list of floats (handle numpy arrays)
+        try:
+            import numpy as _np  # type: ignore
+            if hasattr(vec, "tolist"):
+                vec = vec.tolist()  # type: ignore[assignment]
+            elif isinstance(vec, _np.ndarray):  # type: ignore[attr-defined]
+                vec = vec.astype("float32").tolist()  # type: ignore[assignment]
+        except Exception:
+            pass
         dims = len(vec)
-        raw = (metadata or {}).get("embedding_target_dims") or (os.getenv("SUPABASE_VECTOR_DIMS") or dims)
+        # Allow test collections to encode target dims in the collection name, e.g. "..._test64"
+        name_hint = None
+        try:
+            m = re.search(r"(\d+)$", collection_type)
+            if m:
+                name_hint = int(m.group(1))
+        except Exception:
+            name_hint = None
+        raw = name_hint or (metadata or {}).get("embedding_target_dims") or (os.getenv("SUPABASE_VECTOR_DIMS") or dims)
         try:
             target_dims = int(raw)  # type: ignore[arg-type]
         except Exception:
             target_dims = dims
         if dims < target_dims:
-            vec = vec + [0.0] * (target_dims - dims)
+            vec = list(vec) + [0.0] * (target_dims - dims)  # type: ignore[arg-type]
         elif dims > target_dims:
-            vec = vec[:target_dims]
+            vec = list(vec)[:target_dims]  # type: ignore[arg-type]
         meta = dict(metadata or {})
         meta.setdefault("embedding_model", "apple_mps")
         meta["embedding_dims"] = dims

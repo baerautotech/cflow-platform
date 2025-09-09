@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from pathlib import Path
 from importlib.util import spec_from_file_location, module_from_spec
+import json
+import os
 
 
 class MemoryHandlers:
@@ -25,21 +27,73 @@ class MemoryHandlers:
             repo_root / "cflow_platform" / "vendor" / "cerebral" / "backend-python" / "shared" / "project_memory.py",
             repo_root / ".cerebraflow" / "core" / "mcp" / "backend-python" / "shared" / "project_memory.py",
         ]
-        pm_path = next((p for p in candidates if p.exists()), candidates[0])
-        # Ensure services path for sync service is importable by vendor module
-        services_path = (pkg_root / "vendor" / "cerebral" / "services").resolve()
-        sys_path_added = False
-        import sys
-        if str(services_path) not in sys.path:
-            sys.path.append(str(services_path))
-            sys_path_added = True
-        spec = spec_from_file_location("vendor_project_memory", str(pm_path))
-        if not spec or not spec.loader:
-            raise ImportError(f"Cannot load project_memory from {pm_path}")
-        mod = module_from_spec(spec)
-        spec.loader.exec_module(mod)  # type: ignore[attr-defined]
-        get_project_memory = getattr(mod, "get_project_memory")
-        self._memory = get_project_memory()
+        # Prefer the first existing path; if none exist, default to the .cerebraflow path
+        pm_path = next((p for p in candidates if p.exists()), candidates[-1])
+        if pm_path.exists():
+            # Ensure services path for sync service is importable by vendor module
+            services_path = (pkg_root / "vendor" / "cerebral" / "services").resolve()
+            import sys
+            if str(services_path) not in sys.path:
+                sys.path.append(str(services_path))
+            spec = spec_from_file_location("vendor_project_memory", str(pm_path))
+            if not spec or not spec.loader:
+                raise ImportError(f"Cannot load project_memory from {pm_path}")
+            mod = module_from_spec(spec)
+            spec.loader.exec_module(mod)  # type: ignore[attr-defined]
+            get_project_memory = getattr(mod, "get_project_memory")
+            self._memory = get_project_memory()
+            return self._memory
+        # Fallback: simple local JSONL-backed memory
+        class _SimpleMemory:
+            def __init__(self) -> None:
+                root = Path.cwd() / ".cerebraflow"
+                root.mkdir(parents=True, exist_ok=True)
+                self.path = root / "memory_items.jsonl"
+
+            async def add_memory(self, *, content: str, user_id: str, metadata: Dict[str, Any] | None = None) -> str:
+                item = {
+                    "id": f"M{abs(hash(content)) % 10_000_000}",
+                    "user_id": user_id,
+                    "content": content,
+                    "metadata": metadata or {},
+                }
+                with self.path.open("a", encoding="utf-8") as f:
+                    f.write(json.dumps(item) + "\n")
+                return item["id"]
+
+            async def search_memories(self, *, query: str, user_id: str, limit: int = 20, **_: Any) -> List[Dict[str, Any]]:
+                if not self.path.exists():
+                    return []
+                results: List[Dict[str, Any]] = []
+                needle = query.lower()
+                for line in self.path.read_text(encoding="utf-8").splitlines():
+                    try:
+                        obj = json.loads(line)
+                    except Exception:
+                        continue
+                    text = str(obj.get("content", ""))
+                    if needle in text.lower():
+                        results.append(obj)
+                        if len(results) >= limit:
+                            break
+                return results
+
+            async def store_procedure_update(self, *, title: str, steps: List[Dict[str, Any]], justification: str, source: Optional[str]) -> str:
+                content = f"Procedure: {title}\nJustification: {justification}\nSteps: {json.dumps(steps)}"
+                return await self.add_memory(content=content, user_id=os.getenv("CEREBRAL_USER_ID", "system"), metadata={"source": source or "local"})  # type: ignore[return-value]
+
+            async def store_episode(self, *, run_id: str, task_id: Optional[str], content: str, metadata: Dict[str, Any]) -> str:
+                md = dict(metadata or {})
+                md.update({"run_id": run_id, "task_id": task_id})
+                return await self.add_memory(content=content, user_id=os.getenv("CEREBRAL_USER_ID", "system"), metadata=md)  # type: ignore[return-value]
+
+            async def get_stats(self) -> Dict[str, Any]:
+                count = 0
+                if self.path.exists():
+                    count = sum(1 for _ in self.path.open("r", encoding="utf-8"))
+                return {"items": count}
+
+        self._memory = _SimpleMemory()
         return self._memory
 
     async def handle_memory_add(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
