@@ -14,6 +14,7 @@ cflow_platform/vendor/.cerebraflow/core/storage/chromadb/2a3691b9-1703-4f4f-aa0f
 cflow_platform/vendor/.cerebraflow/core/storage/chromadb/2a3691b9-1703-4f4f-aa0f-56736c550aed/length.bin
 cflow_platform/vendor/.cerebraflow/core/storage/chromadb/2a3691b9-1703-4f4f-aa0f-56736c550aed/link_lists.bin
 .cerebraflow/.env
+!/.cerebraflow/.env.sample
 uv.lock
 .gitignore
 *.db

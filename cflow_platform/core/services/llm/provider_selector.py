@@ -34,6 +34,16 @@ async def probe_provider(model: Optional[str] = None, prompt: Optional[str] = No
     except Exception:
         pass
 
+    # Optional stdio MCP adapter
+    try:
+        from .stdio_mcp_adapter import probe as sm_probe  # type: ignore
+        for pr in [prompt, "Reply with exactly: ok"]:
+            data3 = await sm_probe(model=os.getenv("CFLOW_STDIO_MCP_MODEL", None), prompt=pr)
+            if data3.get("status") == "success" and data3.get("ok") is True:
+                return data3
+    except Exception:
+        pass
+
     return {"status": "error", "provider": "none", "error": "no provider passed strict ok probe"}
 
 
