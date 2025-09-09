@@ -78,6 +78,50 @@ async def main():
 asyncio.run(main())
 ```
 
+### stdio-MCP LLM adapter (optional, offline)
+
+- Prepare a local command that prints the content of a prompt file (or integrates with your local LLM). Example shell script:
+  ```bash
+  #!/bin/sh
+  # naive example: echo the prompt file content
+  cat "$1"
+  ```
+- Configure environment:
+  - `CFLOW_STDIO_MCP_CMD="/path/to/your/script {prompt_file}"`
+  - (Optional) `CFLOW_STDIO_MCP_MODEL=offline-stdio`
+- Probe (strict):
+  ```bash
+  uv run python - << 'PY'
+  import asyncio, json, os
+  from cflow_platform.core.public_api import get_direct_client_executor
+  os.environ["CFLOW_STDIO_MCP_CMD"]="/path/to/your/script {prompt_file}"
+  async def main():
+    dc = get_direct_client_executor()
+    res = await dc("llm_provider.probe", prompt="Reply with exactly: ok")
+    print(json.dumps(res, indent=2))
+  asyncio.run(main())
+  PY
+  ```
+
+### Context7 (real mode via WebMCP)
+
+- Ensure `.env` contains:
+  - `CONTEXT7_WEBMCP_URL` (e.g., `https://your-webmcp-host/mcp/tools/call`)
+  - Either `CONTEXT7_BEARER_TOKEN` or a custom header pair:
+    - `CONTEXT7_HEADER_NAME`, `CONTEXT7_HEADER_VALUE`
+- Example programmatic call:
+  ```python
+  import os
+  from cflow_platform.core.docs_context7 import fetch_context7_docs_for_symbols, summarize_docs
+
+  os.environ["CONTEXT7_WEBMCP_URL"] = "https://your-webmcp-host/mcp/tools/call"
+  os.environ["CONTEXT7_BEARER_TOKEN"] = "<token>"
+
+  docs = fetch_context7_docs_for_symbols(["pandas.DataFrame"], per_symbol_limit=2)
+  print(summarize_docs(docs.get("notes", [])))
+  print(docs.get("sources", []))
+  ```
+
 ### Memory & Sync (Supabase/MinIO/ChromaDB/SQLite)
 
 See `./MemoryAndSync.md` for full details. Minimal examples:

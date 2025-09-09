@@ -98,6 +98,17 @@ def fetch_context7_docs_for_symbols(symbols: List[str], *, per_symbol_limit: int
         return {"notes": notes, "sources": sources}
 
     webmcp = os.environ.get("CONTEXT7_WEBMCP_URL") or os.environ.get("WEBMCP_URL") or "http://localhost:30080/mcp/tools/call"
+    # Optional auth/header support for public WebMCP gateways
+    bearer_token = os.environ.get("CONTEXT7_BEARER_TOKEN") or os.environ.get("CONTEXT7_API_TOKEN") or ""
+    custom_header_name = (os.environ.get("CONTEXT7_HEADER_NAME") or "").strip()
+    custom_header_value = (os.environ.get("CONTEXT7_HEADER_VALUE") or "").strip()
+    base_headers: Dict[str, str] = {"Content-Type": "application/json"}
+    if bearer_token:
+        # Provide both Authorization and X-API-Key to cover common gateway conventions
+        base_headers["Authorization"] = f"Bearer {bearer_token}"
+        base_headers["X-API-Key"] = bearer_token
+    if custom_header_name and custom_header_value:
+        base_headers[custom_header_name] = custom_header_value
     notes: List[str] = []
     sources: List[Dict[str, str]] = []
     try:
@@ -110,7 +121,7 @@ def fetch_context7_docs_for_symbols(symbols: List[str], *, per_symbol_limit: int
                     "limit": per_symbol_limit,
                 },
             }).encode("utf-8")
-            req = _http.Request(webmcp, data=payload, headers={"Content-Type": "application/json"}, method="POST")
+            req = _http.Request(webmcp, data=payload, headers=base_headers, method="POST")
             with _http.urlopen(req, timeout=timeout_sec) as resp:
                 raw = resp.read().decode("utf-8", "ignore")
                 data = json.loads(raw)

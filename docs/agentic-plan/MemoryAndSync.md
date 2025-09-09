@@ -27,6 +27,16 @@
 - Off by default; wire incremental pulls only when enabled
 - Pre-commit and CI enforce preference for system LaunchAgent; vendored daemon is deprecated
 
+### Realtime setup (macOS LaunchAgent)
+
+- Install LaunchAgent and watchdog:
+  - `uv run python -m cflow_platform.cli.sync_supervisor install-agent --project-root $(pwd)`
+  - This writes `~/Library/LaunchAgents/com.cerebraflow.sync.plist` and a simple watchdog `com.cerebraflow.sync.watch.plist`.
+- Start/ensure running:
+  - `launchctl load -w ~/Library/LaunchAgents/com.cerebraflow.sync.plist`
+  - `launchctl kickstart -k gui/$UID/com.cerebraflow.sync`
+- Pre-commit/CI will block if vendored services are present and the system agent isn’t running.
+
 ### Safety & Performance
 
 - Never block on Supabase writes; Chroma path must succeed

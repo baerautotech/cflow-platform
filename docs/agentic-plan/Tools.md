@@ -13,6 +13,10 @@
 - internet_search (MCP server): Real-time search (e.g., `duckduckgo-mcp-server`) to fetch up-to-date information for libraries and APIs
 
 - context7.docs (MCP server): Up-to-date library documentation retrieval (Context7) for symbol/API references; returns excerpts with sources
+  - Real mode (via WebMCP HTTP):
+    - Required: `CONTEXT7_WEBMCP_URL` (e.g., `https://<host>/mcp/tools/call`)
+    - Auth (either): `CONTEXT7_BEARER_TOKEN` or pair `CONTEXT7_HEADER_NAME` + `CONTEXT7_HEADER_VALUE`
+    - The client posts `{ name: "context7.search", arguments: { query, limit } }` and expects `result.content[]` items with `type: text|link`.
 
 - awslabs.core (optional MCP pack): AWS capabilities for cloud-native workflows (off by default)
 

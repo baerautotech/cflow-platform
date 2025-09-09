@@ -15,20 +15,24 @@ def load_env() -> None:
 
 
 def fetch_supabase_tasks(max_rows: int = 50000) -> List[Dict[str, Any]]:
-    import httpx  # type: ignore
-    url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
+    """Fetch tasks via Supabase SDK (no raw REST)."""
+    try:
+        from supabase import create_client  # type: ignore
+    except Exception as e:  # pragma: no cover
+        raise RuntimeError(f"supabase sdk missing: {e}")
+    url = os.getenv("SUPABASE_URL", "").strip()
+    key = (os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY") or "").strip()
     if not url or not key:
         raise RuntimeError("Missing SUPABASE_URL or key in environment")
-    headers = {"apikey": key, "Authorization": f"Bearer {key}", "Prefer": "count=exact"}
-    params = {"select": "id,title,description", "limit": str(max_rows)}
-    r = httpx.get(url.rstrip("/") + "/rest/v1/cerebraflow_tasks", headers=headers, params=params, timeout=30.0)
-    if r.status_code == 400:
-        params = {"select": "id,description", "limit": str(max_rows)}
-        r = httpx.get(url.rstrip("/") + "/rest/v1/cerebraflow_tasks", headers=headers, params=params, timeout=30.0)
-    r.raise_for_status()
-    data = r.json()
-    return data if isinstance(data, list) else []
+    client = create_client(url, key)
+    try:
+        resp = client.table("cerebraflow_tasks").select("id,title,description").limit(max_rows).execute()
+        data = getattr(resp, "data", None) or []
+        return data if isinstance(data, list) else []
+    except Exception:
+        resp = client.table("cerebraflow_tasks").select("id,description").limit(max_rows).execute()
+        data = getattr(resp, "data", None) or []
+        return data if isinstance(data, list) else []
 
 
 def get_chroma_client(path: Path):
@@ -101,17 +105,7 @@ def enforce_local_matches_supabase(chroma_path: Path, sup_ids: Set[str]) -> Dict
 
 
 def run_one_shot_sync(project_root: Path) -> Dict[str, Any]:
-    import subprocess
-    env = os.environ.copy()
-    env["CFLOW_VECTOR_SYNC_ENABLED"] = env.get("CFLOW_VECTOR_SYNC_ENABLED", "1")
-    env["CFLOW_VECTOR_COLUMN"] = env.get("CFLOW_VECTOR_COLUMN", "embeddings")
-    cmd = [os.environ.get("PYTHON", "python"), str(project_root / "cflow_platform" / "vendor" / "cerebral" / "services" / "unified_realtime_sync_service.py"), "once", "--project-root", str(project_root)]
-    proc = subprocess.run(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    try:
-        data = json.loads(proc.stdout.strip().splitlines()[-1]) if proc.stdout else {}
-    except Exception:
-        data = {"stdout": proc.stdout, "stderr": proc.stderr}
-    return data
+    return {"status": "skipped", "mode": "sdk_only", "message": "vendor realtime sync disabled"}
 
 
 def cli() -> int:
