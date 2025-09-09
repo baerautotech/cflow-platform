@@ -17,6 +17,11 @@ class MemoryHandlers:
     def __init__(self) -> None:
         self._memory = None
 
+    def _is_dev_mode(self) -> bool:
+        profile = os.getenv("CFLOW_PROFILE", "dev").strip().lower()
+        secure = os.getenv("CFLOW_SECURE_MODE", "").strip().lower() in {"1", "true", "yes", "on"}
+        return (profile in {"dev", "quick"}) and not secure
+
     def _get_memory(self):
         if self._memory is not None:
             return self._memory
@@ -74,6 +79,8 @@ class MemoryHandlers:
         return self._memory
 
     async def handle_memory_add(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        if not self._is_dev_mode():
+            return {"success": False, "error": "local memory store disabled in this profile"}
         mem = self._get_memory()
         content = str(arguments.get("content", "")).strip()
         if not content:
@@ -84,6 +91,8 @@ class MemoryHandlers:
         return {"success": True, "memoryId": memory_id}
 
     async def handle_memory_search(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        if not self._is_dev_mode():
+            return {"success": False, "error": "local memory store disabled in this profile"}
         mem = self._get_memory()
         query = str(arguments.get("query", "")).strip()
         if not query:
@@ -99,6 +108,8 @@ class MemoryHandlers:
         return {"success": True, "count": len(results), "results": results}
 
     async def handle_memory_store_procedure(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        if not self._is_dev_mode():
+            return {"success": False, "error": "local memory store disabled in this profile"}
         mem = self._get_memory()
         title = str(arguments.get("title", "")).strip()
         steps = arguments.get("steps") or []
@@ -127,6 +138,8 @@ class MemoryHandlers:
         return {"success": True, "memoryId": memory_id}
 
     async def handle_memory_store_episode(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        if not self._is_dev_mode():
+            return {"success": False, "error": "local memory store disabled in this profile"}
         mem = self._get_memory()
         run_id = str(arguments.get("runId", "")).strip()
         task_id = str(arguments.get("taskId", "")).strip()
@@ -138,6 +151,8 @@ class MemoryHandlers:
         return {"success": True, "memoryId": memory_id}
 
     async def handle_memory_stats(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        if not self._is_dev_mode():
+            return {"success": True, "stats": {"items": 0, "disabled": True}}
         mem = self._get_memory()
         stats = await mem.get_stats()
         return {"success": True, "stats": stats}

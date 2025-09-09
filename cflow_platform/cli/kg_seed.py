@@ -6,6 +6,7 @@ import os
 from typing import Any, Dict
 
 from dotenv import load_dotenv
+from cflow_platform.core.config.supabase_config import get_rest_url, get_api_key
 
 
 def _client():
@@ -14,62 +15,8 @@ def _client():
     except Exception as e:  # pragma: no cover
         raise SystemExit(json.dumps({"success": False, "error": f"supabase sdk missing: {e}"}))
     load_dotenv(dotenv_path=os.path.join(os.getcwd(), ".cerebraflow", ".env"), override=True)
-    # Normalize URL (handles REST host or Postgres DSN)
-    raw_url = (
-        os.getenv("SUPABASE_URL", "").strip()
-        or os.getenv("CEREBRAL_SUPABASE_URL", "").strip()
-        or os.getenv("SUPABASE_REST_URL", "").strip()
-        or os.getenv("CEREBRAL_SUPABASE_REST_URL", "").strip()
-    )
-    def _normalize(u: str) -> str:
-        if not u:
-            return u
-        s = u.strip()
-        # If this looks like a Postgres DSN (with or without http prefix), derive REST base
-        if s.startswith("postgres://") or s.startswith("postgresql://") or "://postgres" in s:
-            try:
-                # Strip any accidental http(s) prefix before the DSN
-                if s.startswith("http://") or s.startswith("https://"):
-                    s = s.split("://", 1)[1]
-                    # Now s starts with 'postgresql://...' or similar without scheme; add back for parsing
-                    if not s.startswith("postgres"):
-                        s = "postgresql://" + s
-                from urllib.parse import urlparse
-                p = urlparse(s)
-                host = p.hostname or ""
-                if host.startswith("db.") and host.endswith(".supabase.co"):
-                    host = host[len("db."):]
-                if host.endswith(".supabase.co"):
-                    return f"https://{host}"
-            except Exception:
-                pass
-            # Fallback to an explicit override if provided
-            ov = os.getenv("SUPABASE_REST_URL", "").strip()
-            if ov:
-                return ov
-            return ""
-        # Otherwise treat as REST base
-        if not s.startswith("http://") and not s.startswith("https://"):
-            s = f"https://{s}"
-        try:
-            from urllib.parse import urlparse, urlunparse
-            p = urlparse(s)
-            host = p.netloc
-            if host.startswith("db.") and host.endswith(".supabase.co"):
-                host = host[len("db."):]
-                p = p._replace(netloc=host)
-            p = p._replace(path="", params="", query="", fragment="")
-            return urlunparse(p)
-        except Exception:
-            return s
-    url = _normalize(raw_url)
-    key = (
-        os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-        or os.getenv("CEREBRAL_SUPABASE_SERVICE_ROLE_KEY")
-        or os.getenv("SUPABASE_ANON_KEY")
-        or os.getenv("CEREBRAL_SUPABASE_ANON_KEY")
-        or ""
-    ).strip()
+    url = get_rest_url() or ""
+    key = get_api_key() or ""
     if not (url and key):
         raise SystemExit(json.dumps({"success": False, "error": "missing SUPABASE_URL or key"}))
     return create_client(url, key)
