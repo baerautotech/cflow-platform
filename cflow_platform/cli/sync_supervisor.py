@@ -45,6 +45,33 @@ def run_command(args: list[str], cwd: str | None = None, env: dict[str, str] | N
     return proc.returncode, proc.stdout, proc.stderr
 
 
+def _notify_status(status_path: Path) -> None:
+    try:
+        import json as _json
+        data = _json.loads(status_path.read_text(encoding="utf-8"))
+        daemon = (data or {}).get("daemon", {})
+        running = bool(daemon.get("running"))
+        msg = "Realtime daemon running" if running else "Realtime daemon stopped"
+        # Optional desktop notification
+        if str(os.environ.get("CFLOW_DESKTOP_NOTIFICATIONS", "")).lower() in {"1", "true", "yes", "on"}:
+            try:
+                import subprocess as _sp
+                _sp.run([
+                    sys.executable,
+                    "-m",
+                    "cflow_platform.cli.desktop_commander",
+                    msg,
+                    "--title",
+                    "CFlow Sync",
+                    "--subtitle",
+                    "Status",
+                ], check=False)
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
 def start(project_root: str | None) -> int:
     paths = _service_paths()
     # Load env for child
@@ -104,6 +131,17 @@ def start(project_root: str | None) -> int:
     # Write a synthetic PID file for this process
     pid_path = _pid_file(project_root)
     pid_path.write_text(str(os.getpid()))
+    # Write initial status snapshot
+    try:
+        status_path = Path(project_root or Path.cwd()) / ".cerebraflow" / "sync-status.json"
+        payload = {
+            "daemon": {"running": True, "pid": os.getpid(), "pid_file": str(pid_path), "log_file": str(log_file)},
+            "databases": _report_databases(project_root),
+        }
+        status_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        _notify_status(status_path)
+    except Exception:
+        pass
     print(json.dumps({"success": True, "pid": os.getpid(), "pid_file": str(pid_path), "log_file": str(log_file), "realtime": True}))
     return 0
 
@@ -240,6 +278,13 @@ def _report_databases(project_root: str | None) -> dict:
             pass
     except Exception as e:
         report["minio"] = {"error": str(e)}
+    # Always attempt to write a status file snapshot for external watchers
+    try:
+        status_path = root / ".cerebraflow" / "sync-status.json"
+        status_path.parent.mkdir(parents=True, exist_ok=True)
+        status_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    except Exception:
+        pass
     return report
 
 
@@ -264,6 +309,15 @@ def status(project_root: str | None) -> int:
         },
         "databases": _report_databases(project_root),
     }
+    # Persist status for reliable inspection
+    try:
+        root = Path(project_root or Path.cwd())
+        status_path = root / ".cerebraflow" / "sync-status.json"
+        status_path.parent.mkdir(parents=True, exist_ok=True)
+        status_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    except Exception:
+        pass
+    # Print to stdout in the simplest form
     print(json.dumps(payload))
     return 0
 
@@ -277,6 +331,17 @@ def stop(project_root: str | None) -> int:
         pid = int(pid_path.read_text().strip())
         os.kill(pid, signal.SIGTERM)
         pid_path.unlink(missing_ok=True)  # type: ignore[arg-type]
+        # Write status snapshot on stop
+        try:
+            status_path = Path(project_root or Path.cwd()) / ".cerebraflow" / "sync-status.json"
+            payload = {
+                "daemon": {"running": False, "pid": None, "pid_file": str(pid_path), "log_file": str((Path(project_root or Path.cwd()) / ".cerebraflow" / "logs" / "sync-service.log"))},
+                "databases": _report_databases(project_root),
+            }
+            status_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+            _notify_status(status_path)
+        except Exception:
+            pass
         print(json.dumps({"success": True, "stopped_pid": pid}))
         return 0
     except Exception as e:

@@ -1,0 +1,11 @@
+#!/bin/bash
+set -euo pipefail
+
+# Index changed functions before commit for fast local search
+if command -v uv >/dev/null 2>&1; then
+  uv run cflow-code-intel index-functions --changed-only || true
+fi
+
+exit 0
+
+

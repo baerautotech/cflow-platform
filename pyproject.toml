@@ -59,6 +59,8 @@ cflow-codegen = "cflow_platform.cli.codegen_cli:cli"
 cflow-provider-aws = "cflow_platform.cli.provider_aws:cli"
 cflow-chroma-tools = "cflow_platform.cli.chroma_tools:cli"
 cflow-supabase-backfill = "cflow_platform.cli.supabase_backfill:cli"
+cflow-kg-seed = "cflow_platform.cli.kg_seed:cli"
+cflow-code-intel = "cflow_platform.cli.code_intel:cli"
 
 
 

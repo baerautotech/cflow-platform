@@ -13,12 +13,33 @@ class TaskModificationHandlers:
         description = arguments.get("description", "")
         priority = arguments.get("priority", "medium")
         task_id = await self.task_manager.add_task(title, description, priority)
+        # Mirror to memory for KG
+        try:
+            from cflow_platform.core.public_api import get_direct_client_executor
+            dc = get_direct_client_executor()
+            content = f"TASK: {title}\n{description}".strip()
+            await dc("memory_add", content=content, userId="system", metadata={"type": "task", "task_id": task_id, "priority": priority})
+        except Exception:
+            pass
         return {"status": "success", "taskId": task_id}
 
     async def handle_task_update(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         task_id = arguments.get("taskId")
         updates = arguments.get("updates", {})
         ok = await self.task_manager.update_task(task_id, updates)
+        # Mirror to memory for KG
+        if ok:
+            try:
+                from cflow_platform.core.public_api import get_direct_client_executor
+                dc = get_direct_client_executor()
+                # Fetch to compose content
+                get_task = await self.task_manager.get_task(task_id)
+                title = get_task.get("title") if isinstance(get_task, dict) else None
+                desc = get_task.get("description") if isinstance(get_task, dict) else None
+                content = f"TASK UPDATE: {title or task_id}\n{desc or ''}".strip()
+                await dc("memory_add", content=content, userId="system", metadata={"type": "task_update", "task_id": task_id, "updates": updates})
+            except Exception:
+                pass
         return {"status": "success" if ok else "error", "taskId": task_id}
 
     async def handle_task_status(self, arguments: Dict[str, Any]) -> Dict[str, Any]:

@@ -139,6 +139,15 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
         mod = load_handler_module("internet_search_handlers")
         handler = mod.InternetSearchHandlers()  # type: ignore[attr-defined]
         return await handler.handle_internet_search(kwargs or {})
+    if tool_name in {"code.search_functions", "code.index_functions", "code.call_paths"}:
+        mod = load_handler_module("code_intel_handlers")
+        handler = mod.CodeIntelHandlers(project_root=Path.cwd())  # type: ignore[attr-defined]
+        if tool_name == "code.search_functions":
+            return await handler.handle_search_functions(kwargs or {})
+        if tool_name == "code.index_functions":
+            return await handler.handle_index_functions(kwargs or {})
+        if tool_name == "code.call_paths":
+            return await handler.handle_call_paths(kwargs or {})
     if tool_name in {"desktop.notify"}:
         mod = load_handler_module("desktop_handlers")
         handler = mod.DesktopHandlers()  # type: ignore[attr-defined]

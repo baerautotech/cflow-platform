@@ -8,9 +8,10 @@ import os
 
 
 class MemoryHandlers:
-    """MCP handlers bridging to CerebralProjectMemory (unified ChromaDB/Supabase).
+    """Unified memory handlers (no vendor dependency).
 
-    Loads vendor memory module by file path to avoid import issues with hyphenated dirs.
+    Uses internal JSONL local store by default, and will opportunistically
+    dual-write to Supabase/Chroma if environment is configured elsewhere.
     """
 
     def __init__(self) -> None:
@@ -19,31 +20,7 @@ class MemoryHandlers:
     def _get_memory(self):
         if self._memory is not None:
             return self._memory
-        here = Path(__file__).resolve()
-        pkg_root = here.parents[1]  # .../cflow_platform
-        repo_root = here.parents[2]  # repo root
-        candidates = [
-            pkg_root / "vendor" / "cerebral" / "backend-python" / "shared" / "project_memory.py",
-            repo_root / "cflow_platform" / "vendor" / "cerebral" / "backend-python" / "shared" / "project_memory.py",
-            repo_root / ".cerebraflow" / "core" / "mcp" / "backend-python" / "shared" / "project_memory.py",
-        ]
-        # Prefer the first existing path; if none exist, default to the .cerebraflow path
-        pm_path = next((p for p in candidates if p.exists()), candidates[-1])
-        if pm_path.exists():
-            # Ensure services path for sync service is importable by vendor module
-            services_path = (pkg_root / "vendor" / "cerebral" / "services").resolve()
-            import sys
-            if str(services_path) not in sys.path:
-                sys.path.append(str(services_path))
-            spec = spec_from_file_location("vendor_project_memory", str(pm_path))
-            if not spec or not spec.loader:
-                raise ImportError(f"Cannot load project_memory from {pm_path}")
-            mod = module_from_spec(spec)
-            spec.loader.exec_module(mod)  # type: ignore[attr-defined]
-            get_project_memory = getattr(mod, "get_project_memory")
-            self._memory = get_project_memory()
-            return self._memory
-        # Fallback: simple local JSONL-backed memory
+        # Internal JSONL-backed memory (always used; no vendor path)
         class _SimpleMemory:
             def __init__(self) -> None:
                 root = Path.cwd() / ".cerebraflow"

@@ -1,0 +1,11 @@
+#!/bin/bash
+set -euo pipefail
+
+# Rebuild callgraph after commit
+if command -v uv >/dev/null 2>&1; then
+  uv run cflow-code-intel build-callgraph || true
+fi
+
+exit 0
+
+
