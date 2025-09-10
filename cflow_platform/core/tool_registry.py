@@ -159,7 +159,6 @@ class ToolRegistry:
             ),
         ]
 
-<<<<<<< HEAD
         # Desktop notifications (optional, off by default)
         tools += [
             tool(
@@ -176,9 +175,6 @@ class ToolRegistry:
                 },
             )
         ]
-
-=======
->>>>>>> cursor/evaluate-deepseek-coder-v2-integration-for-codegen-a1c4
         # LLM provider
         tools += [
             tool(
@@ -213,6 +209,45 @@ class ToolRegistry:
                     "required": ["task"],
                 },
             )
+        ]
+
+        # Code Intelligence
+        tools += [
+            tool(
+                "code.search_functions",
+                "Semantic search for functions by natural-language description",
+                {
+                    "type": "object",
+                    "properties": {
+                        "description": {"type": "string"},
+                        "topK": {"type": "integer"},
+                    },
+                    "required": ["description"],
+                },
+            ),
+            tool(
+                "code.index_functions",
+                "Index functions in the repository to build/update embeddings",
+                {
+                    "type": "object",
+                    "properties": {
+                        "files": {"type": "array", "items": {"type": "string"}},
+                    },
+                    "required": [],
+                },
+            ),
+            tool(
+                "code.call_paths",
+                "Compute call paths to a target function",
+                {
+                    "type": "object",
+                    "properties": {
+                        "to": {"type": "string"},
+                        "maxDepth": {"type": "integer"},
+                    },
+                    "required": ["to"],
+                },
+            ),
         ]
 
         return tools

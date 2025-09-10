@@ -31,14 +31,6 @@
 			"command": "npx",
 			"args": ["@upstash/context7-mcp@latest"]
 		}
-		,
-		"cflow-codeintel": {
-			"command": "uv",
-			"args": ["run", "python", "-m", "cflow_platform.core.web_mcp_server"],
-			"env": {
-				"CFLOW_ENABLE_CODEINTEL": "1"
-			}
-		}
 	}
 }
 
