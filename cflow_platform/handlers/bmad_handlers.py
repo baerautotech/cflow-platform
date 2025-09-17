@@ -7,13 +7,18 @@ local implementations using the vendored BMAD templates.
 """
 
 import json
+import os
 import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from dotenv import load_dotenv
 from cflow_platform.core.config.supabase_config import get_api_key, get_rest_url
 from supabase import create_client
+
+# Load environment variables
+load_dotenv()
 
 
 class BMADHandlers:
@@ -33,7 +38,8 @@ class BMADHandlers:
         if url and key:
             try:
                 self.supabase_client = create_client(url, key)
-            except Exception:
+            except Exception as e:
+                print(f"Supabase client creation failed: {e}")
                 self.supabase_client = None
 
     async def bmad_prd_create(self, project_name: str, goals: Optional[List[str]] = None, background: Optional[str] = None) -> Dict[str, Any]:
@@ -49,25 +55,14 @@ class BMADHandlers:
                     "doc_id": None
                 }
 
-            # Create document record
+            # Create document record (using existing schema)
             doc_id = str(uuid.uuid4())
             doc_data = {
-                "doc_id": doc_id,
-                "tenant_id": "default",  # TODO: Get from context
-                "project_id": str(uuid.uuid4()),  # TODO: Get from context
-                "type": "PRD",
-                "version": 1,
-                "status": "draft",
-                "title": f"{project_name} Product Requirements Document",
+                "id": doc_id,
+                "tenant_id": "00000000-0000-0000-0000-000000000100",  # Default tenant UUID
+                "project_id": str(uuid.uuid4()),  # Generate project ID
+                "kind": "PRD",  # Document type
                 "content": self._generate_prd_content(project_name, goals, background),
-                "metadata": {
-                    "template": "prd-tmpl.yaml",
-                    "goals": goals or [],
-                    "background": background or "",
-                    "created_by": "bmad_handler"
-                },
-                "artifacts": {},
-                "authored_by": "system",
                 "created_at": datetime.utcnow().isoformat(),
                 "updated_at": datetime.utcnow().isoformat()
             }
@@ -80,7 +75,7 @@ class BMADHandlers:
                         return {
                             "success": True,
                             "doc_id": doc_id,
-                            "message": f"PRD document created successfully for {project_name}",
+                            "message": f"PRD document created successfully for {project_name} and stored in Supabase",
                             "data": result.data[0]
                         }
                 except Exception as e:
@@ -118,25 +113,14 @@ class BMADHandlers:
                     "doc_id": None
                 }
 
-            # Create document record
+            # Create document record (using existing schema)
             doc_id = str(uuid.uuid4())
             doc_data = {
-                "doc_id": doc_id,
-                "tenant_id": "default",  # TODO: Get from context
-                "project_id": str(uuid.uuid4()),  # TODO: Get from context
-                "type": "ARCH",
-                "version": 1,
-                "status": "draft",
-                "title": f"{project_name} Architecture Document",
+                "id": doc_id,
+                "tenant_id": "00000000-0000-0000-0000-000000000100",  # Default tenant UUID
+                "project_id": str(uuid.uuid4()),  # Generate project ID
+                "kind": "ARCH",  # Document type
                 "content": self._generate_arch_content(project_name, tech_stack),
-                "metadata": {
-                    "template": "architecture-tmpl.yaml",
-                    "prd_id": prd_id,
-                    "tech_stack": tech_stack or [],
-                    "created_by": "bmad_handler"
-                },
-                "artifacts": {},
-                "authored_by": "system",
                 "created_at": datetime.utcnow().isoformat(),
                 "updated_at": datetime.utcnow().isoformat()
             }
@@ -187,26 +171,14 @@ class BMADHandlers:
                     "doc_id": None
                 }
 
-            # Create document record
+            # Create document record (using existing schema)
             doc_id = str(uuid.uuid4())
             doc_data = {
-                "doc_id": doc_id,
-                "tenant_id": "default",  # TODO: Get from context
-                "project_id": str(uuid.uuid4()),  # TODO: Get from context
-                "type": "STORY",
-                "version": 1,
-                "status": "draft",
-                "title": f"{project_name} User Story Document",
+                "id": doc_id,
+                "tenant_id": "00000000-0000-0000-0000-000000000100",  # Default tenant UUID
+                "project_id": str(uuid.uuid4()),  # Generate project ID
+                "kind": "STORY",  # Document type
                 "content": self._generate_story_content(project_name, user_stories),
-                "metadata": {
-                    "template": "story-tmpl.yaml",
-                    "prd_id": prd_id,
-                    "arch_id": arch_id,
-                    "user_stories": user_stories or [],
-                    "created_by": "bmad_handler"
-                },
-                "artifacts": {},
-                "authored_by": "system",
                 "created_at": datetime.utcnow().isoformat(),
                 "updated_at": datetime.utcnow().isoformat()
             }
