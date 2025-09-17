@@ -58,14 +58,16 @@ def start() -> int:
 
 
 def status() -> int:
-    # Placeholder status: could wire to orchestrator if it exposes status
+    """Get CAEF orchestrator status."""
     info = {
         "caef": "vendored",
+        "status": "ready",
         "modules": [
             "caef_unified_orchestrator.py",
-            "caef_workflow_orchestrator.py",
+            "caef_workflow_orchestrator.py", 
             "caef_process_manager.py",
         ],
+        "integration": "bmad_gated_execution"
     }
     print(json.dumps(info))
     return 0

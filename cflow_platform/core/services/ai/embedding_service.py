@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 """
-AI Embedding Service - Core Implementation
+Unified Embedding Service - Core Implementation
 
 Centralized service for generating vector embeddings using Apple Silicon
-accelerator with caching and a singleton access pattern.
+accelerator with caching and thread-safe singleton access pattern.
+Consolidates all embedding functionality into a single service.
 """
 
 import hashlib
 import logging
+import threading
 from typing import List, Dict, Optional, Any
 
 from cflow_platform.core.embeddings.enhanced_apple_silicon_accelerator import (
@@ -19,25 +21,38 @@ logger = logging.getLogger(__name__)
 
 
 class EmbeddingService:
+    """Unified embedding service with thread-safe singleton pattern."""
+    
     _instance: Optional["EmbeddingService"] = None
+    _lock = threading.Lock()
     _accelerator: Optional[EnhancedAppleSiliconAccelerator] = None
     _embedding_cache: Dict[str, List[float]] = {}
+    _initialized = False
 
     def __new__(cls) -> "EmbeddingService":
         if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._initialized = False  # type: ignore[attr-defined]
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
         return cls._instance  # type: ignore[return-value]
 
     def __init__(self) -> None:
-        if getattr(self, "_initialized", False):  # type: ignore[attr-defined]
+        if self._initialized:
             return
-        logger.info("Initializing Core AI Embedding Service...")
-        self._accelerator = EnhancedAppleSiliconAccelerator()
-        self._initialized = True  # type: ignore[attr-defined]
-        logger.info("Core AI Embedding Service initialized.")
+        with self._lock:
+            if self._initialized:
+                return
+            logger.info("Initializing Unified Embedding Service...")
+            self._accelerator = EnhancedAppleSiliconAccelerator()
+            self._initialized = True
+            logger.info("Unified Embedding Service initialized.")
 
     async def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
+        """Generate embeddings for a list of texts (async interface)."""
+        return self.embed_documents(texts)
+
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        """Generate embeddings for a list of texts (sync interface)."""
         if not self._accelerator:
             raise RuntimeError("EmbeddingService is not initialized.")
 
@@ -71,6 +86,19 @@ class EmbeddingService:
             raise RuntimeError("Failed to generate embeddings for some texts.")
         return [r for r in results if r is not None]
 
+    def embed_query(self, text: str) -> List[float]:
+        """Generate embedding for a single query text."""
+        return self.embed_documents([text])[0]
+
+    def get_model_info(self) -> Dict[str, Any]:
+        """Get model and cache information."""
+        return {
+            "cache_size": len(self._embedding_cache),
+            "accelerator_type": "EnhancedAppleSiliconAccelerator",
+            "initialized": self._initialized
+        }
+
 
 def get_embedding_service() -> EmbeddingService:
+    """Get the singleton embedding service instance."""
     return EmbeddingService()

@@ -22,3 +22,5 @@ uv.lock
 .cerebraflow/core/storage/
 .cerebraflow/logs/
 .cerebraflow/cflow-sync.pid
+.env
+.DS_Store

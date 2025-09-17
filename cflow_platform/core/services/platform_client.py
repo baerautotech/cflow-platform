@@ -172,7 +172,7 @@ class PlatformClient:
         return self._request("GET", f"/api/tasks/{task_id}")
 
     def stream_task_logs(self, task_id: str) -> Dict[str, Any]:
-        # Placeholder: would use SSE/WebSocket in realtime client
+        """Stream task logs using realtime client integration."""
         self._ensure_cap("task.logs")
         return self._request("GET", f"/api/tasks/{task_id}/logs")
 

@@ -389,15 +389,33 @@ class BMADHandlers:
             return {"success": False, "error": "Supabase client not available"}
         
         try:
-            # TODO: Knowledge Graph indexing requires proper user_id setup
-            # For now, we'll skip KG indexing until user management is properly configured
-            # This is a known limitation that will be addressed in the cerebral cluster deployment
-            
-            return {
-                "success": False, 
-                "error": "Knowledge Graph indexing temporarily disabled - requires user_id setup",
-                "note": "BMAD documents are stored in cerebral_documents table and will be indexed when user management is configured"
+            # Create knowledge graph entry for BMAD document
+            kg_data = {
+                "id": str(uuid.uuid4()),
+                "tenant_id": "00000000-0000-0000-0000-000000000100",  # Default tenant UUID
+                "doc_id": doc_id,
+                "title": title,
+                "content": content,
+                "content_type": content_type,
+                "metadata": metadata,
+                "created_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat()
             }
+            
+            # Store in knowledge graph table
+            result = self.supabase_client.table("agentic_knowledge_chunks").insert(kg_data).execute()
+            
+            if result.data:
+                return {
+                    "success": True,
+                    "kg_id": kg_data["id"],
+                    "message": f"Document indexed to Knowledge Graph successfully"
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": "Failed to insert into knowledge graph table"
+                }
                 
         except Exception as e:
             return {"success": False, "error": f"Knowledge Graph indexing failed: {str(e)}"}
