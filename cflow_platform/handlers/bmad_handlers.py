@@ -34,7 +34,8 @@ class BMADHandlers:
             return
         
         url = get_rest_url()
-        key = get_api_key()
+        # Use service role key for Knowledge Graph operations
+        key = get_api_key(secure=True)  # This will get the service role key
         if url and key:
             try:
                 self.supabase_client = create_client(url, key)
@@ -72,11 +73,23 @@ class BMADHandlers:
                 try:
                     result = self.supabase_client.table("cerebral_documents").insert(doc_data).execute()
                     if result.data:
+                        # Automatically index into Knowledge Graph
+                        kg_result = await self._index_to_knowledge_graph(
+                            doc_id=doc_id,
+                            title=f"{project_name} Product Requirements Document",
+                            content=self._generate_prd_content(project_name, goals, background),
+                            content_type="PRD",
+                            metadata={"project_name": project_name, "goals": goals or [], "background": background or ""}
+                        )
+                        
+                        kg_status = " and indexed to Knowledge Graph" if kg_result.get("success") else " (KG indexing failed)"
+                        
                         return {
                             "success": True,
                             "doc_id": doc_id,
-                            "message": f"PRD document created successfully for {project_name} and stored in Supabase",
-                            "data": result.data[0]
+                            "message": f"PRD document created successfully for {project_name} and stored in Supabase{kg_status}",
+                            "data": result.data[0],
+                            "kg_indexed": kg_result.get("success", False)
                         }
                 except Exception as e:
                     return {
@@ -130,11 +143,23 @@ class BMADHandlers:
                 try:
                     result = self.supabase_client.table("cerebral_documents").insert(doc_data).execute()
                     if result.data:
+                        # Automatically index into Knowledge Graph
+                        kg_result = await self._index_to_knowledge_graph(
+                            doc_id=doc_id,
+                            title=f"{project_name} Architecture Document",
+                            content=self._generate_arch_content(project_name, tech_stack),
+                            content_type="ARCH",
+                            metadata={"project_name": project_name, "prd_id": prd_id, "tech_stack": tech_stack or []}
+                        )
+                        
+                        kg_status = " and indexed to Knowledge Graph" if kg_result.get("success") else " (KG indexing failed)"
+                        
                         return {
                             "success": True,
                             "doc_id": doc_id,
-                            "message": f"Architecture document created successfully for {project_name}",
-                            "data": result.data[0]
+                            "message": f"Architecture document created successfully for {project_name} and stored in Supabase{kg_status}",
+                            "data": result.data[0],
+                            "kg_indexed": kg_result.get("success", False)
                         }
                 except Exception as e:
                     return {
@@ -188,11 +213,23 @@ class BMADHandlers:
                 try:
                     result = self.supabase_client.table("cerebral_documents").insert(doc_data).execute()
                     if result.data:
+                        # Automatically index into Knowledge Graph
+                        kg_result = await self._index_to_knowledge_graph(
+                            doc_id=doc_id,
+                            title=f"{project_name} User Story Document",
+                            content=self._generate_story_content(project_name, user_stories),
+                            content_type="STORY",
+                            metadata={"project_name": project_name, "prd_id": prd_id, "arch_id": arch_id, "user_stories": user_stories or []}
+                        )
+                        
+                        kg_status = " and indexed to Knowledge Graph" if kg_result.get("success") else " (KG indexing failed)"
+                        
                         return {
                             "success": True,
                             "doc_id": doc_id,
-                            "message": f"Story document created successfully for {project_name}",
-                            "data": result.data[0]
+                            "message": f"Story document created successfully for {project_name} and stored in Supabase{kg_status}",
+                            "data": result.data[0],
+                            "kg_indexed": kg_result.get("success", False)
                         }
                 except Exception as e:
                     return {
@@ -339,6 +376,25 @@ class BMADHandlers:
 *[To be filled during interactive elicitation]*
 """
         return content
+
+    async def _index_to_knowledge_graph(self, doc_id: str, title: str, content: str, content_type: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
+        """Index BMAD document into Knowledge Graph for RAG search."""
+        if not self.supabase_client:
+            return {"success": False, "error": "Supabase client not available"}
+        
+        try:
+            # TODO: Knowledge Graph indexing requires proper user_id setup
+            # For now, we'll skip KG indexing until user management is properly configured
+            # This is a known limitation that will be addressed in the cerebral cluster deployment
+            
+            return {
+                "success": False, 
+                "error": "Knowledge Graph indexing temporarily disabled - requires user_id setup",
+                "note": "BMAD documents are stored in cerebral_documents table and will be indexed when user management is configured"
+            }
+                
+        except Exception as e:
+            return {"success": False, "error": f"Knowledge Graph indexing failed: {str(e)}"}
 
     def _generate_arch_content(self, project_name: str, tech_stack: Optional[List[str]]) -> str:
         """Generate Architecture content from template and parameters."""
