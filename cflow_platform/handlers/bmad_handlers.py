@@ -63,6 +63,8 @@ class BMADHandlers:
                 "tenant_id": "00000000-0000-0000-0000-000000000100",  # Default tenant UUID
                 "project_id": str(uuid.uuid4()),  # Generate project ID
                 "kind": "PRD",  # Document type
+                "version": 1,  # Document version
+                "status": "draft",  # Document status
                 "content": self._generate_prd_content(project_name, goals, background),
                 "created_at": datetime.utcnow().isoformat(),
                 "updated_at": datetime.utcnow().isoformat()
@@ -132,7 +134,9 @@ class BMADHandlers:
                 "id": doc_id,
                 "tenant_id": "00000000-0000-0000-0000-000000000100",  # Default tenant UUID
                 "project_id": str(uuid.uuid4()),  # Generate project ID
-                "kind": "ARCH",  # Document type
+                "kind": "ARCHITECTURE",  # Document type
+                "version": 1,  # Document version
+                "status": "draft",  # Document status
                 "content": self._generate_arch_content(project_name, tech_stack),
                 "created_at": datetime.utcnow().isoformat(),
                 "updated_at": datetime.utcnow().isoformat()
@@ -203,6 +207,8 @@ class BMADHandlers:
                 "tenant_id": "00000000-0000-0000-0000-000000000100",  # Default tenant UUID
                 "project_id": str(uuid.uuid4()),  # Generate project ID
                 "kind": "STORY",  # Document type
+                "version": 1,  # Document version
+                "status": "draft",  # Document status
                 "content": self._generate_story_content(project_name, user_stories),
                 "created_at": datetime.utcnow().isoformat(),
                 "updated_at": datetime.utcnow().isoformat()
