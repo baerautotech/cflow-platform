@@ -140,6 +140,22 @@ class ToolRegistry:
             tool("memory_stats", "Get memory system stats"),
         ]
 
+        # BMAD Planning Tools
+        tools += [
+            tool("bmad_prd_create", "Create Product Requirements Document", {"type": "object", "properties": {"project_name": {"type": "string"}, "goals": {"type": "array", "items": {"type": "string"}}, "background": {"type": "string"}}, "required": ["project_name"]}),
+            tool("bmad_prd_update", "Update PRD document", {"type": "object", "properties": {"doc_id": {"type": "string"}, "updates": {"type": "object"}}, "required": ["doc_id", "updates"]}),
+            tool("bmad_prd_get", "Get PRD document", {"type": "object", "properties": {"doc_id": {"type": "string"}}, "required": ["doc_id"]}),
+            tool("bmad_arch_create", "Create Architecture Document", {"type": "object", "properties": {"project_name": {"type": "string"}, "prd_id": {"type": "string"}, "tech_stack": {"type": "array", "items": {"type": "string"}}}, "required": ["project_name", "prd_id"]}),
+            tool("bmad_arch_update", "Update Architecture document", {"type": "object", "properties": {"doc_id": {"type": "string"}, "updates": {"type": "object"}}, "required": ["doc_id", "updates"]}),
+            tool("bmad_arch_get", "Get Architecture document", {"type": "object", "properties": {"doc_id": {"type": "string"}}, "required": ["doc_id"]}),
+            tool("bmad_story_create", "Create User Story Document", {"type": "object", "properties": {"project_name": {"type": "string"}, "prd_id": {"type": "string"}, "arch_id": {"type": "string"}, "user_stories": {"type": "array", "items": {"type": "string"}}}, "required": ["project_name", "prd_id", "arch_id"]}),
+            tool("bmad_story_update", "Update Story document", {"type": "object", "properties": {"doc_id": {"type": "string"}, "updates": {"type": "object"}}, "required": ["doc_id", "updates"]}),
+            tool("bmad_story_get", "Get Story document", {"type": "object", "properties": {"doc_id": {"type": "string"}}, "required": ["doc_id"]}),
+            tool("bmad_doc_list", "List BMAD documents", {"type": "object", "properties": {"project_id": {"type": "string"}, "doc_type": {"type": "string", "enum": ["PRD", "ARCH", "STORY"]}, "status": {"type": "string", "enum": ["draft", "review", "approved", "archived"]}}, "required": []}),
+            tool("bmad_doc_approve", "Approve BMAD document", {"type": "object", "properties": {"doc_id": {"type": "string"}, "approver": {"type": "string"}}, "required": ["doc_id", "approver"]}),
+            tool("bmad_doc_reject", "Reject BMAD document", {"type": "object", "properties": {"doc_id": {"type": "string"}, "reason": {"type": "string"}, "reviewer": {"type": "string"}}, "required": ["doc_id", "reason", "reviewer"]}),
+        ]
+
         # Internet search (DuckDuckGo)
         tools += [
             tool(

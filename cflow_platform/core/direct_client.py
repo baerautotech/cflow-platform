@@ -135,6 +135,36 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             "memory_stats": handler.handle_memory_stats,
         }
         return await mapping[tool_name](kwargs or {})
+    
+    # BMAD Planning Tools
+    if tool_name.startswith("bmad_"):
+        mod = load_handler_module("bmad_handlers")
+        handler = mod.BMADHandlers()  # type: ignore[attr-defined]
+        
+        if tool_name == "bmad_prd_create":
+            return await handler.bmad_prd_create(**kwargs)
+        elif tool_name == "bmad_prd_update":
+            return await handler.bmad_prd_update(**kwargs)
+        elif tool_name == "bmad_prd_get":
+            return await handler.bmad_prd_get(**kwargs)
+        elif tool_name == "bmad_arch_create":
+            return await handler.bmad_arch_create(**kwargs)
+        elif tool_name == "bmad_arch_update":
+            return await handler.bmad_arch_update(**kwargs)
+        elif tool_name == "bmad_arch_get":
+            return await handler.bmad_arch_get(**kwargs)
+        elif tool_name == "bmad_story_create":
+            return await handler.bmad_story_create(**kwargs)
+        elif tool_name == "bmad_story_update":
+            return await handler.bmad_story_update(**kwargs)
+        elif tool_name == "bmad_story_get":
+            return await handler.bmad_story_get(**kwargs)
+        elif tool_name == "bmad_doc_list":
+            return await handler.bmad_doc_list(**kwargs)
+        elif tool_name == "bmad_doc_approve":
+            return await handler.bmad_doc_approve(**kwargs)
+        elif tool_name == "bmad_doc_reject":
+            return await handler.bmad_doc_reject(**kwargs)
     if tool_name in {"internet_search"}:
         mod = load_handler_module("internet_search_handlers")
         handler = mod.InternetSearchHandlers()  # type: ignore[attr-defined]
