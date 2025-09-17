@@ -26,6 +26,11 @@ def _load_env() -> None:
 def cli() -> int:
     _load_env()
 
+    # Initialize variables
+    supa_url = ""
+    supa_key = ""
+    client = None
+
     # SDK client
     try:
         from supabase import create_client  # type: ignore
@@ -33,7 +38,7 @@ def cli() -> int:
         supa_key = get_api_key() or ""
         client = create_client(supa_url, supa_key) if (supa_url and supa_key) else None
     except Exception:
-        client = None
+        pass
 
     issues: Dict[str, Any] = {}
 
