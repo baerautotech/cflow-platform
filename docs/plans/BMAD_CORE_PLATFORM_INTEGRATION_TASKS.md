@@ -60,23 +60,30 @@ Notes
 
 ---
 
-## 3. BMAD Headless Service (API Facade)
+## 3. BMAD HTTP API Facade (Cerebral Cluster)
 
-[ ] 3.1 Scaffold BMAD headless Deployment/Service (cerebral-deployment)
-- Description: Create Kubernetes manifests (Deployment/Service/Ingress) with image SHAs; no web UI.
+[ ] 3.1 Scaffold BMAD HTTP API service (cerebral-deployment)
+- Description: Create Kubernetes manifests (Deployment/Service/Ingress) for BMAD HTTP API facade on cerebral cluster.
 - Context: Plan → Installer Integration; Scalability.
-- Outputs: `infrastructure/kubernetes/bmad-service.yaml`.
-- Acceptance: Pod ready; health endpoint OK.
+- Outputs: `k8s/bmad-api-service.yaml` in cerebral-deployment.
+- Acceptance: Pod ready; health endpoint OK; accessible via cluster ingress.
 - Dependencies: 1.1.
 
-[ ] 3.2 Implement API facade endpoints
+[ ] 3.2 Implement BMAD HTTP API facade endpoints
 - Description: POST `/bmad/planning/prd|architecture|story`, `/bmad/gates/approve`; validations; authz.
 - Context: Plan → API Contracts; Security.
-- Outputs: Service handlers, OpenAPI.
-- Acceptance: Contract tests green.
-- Dependencies: 2.1.
+- Outputs: HTTP API handlers, OpenAPI spec, deployed to cerebral cluster.
+- Acceptance: Contract tests green; accessible via `mcp.cerebral.baerautotech.com`.
+- Dependencies: 2.1, 3.1.
 
-[ ] 3.3 Provider router integration (hosted LLM only)
+[ ] 3.3 WebMCP integration for BMAD tools
+- Description: Add BMAD tools to cflow-platform tool registry; update WebMCP server to import and route BMAD calls.
+- Context: Plan → MCP Integration; Tool Registry.
+- Outputs: Updated `tool_registry.py`; WebMCP server integration.
+- Acceptance: BMAD tools available via WebMCP; HTTP routing to BMAD API.
+- Dependencies: 3.2.
+
+[ ] 3.4 Provider router integration (hosted LLM only)
 - Description: Route BMAD agent calls via provider router; enforce tenant quotas, cost caps, egress allowlist.
 - Context: Plan → Security & Compliance; Provider Policy.
 - Outputs: Router config; policy checks.
@@ -249,16 +256,23 @@ Notes
 
 ---
 
-## 10. Local Runner & IDE
+## 10. Local Development & IDE Integration
 
-[ ] 10.1 `cflow-local bmad` CLI
-- Description: Implement login, provider set, prd/arch/story upsert, sync; MCP tool shim.
+[ ] 10.1 `cflow-local bmad` CLI (HTTP client)
+- Description: Implement HTTP client for BMAD API facade; login, provider set, prd/arch/story upsert, sync.
 - Context: Plan → Local Runner & IDE; API Contracts.
-- Outputs: CLI commands + docs.
-- Acceptance: CLI e2e against staging.
+- Outputs: CLI commands + docs; HTTP client library.
+- Acceptance: CLI e2e against cerebral cluster BMAD API.
 - Dependencies: 3.2, 4.2.
 
-[ ] 10.2 Sync engine (bidirectional)
+[ ] 10.2 WebMCP tool integration
+- Description: Add BMAD tools to WebMCP server; ensure proper HTTP routing to BMAD API facade.
+- Context: Plan → MCP Integration; Tool Registry.
+- Outputs: WebMCP server updates; tool routing.
+- Acceptance: BMAD tools accessible via WebMCP; proper HTTP routing.
+- Dependencies: 3.3, 10.1.
+
+[ ] 10.3 Sync engine (bidirectional)
 - Description: Cursor-based sync for artifacts and metadata; conflict resolution; audit.
 - Context: Plan → API Contracts; Governance.
 - Outputs: Sync service + tests.

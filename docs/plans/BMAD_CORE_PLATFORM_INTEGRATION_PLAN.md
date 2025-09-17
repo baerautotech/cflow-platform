@@ -32,26 +32,30 @@ Links
 
 ### 4) Technical Stack
 - Services:  
-  - BMAD core (Node v20, headless) vendored into `vendor/bmad/` and exposed via internal HTTP/MCP endpoints.  
+  - BMAD core (Node v20, headless) vendored into `vendor/bmad/` and exposed via HTTP API facade on cerebral cluster.  
   - CAEF Orchestrator (Python) controls gated execution.  
-  - RAG/KG: ChromaDB primary (local), Supabase sync (prod), Knowledge Graph builder.  
+  - RAG/KG: Supabase + pgvector (cluster), Knowledge Graph builder.  
+  - WebMCP Server: Runs on cerebral cluster, imports tools from cflow-platform.  
   - API Gateway/Ingress, Service Mesh (istio/linkerd if applicable).  
   - Secrets: Vault.  
-  - Storage: Postgres (Supabase), Object storage (MinIO/S3) for artifacts, ChromaDB for vectors.
+  - Storage: Postgres (Supabase), Object storage (MinIO/S3) for artifacts.
 - Clients: Cerebral Web (React), mobile/wearables (native) using platform APIs.
+- Development: cflow-platform provides tool definitions and HTTP client for cluster APIs.
 
 ### 5) High‑Level Architecture
 ```mermaid
 graph TD
   U[Web/Mobile/Wearables] -->|Forms & Actions| GW[API Gateway]
-  GW -->|AuthZ/JWT| BMAD[BMAD Headless Service]
+  GW -->|AuthZ/JWT| BMAD[BMAD HTTP API Facade]
   GW --> CAEF[CAEF Orchestrator]
-  BMAD -->|Artifacts| DB[(Cerebral DB)]
-  BMAD -->|Index| RAG[(ChromaDB)]
+  GW --> WebMCP[WebMCP Server]
+  BMAD -->|Artifacts| DB[(Supabase DB)]
+  BMAD -->|Index| RAG[(Supabase pgvector)]
   BMAD -->|Edges| KG[Knowledge Graph]
   CAEF -->|Jobs| EXEC[Code/Test/Validate Agents]
   EXEC -->|Results| DB
-  DB <--> SYNC[Supabase Sync]
+  WebMCP -->|Import Tools| CFlow[cflow-platform Tool Registry]
+  CFlow -->|HTTP Client| BMAD
 ```
 
 ### 6) Database Schema Design (mapping)
