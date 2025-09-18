@@ -12,6 +12,8 @@ Purpose: Clarify MCP deployment strategy and architectural decisions
 - **WebMCP Server**: `mcp.cerebral.baerautotech.com`
 - **Tool Registry**: Imported from `cflow_platform.core.tool_registry`
 - **BMAD Integration**: HTTP API facade for BMAD agents
+- **BMAD Project Type Detection**: Automatic greenfield vs brownfield workflow routing
+- **BMAD Brownfield Support**: Comprehensive existing system analysis and documentation generation
 - **BMAD Expansion Packs**: Dynamic pack loading and domain-specific agents
 - **KnowledgeRAG**: Supabase + pgvector on cluster
 - **Deployment**: Kubernetes manifests in `cerebral-deployment/k8s/`
@@ -59,11 +61,14 @@ Purpose: Clarify MCP deployment strategy and architectural decisions
 
 ### **Phase 2: HTTP API Facade**
 1. **BMAD Service**: Deploy BMAD HTTP API facade to cerebral cluster
-2. **API Endpoints**: `/bmad/planning/prd`, `/bmad/planning/architecture`, `/bmad/planning/story`
-3. **Expansion Pack Endpoints**: `/bmad/expansion-packs/install`, `/bmad/expansion-packs/list`, `/bmad/expansion-packs/enable`
-4. **Authentication**: JWT-based auth with tenant isolation
-5. **Provider Router**: Route BMAD agent calls to hosted LLM APIs
-6. **Dynamic Pack Loading**: Load expansion packs on-demand based on project requirements
+2. **Project Type Detection**: `/bmad/project-type/detect` - Automatic greenfield vs brownfield detection
+3. **Greenfield Endpoints**: `/bmad/greenfield/prd-create`, `/bmad/greenfield/arch-create`, `/bmad/greenfield/story-create`
+4. **Brownfield Endpoints**: `/bmad/brownfield/document-project`, `/bmad/brownfield/prd-create`, `/bmad/brownfield/arch-create`, `/bmad/brownfield/story-create`
+5. **Expansion Pack Endpoints**: `/bmad/expansion-packs/install`, `/bmad/expansion-packs/list`, `/bmad/expansion-packs/enable`
+6. **Authentication**: JWT-based auth with tenant isolation
+7. **Provider Router**: Route BMAD agent calls to hosted LLM APIs
+8. **Dynamic Pack Loading**: Load expansion packs on-demand based on project requirements
+9. **Workflow Routing**: Route projects to appropriate greenfield or brownfield workflows
 
 ### **Phase 3: WebMCP Integration**
 1. **Tool Import**: WebMCP server imports BMAD tools from cflow-platform
@@ -82,10 +87,13 @@ Purpose: Clarify MCP deployment strategy and architectural decisions
 ### **Cluster Deployment (When Ready)**
 - [ ] **Task 3.1**: Scaffold BMAD HTTP API service (cerebral-deployment)
 - [ ] **Task 3.2**: Implement BMAD HTTP API facade endpoints
-- [ ] **Task 3.3**: Implement BMAD expansion pack endpoints
-- [ ] **Task 3.4**: WebMCP integration for BMAD tools
-- [ ] **Task 3.5**: Provider router integration
-- [ ] **Task 3.6**: Dynamic expansion pack loading system
+- [ ] **Task 3.3**: Implement BMAD project type detection system
+- [ ] **Task 3.4**: Implement BMAD brownfield support (document-project, brownfield templates)
+- [ ] **Task 3.5**: Implement BMAD expansion pack endpoints
+- [ ] **Task 3.6**: WebMCP integration for BMAD tools
+- [ ] **Task 3.7**: Provider router integration
+- [ ] **Task 3.8**: Dynamic expansion pack loading system
+- [ ] **Task 3.9**: Workflow routing system for greenfield vs brownfield
 
 ### **Local Development Tools**
 - [ ] **Task 10.1**: `cflow-local bmad` CLI (HTTP client)

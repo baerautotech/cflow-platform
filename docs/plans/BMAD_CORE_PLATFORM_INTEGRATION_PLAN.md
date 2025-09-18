@@ -23,7 +23,7 @@ Links
 - Goal: Adopt BMAD’s agentic planning and context-engineered development as the mandatory planning/PM/story system, enforce gates before codegen, and integrate artifacts into Cerebral’s RAG/KG and PM.
 
 ### 2) Scope
-- In scope: BMAD planning agents (Analyst/PM/Architect/SM/Dev/QA), PRD/Architecture/Story lifecycle, CAEF-gated code/test/validation, storage and RAG/KG indexing, web/mobile/wearable UX, security/tenancy/audit, 1‑touch installer integration, local runner + IDE tools optional, BMAD expansion packs integration.
+- In scope: BMAD planning agents (Analyst/PM/Architect/SM/Dev/QA), PRD/Architecture/Story lifecycle, CAEF-gated code/test/validation, storage and RAG/KG indexing, web/mobile/wearable UX, security/tenancy/audit, 1‑touch installer integration, local runner + IDE tools optional, BMAD expansion packs integration, comprehensive brownfield vs greenfield project type detection and workflow routing.
 - Out of scope: Retaining BMAD's web UI; legacy TaskMaster file/json systems; non-compliant mock systems.
 
 ### 3) Success Criteria (VEG & AEMI)
@@ -34,6 +34,8 @@ Links
 - Services:  
   - BMAD core (Node v20, headless) vendored into `vendor/bmad/` and exposed via HTTP API facade on cerebral cluster.  
   - BMAD Expansion Packs: Domain-specific agent teams, templates, and workflows (Game Dev, Creative Writing, DevOps, etc.) integrated into cerebral cluster.
+  - BMAD Project Type Detection: Automatic greenfield vs brownfield workflow routing with appropriate templates and processes.
+  - BMAD Brownfield Support: Comprehensive existing system analysis, documentation generation, integration strategy planning.
   - CAEF Orchestrator (Python) controls gated execution.  
   - RAG/KG: Supabase + pgvector (cluster), Knowledge Graph builder.  
   - WebMCP Server: Runs on cerebral cluster, imports tools from cflow-platform.  
@@ -50,7 +52,13 @@ graph TD
   GW -->|AuthZ/JWT| BMAD[BMAD HTTP API Facade]
   GW --> CAEF[CAEF Orchestrator]
   GW --> WebMCP[WebMCP Server]
-  BMAD -->|Core Agents| CORE[BMAD Core Agents]
+  BMAD -->|Project Type Detection| PTD[Project Type Detector]
+  PTD -->|Greenfield| GREEN[Greenfield Workflow]
+  PTD -->|Brownfield| BROWN[Brownfield Workflow]
+  GREEN -->|Core Agents| CORE[BMAD Core Agents]
+  BROWN -->|Core Agents| CORE
+  BROWN -->|Document Project| DOC[Project Documentation]
+  BROWN -->|Integration Strategy| INT[Integration Planning]
   BMAD -->|Expansion Packs| EXP[BMAD Expansion Packs]
   BMAD -->|Artifacts| DB[(Supabase DB)]
   BMAD -->|Index| RAG[(Supabase pgvector)]
@@ -77,7 +85,144 @@ graph TD
 
 ---
 
-## II. BMAD Expansion Packs Integration
+## II. BMAD Brownfield vs Greenfield Integration
+
+### 1) Project Type Detection Overview
+The Cerebral platform must automatically detect and route between greenfield (new projects) and brownfield (existing system enhancement) workflows. This is critical because most real-world software development involves enhancing existing systems rather than building from scratch.
+
+### 2) Project Type Detection Logic
+```mermaid
+graph TD
+  START[Project Start] --> INPUT[User Input: Project Name + Context]
+  INPUT --> CHECK{Existing Codebase?}
+  CHECK -->|Yes| BROWN[Brownfield Workflow]
+  CHECK -->|No| GREEN[Greenfield Workflow]
+  BROWN --> DOC[Document Existing System]
+  DOC --> PRD[Create Brownfield PRD]
+  PRD --> ARCH[Create Brownfield Architecture]
+  GREEN --> PRD2[Create Greenfield PRD]
+  PRD2 --> ARCH2[Create Greenfield Architecture]
+  ARCH --> VALIDATE[PO Master Checklist]
+  ARCH2 --> VALIDATE
+  VALIDATE --> CAEF[CAEF Orchestration]
+```
+
+### 3) Brownfield Workflow Components
+
+#### 3.1) Project Documentation Phase
+- **Purpose**: Generate comprehensive documentation from existing codebase
+- **Agent**: Architect with `document-project` task
+- **Output**: Complete system documentation stored in `cerebral_documents`
+- **Integration**: Automatically indexed in Knowledge Graph for RAG search
+
+#### 3.2) Enhancement Planning Phase
+- **Purpose**: Create PRD focused on enhancement with existing system analysis
+- **Agent**: PM with `brownfield-prd-tmpl.yaml`
+- **Features**: 
+  - Existing system analysis
+  - Integration point identification
+  - Compatibility requirements
+  - Risk assessment
+  - Migration strategy
+
+#### 3.3) Architecture Planning Phase
+- **Purpose**: Create architecture with integration strategy
+- **Agent**: Architect with `brownfield-architecture-tmpl.yaml`
+- **Features**:
+  - Integration strategy design
+  - Migration approach planning
+  - Backwards compatibility
+  - Risk mitigation strategies
+  - Performance impact analysis
+
+#### 3.4) Validation Phase
+- **Purpose**: Ensure compatibility and no breaking changes
+- **Agent**: PO with enhanced master checklist
+- **Features**:
+  - Project type-specific validation
+  - Integration safety checks
+  - Risk mitigation verification
+  - Compliance validation
+
+### 4) Greenfield Workflow Components
+
+#### 4.1) Requirements Planning Phase
+- **Purpose**: Create PRD for new project from scratch
+- **Agent**: PM with `prd-tmpl.yaml`
+- **Features**: Standard BMAD greenfield planning
+
+#### 4.2) Architecture Planning Phase
+- **Purpose**: Create architecture for new system
+- **Agent**: Architect with `architecture-tmpl.yaml`
+- **Features**: Standard BMAD greenfield architecture
+
+#### 4.3) Validation Phase
+- **Purpose**: Ensure completeness and quality
+- **Agent**: PO with standard master checklist
+- **Features**: Standard BMAD greenfield validation
+
+### 5) Unified Workflow Integration
+
+#### 5.1) Entry Points
+- **Web/Mobile/Wearable UIs**: Project creation forms with project type detection
+- **IDE Integration**: Automatic project type detection from existing codebase
+- **CLI Tools**: Explicit project type specification with validation
+
+#### 5.2) Server Platform Components
+- **Project Type Detector**: Core service for automatic detection
+- **Workflow Router**: Routes to appropriate greenfield/brownfield workflow
+- **Template Manager**: Manages greenfield vs brownfield templates
+- **Documentation Generator**: Handles existing system documentation
+
+#### 5.3) Database Schema Extensions
+```sql
+-- Project type tracking
+ALTER TABLE cerebral_documents ADD COLUMN project_type TEXT CHECK (project_type IN ('greenfield', 'brownfield'));
+ALTER TABLE cerebral_tasks ADD COLUMN project_type TEXT CHECK (project_type IN ('greenfield', 'brownfield'));
+
+-- Brownfield-specific metadata
+ALTER TABLE cerebral_documents ADD COLUMN existing_system_analysis JSONB;
+ALTER TABLE cerebral_documents ADD COLUMN integration_strategy JSONB;
+ALTER TABLE cerebral_documents ADD COLUMN migration_plan JSONB;
+```
+
+### 6) API Endpoints for Project Type Management
+
+#### 6.1) Project Type Detection
+- `POST /bmad/project-type/detect` - Detect project type from context
+- `GET /bmad/project-type/{project_id}` - Get project type for existing project
+
+#### 6.2) Brownfield-Specific Endpoints
+- `POST /bmad/brownfield/document-project` - Generate project documentation
+- `POST /bmad/brownfield/prd-create` - Create brownfield PRD
+- `POST /bmad/brownfield/arch-create` - Create brownfield architecture
+- `POST /bmad/brownfield/story-create` - Create brownfield story
+
+#### 6.3) Greenfield-Specific Endpoints
+- `POST /bmad/greenfield/prd-create` - Create greenfield PRD
+- `POST /bmad/greenfield/arch-create` - Create greenfield architecture
+- `POST /bmad/greenfield/story-create` - Create greenfield story
+
+### 7) Client Integration Requirements
+
+#### 7.1) Web/Mobile/Wearable UIs
+- Project creation forms with project type selection
+- Context input fields for existing system information
+- Workflow-specific UI components for greenfield vs brownfield
+
+#### 7.2) IDE Integration
+- Automatic project type detection from file system
+- Context-aware agent suggestions
+- Workflow-specific tool palettes
+
+#### 7.3) CLI Tools
+- Project type specification flags
+- Context input parameters
+- Workflow-specific command options
+
+---
+
+## III. BMAD Expansion Packs Integration
 
 ### 1) Expansion Pack Overview
 BMAD expansion packs extend the core framework beyond traditional software development, providing specialized agent teams, templates, and workflows for specific domains. Each pack is a self-contained ecosystem designed to bring AI-assisted workflows to any field.
