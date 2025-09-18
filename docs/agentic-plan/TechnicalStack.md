@@ -4,9 +4,12 @@
 - Packaging/venv: uv + .venv
 - Test framework: pytest 8.x
 - Vector DB: ChromaDB (local), Supabase Postgres + pgvector (remote)
-- Embeddings: Apple Silicon MPS accelerator (fallback CPU)
+- Embeddings: Hardware-agnostic GPU accelerator (Apple Silicon MPS, NVIDIA CUDA, CPU fallback)
 - CLI: argparse entrypoints under `pyproject.toml` [project.scripts]
 - Observability: structured JSON outputs, iteration checkpoints in `.cerebraflow/`
+- Frontend: React Native + React Native Web + TypeScript
+- Backend: Python FastAPI (full Python stack)
+- Storage: MinIO S3 (self-hosted)
 
 ### Model Provider
 

@@ -38,8 +38,8 @@ Links
   - WebMCP Server: Runs on cerebral cluster, imports tools from cflow-platform.  
   - API Gateway/Ingress, Service Mesh (istio/linkerd if applicable).  
   - Secrets: Vault.  
-  - Storage: Postgres (Supabase), Object storage (MinIO/S3) for artifacts.
-- Clients: Cerebral Web (React), mobile/wearables (native) using platform APIs.
+  - Storage: Postgres (Supabase), Object storage (MinIO S3) for artifacts.
+- Clients: Cerebral Web (React Native + React Native Web), mobile/wearables (React Native) using platform APIs.
 - Development: cflow-platform provides tool definitions and HTTP client for cluster APIs.
 
 ### 5) High‑Level Architecture

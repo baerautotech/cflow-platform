@@ -286,7 +286,7 @@ Dependencies:
 
 ### Frontend Framework
 ```yaml
-Framework: React with TypeScript
+Framework: React Native + React Native Web with TypeScript
 State Management: Redux Toolkit
 UI Components: Material-UI or Ant Design
 Rich Text Editor: Slate.js or TipTap
