@@ -1,11 +1,24 @@
 ## High‑Level Architecture
 
-- Core Loop: `cflow_platform/core/agent_loop.py` orchestrates Plan → Verify (tests) with checkpoints.
-- Test Runner: `cflow_platform/core/test_runner.py` provides in‑process and uv subprocess execution.
-- Failure Parser: `cflow_platform/core/failure_parser.py` parses pytest output into structured failures.
-- Minimal Edit Applier: `cflow_platform/core/minimal_edit_applier.py` applies scoped diffs (to integrate).
-- Memory/Sync: Local Chroma; remote Supabase RDB + pgvector via SDK-only access (no raw REST). Realtime preference is the system LaunchAgent (`com.cerebral.unified-sync`).
-- Apple Silicon: `core/embeddings/*` Vectorization path with MPS accelerator.
+### **BMAD Integration Architecture**
+- **BMAD Core**: Node v20 headless services vendored into `vendor/bmad/` and exposed via HTTP API facade on cerebral cluster
+- **Project Type Detection**: Automatic greenfield vs brownfield detection with workflow routing
+- **Brownfield Support**: Comprehensive existing system analysis, documentation generation, and integration strategy planning
+- **Greenfield Support**: Standard BMAD workflow for new project development
+- **Template Management**: Dynamic template selection based on project type (greenfield vs brownfield templates)
+- **Workflow Router**: Routes projects to appropriate greenfield or brownfield workflows
+
+### **Cerebral Platform Integration**
+- **CAEF Orchestrator**: Python-based orchestrator for multi-agent code/test/validation after planning gates
+- **KnowledgeRAG**: Supabase + pgvector for document indexing and RAG search
+- **WebMCP Server**: Runs on cerebral cluster, imports tools from cflow-platform
+- **API Gateway**: JWT-based authentication with tenant isolation
+- **Storage**: Postgres (Supabase) for documents and tasks, MinIO S3 for artifacts
+
+### **Client Integration**
+- **Web/Mobile/Wearable UIs**: React Native + React Native Web for cross-platform development
+- **IDE Integration**: Automatic project type detection and context-aware suggestions
+- **CLI Tools**: Project type specification and workflow management
 
 ### MCP Servers (Extensibility)
 
