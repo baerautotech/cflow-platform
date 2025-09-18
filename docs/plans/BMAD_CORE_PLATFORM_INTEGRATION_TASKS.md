@@ -33,9 +33,43 @@ Notes
 
 ---
 
-## 2. Gap Analysis (Architecture/Data/UI)
+## 2. BMAD Expansion Packs Integration
 
-[ ] 2.1 Inventory BMAD planning/story interfaces
+[ ] 2.1 Inventory available expansion packs
+- Description: Catalog all BMAD expansion packs in vendor/bmad/expansion-packs/ and document their capabilities, agents, templates, and workflows.
+- Context: Plan → BMAD Expansion Packs Integration; Available Packs.
+- RAG/KG: RAG query for expansion pack documentation and capabilities.
+- Outputs: `docs/architecture/bmad_expansion_packs_inventory.md`.
+- Acceptance: Reviewed by architecture; covers all available packs.
+- Dependencies: 1.1.
+
+[ ] 2.2 Design expansion pack registry schema
+- Description: Design database schema for expansion pack registry, project associations, and pack metadata storage.
+- Context: Plan → Database Schema Design; Expansion Pack Architecture.
+- RAG/KG: Query schema docs; link entity relationships.
+- Outputs: ERD/DDL for expansion pack tables.
+- Acceptance: ERD approved; migration draft ready.
+- Dependencies: 2.1.
+
+[ ] 2.3 Implement expansion pack HTTP API endpoints
+- Description: Create REST API endpoints for expansion pack management (install, list, enable, execute).
+- Context: Plan → API Contracts; Expansion Pack Integration.
+- Outputs: HTTP API handlers, OpenAPI spec, deployed to cerebral cluster.
+- Acceptance: Contract tests green; accessible via BMAD API facade.
+- Dependencies: 2.2, 3.2.
+
+[ ] 2.4 Implement dynamic pack loading system
+- Description: Create system to dynamically load expansion packs based on project requirements and tenant configuration.
+- Context: Plan → Cerebral Cluster Integration; Dynamic Loading.
+- Outputs: Pack loader service, configuration management, deployed to cerebral cluster.
+- Acceptance: Packs load on-demand; configuration persisted.
+- Dependencies: 2.3.
+
+---
+
+## 3. Gap Analysis (Architecture/Data/UI)
+
+[ ] 3.1 Inventory BMAD planning/story interfaces
 - Description: Catalog BMAD agent entrypoints (PRD, Architecture, Story). Capture inputs/outputs for API facade.
 - Context: Plan → API Contracts; Process Outline.
 - RAG/KG: RAG pull from GitIngest BMAD docs for agent roles and flows.
@@ -43,47 +77,47 @@ Notes
 - Acceptance: Reviewed by architecture; covers PRD/Architecture/Story.
 - Dependencies: 1.1.
 
-[ ] 2.2 Map artifacts to DB schema
+[ ] 3.2 Map artifacts to DB schema
 - Description: Map PRD/Architecture/Story to `cerebral_documents`, tasks to `cerebral_tasks`, indexes to RAG/KG.
 - Context: Plan → Database Schema Design.
 - RAG/KG: Query schema docs; link entity relationships.
 - Outputs: ERD/DDL deltas.
 - Acceptance: ERD approved; migration draft ready.
-- Dependencies: 2.1.
+- Dependencies: 3.1.
 
-[ ] 2.3 UX scope for PRD/Architecture/Story forms
+[ ] 3.3 UX scope for PRD/Architecture/Story forms
 - Description: Define UX flows and approvals in Cerebral Web; mobile/wearable endpoints.
 - Context: Plan → Web/mobile/wearable UX.
 - Outputs: Wireframes/spec.
 - Acceptance: PM sign-off.
-- Dependencies: 2.1.
+- Dependencies: 3.1.
 
 ---
 
-## 3. BMAD HTTP API Facade (Cerebral Cluster)
+## 4. BMAD HTTP API Facade (Cerebral Cluster)
 
-[ ] 3.1 Scaffold BMAD HTTP API service (cerebral-deployment)
+[ ] 4.1 Scaffold BMAD HTTP API service (cerebral-deployment)
 - Description: Create Kubernetes manifests (Deployment/Service/Ingress) for BMAD HTTP API facade on cerebral cluster.
 - Context: Plan → Installer Integration; Scalability.
 - Outputs: `k8s/bmad-api-service.yaml` in cerebral-deployment.
 - Acceptance: Pod ready; health endpoint OK; accessible via cluster ingress.
 - Dependencies: 1.1.
 
-[ ] 3.2 Implement BMAD HTTP API facade endpoints
+[ ] 4.2 Implement BMAD HTTP API facade endpoints
 - Description: POST `/bmad/planning/prd|architecture|story`, `/bmad/gates/approve`; validations; authz.
 - Context: Plan → API Contracts; Security.
 - Outputs: HTTP API handlers, OpenAPI spec, deployed to cerebral cluster.
 - Acceptance: Contract tests green; accessible via `mcp.cerebral.baerautotech.com`.
-- Dependencies: 2.1, 3.1.
+- Dependencies: 3.1, 4.1.
 
-[ ] 3.3 WebMCP integration for BMAD tools
+[ ] 4.3 WebMCP integration for BMAD tools
 - Description: Add BMAD tools to cflow-platform tool registry; update WebMCP server to import and route BMAD calls.
 - Context: Plan → MCP Integration; Tool Registry.
 - Outputs: Updated `tool_registry.py`; WebMCP server integration.
 - Acceptance: BMAD tools available via WebMCP; HTTP routing to BMAD API.
-- Dependencies: 3.2.
+- Dependencies: 4.2.
 
-[ ] 3.4 Provider router integration (hosted LLM only)
+[ ] 4.4 Provider router integration (hosted LLM only)
 - Description: Route BMAD agent calls via provider router; enforce tenant quotas, cost caps, egress allowlist.
 - Context: Plan → Security & Compliance; Provider Policy.
 - Outputs: Router config; policy checks.

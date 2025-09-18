@@ -23,8 +23,8 @@ Links
 - Goal: Adopt BMAD’s agentic planning and context-engineered development as the mandatory planning/PM/story system, enforce gates before codegen, and integrate artifacts into Cerebral’s RAG/KG and PM.
 
 ### 2) Scope
-- In scope: BMAD planning agents (Analyst/PM/Architect/SM/Dev/QA), PRD/Architecture/Story lifecycle, CAEF-gated code/test/validation, storage and RAG/KG indexing, web/mobile/wearable UX, security/tenancy/audit, 1‑touch installer integration, local runner + IDE tools optional.
-- Out of scope: Retaining BMAD’s web UI; legacy TaskMaster file/json systems; non-compliant mock systems.
+- In scope: BMAD planning agents (Analyst/PM/Architect/SM/Dev/QA), PRD/Architecture/Story lifecycle, CAEF-gated code/test/validation, storage and RAG/KG indexing, web/mobile/wearable UX, security/tenancy/audit, 1‑touch installer integration, local runner + IDE tools optional, BMAD expansion packs integration.
+- Out of scope: Retaining BMAD's web UI; legacy TaskMaster file/json systems; non-compliant mock systems.
 
 ### 3) Success Criteria (VEG & AEMI)
 - VEG: Code and services must be production-ready, zero placeholders/TODOs, testable, validated under performance SLOs, with acceptance tests and clear interfaces.
@@ -33,6 +33,7 @@ Links
 ### 4) Technical Stack
 - Services:  
   - BMAD core (Node v20, headless) vendored into `vendor/bmad/` and exposed via HTTP API facade on cerebral cluster.  
+  - BMAD Expansion Packs: Domain-specific agent teams, templates, and workflows (Game Dev, Creative Writing, DevOps, etc.) integrated into cerebral cluster.
   - CAEF Orchestrator (Python) controls gated execution.  
   - RAG/KG: Supabase + pgvector (cluster), Knowledge Graph builder.  
   - WebMCP Server: Runs on cerebral cluster, imports tools from cflow-platform.  
@@ -49,6 +50,8 @@ graph TD
   GW -->|AuthZ/JWT| BMAD[BMAD HTTP API Facade]
   GW --> CAEF[CAEF Orchestrator]
   GW --> WebMCP[WebMCP Server]
+  BMAD -->|Core Agents| CORE[BMAD Core Agents]
+  BMAD -->|Expansion Packs| EXP[BMAD Expansion Packs]
   BMAD -->|Artifacts| DB[(Supabase DB)]
   BMAD -->|Index| RAG[(Supabase pgvector)]
   BMAD -->|Edges| KG[Knowledge Graph]
@@ -56,12 +59,16 @@ graph TD
   EXEC -->|Results| DB
   WebMCP -->|Import Tools| CFlow[cflow-platform Tool Registry]
   CFlow -->|HTTP Client| BMAD
+  EXP -->|Domain Agents| CORE
+  EXP -->|Templates| DB
+  EXP -->|Workflows| CAEF
 ```
 
 ### 6) Database Schema Design (mapping)
 - Documents: `cerebral_documents` (doc_id, tenant_id, project_id, type: PRD|ARCH|STORY, versioning, status, content, authored_by, artifacts)
 - Tasks: `cerebral_tasks` (task_id, tenant_id, project_id, derived_from_story, status, priority, dependencies, metadata)
 - Activities/Audit: `cerebral_activities` (actor, action, resource, timestamp, metadata)
+- Expansion Packs: `bmad_expansion_packs` (pack_id, tenant_id, pack_name, version, status, agents, templates, workflows, metadata)
 - RAG: `agentic_knowledge_chunks` + vectors tables; link docs↔chunks↔tasks; maintain 1024D code embeddings; allow 384D for docs where configured.
 
 ### 7) Code Style & Compliance
@@ -70,7 +77,82 @@ graph TD
 
 ---
 
-## II. Process Outline (Agentic Workflow)
+## II. BMAD Expansion Packs Integration
+
+### 1) Expansion Pack Overview
+BMAD expansion packs extend the core framework beyond traditional software development, providing specialized agent teams, templates, and workflows for specific domains. Each pack is a self-contained ecosystem designed to bring AI-assisted workflows to any field.
+
+### 2) Available Expansion Packs
+- **Game Development**: 2D Phaser, 2D Unity, Godot game development with specialized agents
+- **Creative Writing**: Complete writing team with plot architects, character psychologists, editors
+- **Infrastructure/DevOps**: Cloud architecture, platform engineering, CI/CD automation
+- **Data Science**: ML model development, data engineering, visualization
+- **Business Strategy**: Market analysis, financial planning, operations optimization
+- **Health & Wellness**: Fitness training, nutrition planning, habit building
+- **Education**: Curriculum design, instructional design, assessment
+- **Legal Assistant**: Contract analysis, legal research, compliance checking
+
+### 3) Expansion Pack Architecture
+```mermaid
+graph TD
+  EP[Expansion Pack] --> AGENTS[Specialized Agents]
+  EP --> TEMPLATES[Domain Templates]
+  EP --> WORKFLOWS[Custom Workflows]
+  EP --> CHECKLISTS[Validation Checklists]
+  EP --> TASKS[Domain Tasks]
+  
+  AGENTS --> CORE[BMAD Core Integration]
+  TEMPLATES --> DB[(Supabase Storage)]
+  WORKFLOWS --> CAEF[CAEF Orchestration]
+  CHECKLISTS --> VALIDATION[Quality Gates]
+  TASKS --> EXECUTION[Multi-Agent Execution]
+```
+
+### 4) Cerebral Cluster Integration
+- **Pack Registry**: Centralized registry of available expansion packs
+- **Dynamic Loading**: Packs loaded on-demand based on project requirements
+- **Agent Routing**: Specialized agents routed through BMAD HTTP API facade
+- **Template Storage**: Domain-specific templates stored in Supabase
+- **Workflow Integration**: Custom workflows integrated with CAEF orchestration
+
+### 5) Expansion Pack Database Schema
+```sql
+-- Expansion Pack Registry
+CREATE TABLE bmad_expansion_packs (
+  pack_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id uuid NOT NULL,
+  pack_name text NOT NULL,
+  version text NOT NULL,
+  status text NOT NULL CHECK (status IN ('available', 'installed', 'active', 'deprecated')),
+  description text,
+  agents jsonb, -- List of specialized agents
+  templates jsonb, -- Available templates
+  workflows jsonb, -- Custom workflows
+  metadata jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Project Pack Associations
+CREATE TABLE project_expansion_packs (
+  project_id uuid NOT NULL,
+  pack_id uuid REFERENCES bmad_expansion_packs(pack_id),
+  status text NOT NULL CHECK (status IN ('enabled', 'disabled')),
+  configuration jsonb,
+  PRIMARY KEY (project_id, pack_id)
+);
+```
+
+### 6) Expansion Pack API Endpoints
+- `POST /bmad/expansion-packs/install` - Install expansion pack
+- `GET /bmad/expansion-packs/list` - List available packs
+- `POST /bmad/expansion-packs/enable` - Enable pack for project
+- `GET /bmad/expansion-packs/{pack_id}/agents` - Get pack agents
+- `POST /bmad/expansion-packs/{pack_id}/execute` - Execute pack workflow
+
+---
+
+## III. Process Outline (Agentic Workflow)
 
 ### 1) Agentic Workflow Definition (Gated)
 1. PRD authored via Cerebral Web (BMAD planning agents).  
