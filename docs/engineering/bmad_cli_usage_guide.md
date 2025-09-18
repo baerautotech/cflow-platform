@@ -76,7 +76,7 @@ await execute_mcp_tool('bmad_arch_create',
 await execute_mcp_tool('bmad_arch_create',
     project_name='Task Management App',
     prd_id='16026136-3af5-4d23-a7bb-74866edbb89e',
-        tech_stack=['React Native + React Native Web', 'Node.js', 'PostgreSQL', 'Redis', 'WebSocket']
+        tech_stack=['React Native + React Native Web', 'Python FastAPI', 'PostgreSQL', 'Redis', 'WebSocket']
 )
 ```
 
@@ -235,11 +235,11 @@ async def complete_bmad_workflow():
         prd_id=prd_id,
         tech_stack=[
             'React Native + React Native Web (Cross-platform)',
-            'Node.js + Express (Backend)',
+            'Python FastAPI (Backend)',
             'PostgreSQL (Database)',
             'Redis (Caching)',
             'Stripe (Payments)',
-            'AWS S3 (File Storage)',
+            'MinIO S3 (File Storage)',
             'Docker (Containerization)'
         ]
     )
