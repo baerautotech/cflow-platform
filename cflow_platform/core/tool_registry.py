@@ -151,9 +151,28 @@ class ToolRegistry:
             tool("bmad_story_create", "Create User Story Document", {"type": "object", "properties": {"project_name": {"type": "string"}, "prd_id": {"type": "string"}, "arch_id": {"type": "string"}, "user_stories": {"type": "array", "items": {"type": "string"}}}, "required": ["project_name", "prd_id", "arch_id"]}),
             tool("bmad_story_update", "Update Story document", {"type": "object", "properties": {"doc_id": {"type": "string"}, "updates": {"type": "object"}}, "required": ["doc_id", "updates"]}),
             tool("bmad_story_get", "Get Story document", {"type": "object", "properties": {"doc_id": {"type": "string"}}, "required": ["doc_id"]}),
-            tool("bmad_doc_list", "List BMAD documents", {"type": "object", "properties": {"project_id": {"type": "string"}, "doc_type": {"type": "string", "enum": ["PRD", "ARCH", "STORY"]}, "status": {"type": "string", "enum": ["draft", "review", "approved", "archived"]}}, "required": []}),
+            tool("bmad_doc_list", "List BMAD documents", {"type": "object", "properties": {"project_id": {"type": "string"}, "doc_type": {"type": "string", "enum": ["PRD", "ARCH", "STORY", "EPIC"]}, "status": {"type": "string", "enum": ["draft", "review", "approved", "archived"]}}, "required": []}),
             tool("bmad_doc_approve", "Approve BMAD document", {"type": "object", "properties": {"doc_id": {"type": "string"}, "approver": {"type": "string"}}, "required": ["doc_id", "approver"]}),
             tool("bmad_doc_reject", "Reject BMAD document", {"type": "object", "properties": {"doc_id": {"type": "string"}, "reason": {"type": "string"}, "reviewer": {"type": "string"}}, "required": ["doc_id", "reason", "reviewer"]}),
+        ]
+
+        # BMAD Orchestration & Workflow Gates
+        tools += [
+            tool("bmad_master_checklist", "Run PO master checklist to validate PRD/Architecture alignment", {"type": "object", "properties": {"prd_id": {"type": "string"}, "arch_id": {"type": "string"}}, "required": ["prd_id", "arch_id"]}),
+            tool("bmad_epic_create", "Create epics from PRD and Architecture", {"type": "object", "properties": {"project_name": {"type": "string"}, "prd_id": {"type": "string"}, "arch_id": {"type": "string"}}, "required": ["project_name", "prd_id", "arch_id"]}),
+            tool("bmad_epic_update", "Update epic document", {"type": "object", "properties": {"doc_id": {"type": "string"}, "updates": {"type": "object"}}, "required": ["doc_id", "updates"]}),
+            tool("bmad_epic_get", "Get epic document", {"type": "object", "properties": {"doc_id": {"type": "string"}}, "required": ["doc_id"]}),
+            tool("bmad_epic_list", "List epics for project", {"type": "object", "properties": {"project_id": {"type": "string"}}, "required": []}),
+            tool("bmad_orchestrator_status", "Check current BMAD workflow status", {"type": "object", "properties": {"project_id": {"type": "string"}}, "required": []}),
+            tool("bmad_workflow_start", "Start specific BMAD workflow", {"type": "object", "properties": {"workflow_id": {"type": "string"}, "project_name": {"type": "string"}}, "required": ["workflow_id", "project_name"]}),
+            tool("bmad_workflow_next", "Get next recommended action in workflow", {"type": "object", "properties": {"project_id": {"type": "string"}}, "required": []}),
+        ]
+
+        # BMAD Expansion Packs
+        tools += [
+            tool("bmad_expansion_packs_list", "List available BMAD expansion packs", {"type": "object", "properties": {}, "required": []}),
+            tool("bmad_expansion_packs_install", "Install BMAD expansion pack", {"type": "object", "properties": {"pack_id": {"type": "string"}}, "required": ["pack_id"]}),
+            tool("bmad_expansion_packs_enable", "Enable expansion pack for project", {"type": "object", "properties": {"project_id": {"type": "string"}, "pack_id": {"type": "string"}}, "required": ["project_id", "pack_id"]}),
         ]
 
         # Internet search (DuckDuckGo)

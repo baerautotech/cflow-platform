@@ -492,3 +492,271 @@ This document outlines the user stories and implementation approach for {project
 *[To be filled during interactive elicitation]*
 """
         return content
+
+    # BMAD Orchestration & Workflow Gates
+
+    async def bmad_master_checklist(self, prd_id: str, arch_id: str) -> Dict[str, Any]:
+        """Run PO master checklist to validate PRD/Architecture alignment."""
+        try:
+            if not self.supabase_client:
+                return {
+                    "success": False,
+                    "error": "Supabase client not available"
+                }
+
+            # Get PRD and Architecture documents
+            prd_result = self.supabase_client.table("cerebral_documents").select("*").eq("id", prd_id).execute()
+            arch_result = self.supabase_client.table("cerebral_documents").select("*").eq("id", arch_id).execute()
+
+            if not prd_result.data or not arch_result.data:
+                return {
+                    "success": False,
+                    "error": "PRD or Architecture document not found"
+                }
+
+            prd_doc = prd_result.data[0]
+            arch_doc = arch_result.data[0]
+
+            # Master checklist validation
+            checklist_results = {
+                "prd_complete": prd_doc.get("status") == "approved",
+                "arch_complete": arch_doc.get("status") == "approved",
+                "prd_arch_aligned": self._validate_prd_arch_alignment(prd_doc, arch_doc),
+                "tech_stack_defined": bool(arch_doc.get("content", "").strip()),
+                "goals_defined": bool(prd_doc.get("content", "").strip())
+            }
+
+            all_passed = all(checklist_results.values())
+            
+            return {
+                "success": True,
+                "checklist_passed": all_passed,
+                "results": checklist_results,
+                "message": "Master checklist completed successfully" if all_passed else "Master checklist failed - documents need revision",
+                "next_action": "Create epics" if all_passed else "Revise PRD or Architecture"
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Master checklist failed: {str(e)}"
+            }
+
+    async def bmad_epic_create(self, project_name: str, prd_id: str, arch_id: str) -> Dict[str, Any]:
+        """Create epics from PRD and Architecture."""
+        try:
+            # First run master checklist
+            checklist_result = await self.bmad_master_checklist(prd_id, arch_id)
+            if not checklist_result.get("checklist_passed", False):
+                return {
+                    "success": False,
+                    "error": "Master checklist failed - cannot create epics",
+                    "checklist_results": checklist_result.get("results", {})
+                }
+
+            # Create epic document record
+            doc_id = str(uuid.uuid4())
+            doc_data = {
+                "id": doc_id,
+                "tenant_id": "00000000-0000-0000-0000-000000000100",
+                "project_id": str(uuid.uuid4()),
+                "kind": "EPIC",
+                "version": 1,
+                "status": "draft",
+                "content": self._generate_epic_content(project_name, prd_id, arch_id),
+                "created_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat()
+            }
+
+            # Store in Supabase if available
+            if self.supabase_client:
+                try:
+                    result = self.supabase_client.table("cerebral_documents").insert(doc_data).execute()
+                    if result.data:
+                        # Index into Knowledge Graph
+                        kg_result = await self._index_to_knowledge_graph(
+                            doc_id=doc_id,
+                            title=f"{project_name} Epic Document",
+                            content=self._generate_epic_content(project_name, prd_id, arch_id),
+                            content_type="EPIC",
+                            metadata={"project_name": project_name, "prd_id": prd_id, "arch_id": arch_id}
+                        )
+                        
+                        kg_status = " and indexed to Knowledge Graph" if kg_result.get("success") else " (KG indexing failed)"
+                        
+                        return {
+                            "success": True,
+                            "doc_id": doc_id,
+                            "message": f"Epic document created successfully for {project_name} and stored in Supabase{kg_status}",
+                            "data": result.data[0],
+                            "kg_indexed": kg_result.get("success", False)
+                        }
+                except Exception as e:
+                    return {
+                        "success": False,
+                        "error": f"Failed to store in Supabase: {str(e)}",
+                        "doc_id": doc_id
+                    }
+            else:
+                return {
+                    "success": True,
+                    "doc_id": doc_id,
+                    "message": f"Epic document created successfully for {project_name} (local only)",
+                    "data": doc_data
+                }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to create epic: {str(e)}",
+                "doc_id": None
+            }
+
+    async def bmad_orchestrator_status(self, project_id: Optional[str] = None) -> Dict[str, Any]:
+        """Check current BMAD workflow status."""
+        try:
+            if not self.supabase_client:
+                return {
+                    "success": False,
+                    "error": "Supabase client not available"
+                }
+
+            # Get all documents for project
+            query = self.supabase_client.table("cerebral_documents")
+            if project_id:
+                query = query.eq("project_id", project_id)
+            
+            result = query.select("*").execute()
+            documents = result.data
+
+            # Analyze workflow status
+            workflow_status = {
+                "prd_exists": any(doc["kind"] == "PRD" for doc in documents),
+                "arch_exists": any(doc["kind"] == "ARCHITECTURE" for doc in documents),
+                "epic_exists": any(doc["kind"] == "EPIC" for doc in documents),
+                "story_exists": any(doc["kind"] == "STORY" for doc in documents),
+                "current_step": self._determine_current_step(documents),
+                "next_action": self._determine_next_action(documents),
+                "documents": documents
+            }
+
+            return {
+                "success": True,
+                "workflow_status": workflow_status,
+                "message": f"Workflow status: {workflow_status['current_step']}"
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to get orchestrator status: {str(e)}"
+            }
+
+    async def bmad_workflow_next(self, project_id: Optional[str] = None) -> Dict[str, Any]:
+        """Get next recommended action in workflow."""
+        try:
+            # Get current workflow status
+            status_result = await self.bmad_orchestrator_status(project_id)
+            if not status_result.get("success"):
+                return status_result
+
+            workflow_status = status_result["workflow_status"]
+            current_step = workflow_status["current_step"]
+            next_action = workflow_status["next_action"]
+
+            return {
+                "success": True,
+                "current_step": current_step,
+                "next_action": next_action,
+                "workflow_status": workflow_status,
+                "message": f"Next action: {next_action}"
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to get next workflow action: {str(e)}"
+            }
+
+    # Helper methods
+
+    def _validate_prd_arch_alignment(self, prd_doc: Dict[str, Any], arch_doc: Dict[str, Any]) -> bool:
+        """Validate that PRD and Architecture are aligned."""
+        # Basic validation - both documents should have content
+        prd_content = prd_doc.get("content", "")
+        arch_content = arch_doc.get("content", "")
+        
+        # Check if both documents have substantial content
+        return len(prd_content.strip()) > 100 and len(arch_content.strip()) > 100
+
+    def _generate_epic_content(self, project_name: str, prd_id: str, arch_id: str) -> str:
+        """Generate epic content from PRD and Architecture."""
+        return f"""# {project_name} Epic Document
+
+## Epic Overview
+
+This document outlines the epics for {project_name} based on the PRD and Architecture documents.
+
+## Epics
+
+### Epic 1: Core Functionality
+- **Description**: Implement core functionality as defined in PRD
+- **Dependencies**: PRD ({prd_id}), Architecture ({arch_id})
+- **Status**: Draft
+
+### Epic 2: User Interface
+- **Description**: Implement user interface components
+- **Dependencies**: Core functionality epic
+- **Status**: Draft
+
+### Epic 3: Integration
+- **Description**: Integrate with external systems
+- **Dependencies**: Core functionality epic
+- **Status**: Draft
+
+## Acceptance Criteria
+
+*[To be filled during interactive elicitation]*
+
+## Implementation Notes
+
+*[To be filled during interactive elicitation]*
+
+## Testing Strategy
+
+*[To be filled during interactive elicitation]*
+
+## Dependencies
+
+*[To be filled during interactive elicitation]*
+"""
+
+    def _determine_current_step(self, documents: List[Dict[str, Any]]) -> str:
+        """Determine current step in BMAD workflow."""
+        doc_types = [doc["kind"] for doc in documents]
+        
+        if "STORY" in doc_types:
+            return "Stories Created"
+        elif "EPIC" in doc_types:
+            return "Epics Created"
+        elif "ARCHITECTURE" in doc_types:
+            return "Architecture Created"
+        elif "PRD" in doc_types:
+            return "PRD Created"
+        else:
+            return "Workflow Not Started"
+
+    def _determine_next_action(self, documents: List[Dict[str, Any]]) -> str:
+        """Determine next action in BMAD workflow."""
+        doc_types = [doc["kind"] for doc in documents]
+        
+        if "STORY" in doc_types:
+            return "Review Stories"
+        elif "EPIC" in doc_types:
+            return "Create Stories"
+        elif "ARCHITECTURE" in doc_types:
+            return "Run Master Checklist"
+        elif "PRD" in doc_types:
+            return "Create Architecture"
+        else:
+            return "Create PRD"

@@ -165,6 +165,30 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             return await handler.bmad_doc_approve(**kwargs)
         elif tool_name == "bmad_doc_reject":
             return await handler.bmad_doc_reject(**kwargs)
+        elif tool_name == "bmad_master_checklist":
+            return await handler.bmad_master_checklist(**kwargs)
+        elif tool_name == "bmad_epic_create":
+            return await handler.bmad_epic_create(**kwargs)
+        elif tool_name == "bmad_epic_update":
+            return await handler.bmad_epic_update(**kwargs)
+        elif tool_name == "bmad_epic_get":
+            return await handler.bmad_epic_get(**kwargs)
+        elif tool_name == "bmad_epic_list":
+            return await handler.bmad_epic_list(**kwargs)
+        elif tool_name == "bmad_orchestrator_status":
+            return await handler.bmad_orchestrator_status(**kwargs)
+        elif tool_name == "bmad_workflow_start":
+            return await handler.bmad_workflow_start(**kwargs)
+        elif tool_name == "bmad_workflow_next":
+            return await handler.bmad_workflow_next(**kwargs)
+        elif tool_name == "bmad_expansion_packs_list":
+            return await handler.bmad_expansion_packs_list(**kwargs)
+        elif tool_name == "bmad_expansion_packs_install":
+            return await handler.bmad_expansion_packs_install(**kwargs)
+        elif tool_name == "bmad_expansion_packs_enable":
+            return await handler.bmad_expansion_packs_enable(**kwargs)
+        else:
+            return {"status": "error", "message": f"Unknown BMAD tool: {tool_name}"}
     if tool_name in {"internet_search"}:
         mod = load_handler_module("internet_search_handlers")
         handler = mod.InternetSearchHandlers()  # type: ignore[attr-defined]
