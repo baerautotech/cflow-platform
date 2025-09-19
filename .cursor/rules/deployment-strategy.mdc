@@ -1,0 +1,296 @@
+---
+description: GitHub CI/CD deployment strategy and cerebral cluster management rules
+globs:
+  - '.github/workflows/*.yml'
+  - '.github/workflows/*.yaml'
+  - 'deploy/**/*.sh'
+  - 'deploy/**/*.yml'
+  - 'deploy/**/*.yaml'
+  - 'infrastructure/**/*.yml'
+  - 'infrastructure/**/*.yaml'
+  - 'Dockerfile*'
+  - 'requirements*.txt'
+---
+
+# GitHub CI/CD Deployment Strategy Rules
+
+## Core Deployment Principles
+
+### 1. SHA-Based Deployments Only
+**NEVER push directly to clusters. ALWAYS use GitHub CI/CD with SHA-based deployments.**
+
+```bash
+# ✅ CORRECT: Push to GitHub, let CI/CD handle deployment
+git push origin main
+
+# ❌ WRONG: Direct deployment bypassing CI/CD
+scp files cerebral@10.34.0.22:/opt/
+ssh cerebral@10.34.0.22 "docker build && kubectl apply"
+```
+
+### 2. GitHub Actions Workflow Structure
+All deployments MUST follow this pattern:
+
+```yaml
+name: Cerebral Cluster Deployment
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get SHA
+        id: sha
+        run: echo "sha=${GITHUB_SHA}" >> $GITHUB_OUTPUT
+      
+      - name: Deploy with SHA
+        run: |
+          # Use ${{ steps.sha.outputs.sha }} for image tags
+          docker build -t cerebral/service:${{ steps.sha.outputs.sha }} .
+          kubectl set image deployment/service service=cerebral/service:${{ steps.sha.outputs.sha }}
+```
+
+## Cerebral Cluster Deployment Rules
+
+### 3. SSH-Based Deployment Process
+Deployments to cerebral cluster (10.34.0.0/24) MUST use SSH:
+
+```bash
+# ✅ CORRECT: SSH-based deployment via GitHub Actions
+ssh cerebral@10.34.0.22 "mkdir -p /opt/cerebral-platform/service/$SHA"
+scp -r service/ cerebral@10.34.0.22:/opt/cerebral-platform/service/$SHA/
+ssh cerebral@10.34.0.22 "cd /opt/cerebral-platform/service/$SHA && docker build -t cerebral/service:$SHA ."
+
+# ❌ WRONG: Direct file operations without SSH
+cp files /opt/cerebral-platform/
+```
+
+### 4. Docker Image Tagging Strategy
+All Docker images MUST use SHA-based tags:
+
+```dockerfile
+# ✅ CORRECT: SHA-based image tags
+FROM python:3.11-slim
+COPY . /app
+WORKDIR /app
+RUN pip install -r requirements.txt
+EXPOSE 8000
+CMD ["python", "app.py"]
+```
+
+```bash
+# ✅ CORRECT: Build with SHA tag
+docker build -t cerebral/service:$GITHUB_SHA .
+docker tag cerebral/service:$GITHUB_SHA cerebral/service:latest
+
+# ❌ WRONG: Using generic tags
+docker build -t cerebral/service:dev .
+```
+
+### 5. Kubernetes Deployment Updates
+Kubernetes deployments MUST use SHA-based image updates:
+
+```yaml
+# ✅ CORRECT: SHA placeholder in manifests
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  template:
+    spec:
+      containers:
+      - name: service
+        image: cerebral/service:${SHA}  # Replaced by CI/CD
+```
+
+```bash
+# ✅ CORRECT: Update deployment with SHA
+kubectl set image deployment/service service=cerebral/service:$SHA
+kubectl rollout status deployment/service --timeout=300s
+
+# ❌ WRONG: Using latest tag
+kubectl set image deployment/service service=cerebral/service:latest
+```
+
+## File Organization Rules
+
+### 6. Directory Structure Requirements
+Files MUST be organized in proper directories:
+
+```
+infrastructure/
+├── docker/
+│   ├── Dockerfile.*
+│   └── requirements*.txt
+├── kubernetes/
+│   └── *.yaml
+└── scripts/
+    └── *.sh
+
+deploy/
+├── *.sh
+└── *.yaml
+
+docs/
+└── cerebral/
+    └── *.md
+```
+
+### 7. Prohibited Root Directory Files
+These files MUST NOT be in root directory:
+
+```bash
+# ❌ WRONG: Files in root
+Dockerfile.mcp-api
+requirements-mcp.txt
+redis-deployment.yaml
+setup_vault_access.sh
+
+# ✅ CORRECT: Files in proper directories
+infrastructure/docker/Dockerfile.mcp-api
+infrastructure/docker/requirements-mcp.txt
+infrastructure/kubernetes/redis-deployment.yaml
+scripts/setup_vault_access.sh
+```
+
+## Code Quality Rules
+
+### 8. No Emojis in Source Code
+Source files MUST NOT contain emoji characters:
+
+```python
+# ❌ WRONG: Emojis in source code
+print("🚀 Starting deployment...")
+print("✅ Deployment successful!")
+
+# ✅ CORRECT: Plain text logging
+print("[INFO] Starting deployment...")
+print("[SUCCESS] Deployment completed!")
+```
+
+### 9. Environment Variable Management
+Secrets MUST be managed via GitHub Secrets and Kubernetes:
+
+```yaml
+# ✅ CORRECT: Using secrets
+env:
+- name: REDIS_HOST
+  value: "redis.cerebral.baerautotech.com"
+- name: REDIS_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: cerebral-redis-secrets
+      key: redis-token
+
+# ❌ WRONG: Hardcoded secrets
+env:
+- name: REDIS_TOKEN
+  value: "hardcoded-secret-here"
+```
+
+## Deployment Verification Rules
+
+### 10. Mandatory Health Checks
+All deployments MUST include health verification:
+
+```bash
+# ✅ CORRECT: Health check verification
+kubectl get pods -l app=service
+kubectl get service service-service
+curl -f https://service.dev.baerautotech.com/health
+
+# ❌ WRONG: Deploy without verification
+kubectl apply -f deployment.yaml
+# No verification step
+```
+
+### 11. Rollback Strategy
+Every deployment MUST have a rollback plan:
+
+```bash
+# ✅ CORRECT: Rollback to previous SHA
+kubectl rollout undo deployment/service
+kubectl set image deployment/service service=cerebral/service:$PREVIOUS_SHA
+
+# ❌ WRONG: No rollback mechanism
+# Deploy and hope for the best
+```
+
+## Company Memory System
+
+### 12. Documentation Requirements
+All deployment decisions MUST be documented:
+
+```markdown
+# docs/cerebral/DEPLOYMENT_DECISIONS.md
+## Decision Log
+- 2025-01-XX: Implemented SHA-based deployments
+- 2025-01-XX: Moved from direct push to GitHub CI/CD
+- 2025-01-XX: Added SSH-based cerebral cluster deployment
+```
+
+### 13. Knowledge Base Integration
+Deployment rules MUST be stored in company memory:
+
+```bash
+# ✅ CORRECT: Update company knowledge base
+echo "SHA-based deployment strategy implemented" >> .cerebraflow/knowledge/deployment.md
+echo "Cerebral cluster SSH access configured" >> .cerebraflow/knowledge/infrastructure.md
+
+# ❌ WRONG: No documentation of decisions
+# Make changes without recording rationale
+```
+
+## Enforcement and Compliance
+
+### 14. Pre-commit Hooks
+These rules MUST be enforced via pre-commit hooks:
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+- repo: local
+  hooks:
+  - id: no-emojis-in-code
+    name: Check for emojis in source files
+    entry: grep -r "[🚀🎉✅❌⚠️🔗🧙]" --include="*.py" .
+    language: system
+    pass_filenames: false
+    fail_fast: true
+```
+
+### 15. CI/CD Validation
+GitHub Actions MUST validate deployment rules:
+
+```yaml
+# .github/workflows/validate-deployment.yml
+name: Validate Deployment Rules
+on: [push, pull_request]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check file organization
+      run: |
+        # Validate files are in correct directories
+        test ! -f Dockerfile.mcp-api || (echo "Dockerfile in root!" && exit 1)
+        test -f infrastructure/docker/Dockerfile.mcp-api || (echo "Missing Dockerfile!" && exit 1)
+```
+
+## Summary
+
+**Key Rules to Remember:**
+1. **SHA-based deployments only** - Never use generic tags
+2. **GitHub CI/CD required** - No direct cluster pushes
+3. **SSH-based deployment** - Use cerebral cluster SSH access
+4. **Proper file organization** - Files in correct directories
+5. **No emojis in source** - Plain text logging only
+6. **Health check verification** - Always verify deployments
+7. **Documentation required** - Record all decisions
+8. **Rollback strategy** - Plan for failures
+
+**Company Memory Integration:**
+- All deployment decisions documented in `.cerebraflow/knowledge/`
+- Rules enforced via pre-commit hooks and CI/CD validation
+- Regular review and updates of deployment strategies

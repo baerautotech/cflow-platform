@@ -153,7 +153,7 @@ class AppleSiliconOptimizedVectorizer:
                         logger.debug(f" Skipping restricted file: {relative_path}")
                         continue
                 except Exception as e:
-                    logger.debug(f"️ Security classification failed for {relative_path}: {e}")
+                    logger.debug(f"[INFO] Security classification failed for {relative_path}: {e}")
                 
                 files.append(file_path)
         
@@ -191,7 +191,7 @@ class AppleSiliconOptimizedVectorizer:
                         file_contents.append(content)
                         valid_files.append(file_path)
                 except Exception as e:
-                    logger.debug(f"️ Could not read {file_path}: {e}")
+                    logger.debug(f"[INFO] Could not read {file_path}: {e}")
             
             if not file_contents:
                 return {

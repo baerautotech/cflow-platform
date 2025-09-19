@@ -1,0 +1,125 @@
+name: Cerebral Cluster Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'cerebral'
+        type: choice
+        options:
+          - cerebral
+          - cerebral-staging
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'cflow_platform/**'
+      - 'deploy/**'
+      - 'requirements*.txt'
+      - 'Dockerfile*'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'cflow_platform/**'
+      - 'deploy/**'
+
+jobs:
+  deploy-cerebral:
+    runs-on: ubuntu-latest
+    environment: cerebral
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for SHA-based builds
+      
+      - name: Get SHA
+        id: sha
+        run: echo "sha=${GITHUB_SHA}" >> $GITHUB_OUTPUT
+      
+      - name: Setup SSH for cerebral cluster
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.CEREBRAL_SSH_KEY }}
+      
+      - name: Deploy MCP API to cerebral cluster
+        run: |
+          echo "🚀 Deploying MCP API to cerebral cluster via GitHub CI/CD..."
+          echo "SHA: ${{ steps.sha.outputs.sha }}"
+          
+          # Create deployment directory on cerebral cluster
+          ssh cerebral@10.34.0.22 "mkdir -p /opt/cerebral-platform/mcp-api/${{ steps.sha.outputs.sha }}"
+          
+          # Copy MCP API files
+          scp -r cflow_platform/ cerebral@10.34.0.22:/opt/cerebral-platform/mcp-api/${{ steps.sha.outputs.sha }}/
+          scp requirements-mcp.txt cerebral@10.34.0.22:/opt/cerebral-platform/mcp-api/${{ steps.sha.outputs.sha }}/
+          scp deploy/cerebral-cluster.yaml cerebral@10.34.0.22:/opt/cerebral-platform/mcp-api/${{ steps.sha.outputs.sha }}/
+          scp Dockerfile.mcp-api cerebral@10.34.0.22:/opt/cerebral-platform/mcp-api/${{ steps.sha.outputs.sha }}/
+          
+          # Build Docker image with SHA tag
+          ssh cerebral@10.34.0.22 << 'EOF'
+          cd /opt/cerebral-platform/mcp-api/${{ steps.sha.outputs.sha }}
+          docker build -f Dockerfile.mcp-api -t cerebral/mcp-api:${{ steps.sha.outputs.sha }} .
+          docker tag cerebral/mcp-api:${{ steps.sha.outputs.sha }} cerebral/mcp-api:latest
+          EOF
+          
+          # Deploy to Kubernetes with SHA
+          ssh cerebral@10.34.0.22 << 'EOF'
+          cd /opt/cerebral-platform/mcp-api/${{ steps.sha.outputs.sha }}
+          # Replace ${SHA} placeholder in YAML with actual SHA
+          sed -i "s/\${SHA}/${{ steps.sha.outputs.sha }}/g" cerebral-cluster.yaml
+          kubectl apply -f cerebral-cluster.yaml
+          kubectl set image deployment/cerebral-mcp-api mcp-api=cerebral/mcp-api:${{ steps.sha.outputs.sha }}
+          kubectl rollout status deployment/cerebral-mcp-api --timeout=300s
+          EOF
+          
+          echo "✅ MCP API deployed to cerebral cluster with SHA: ${{ steps.sha.outputs.sha }}"
+      
+      - name: Verify deployment
+        run: |
+          ssh cerebral@10.34.0.22 << 'EOF'
+          kubectl get pods -l app=mcp-api
+          kubectl get service mcp-api-service
+          kubectl get ingress mcp-api-ingress || echo "No ingress configured"
+          EOF
+      
+      - name: Update deployment status
+        run: |
+          echo "🎉 Cerebral cluster deployment complete!"
+          echo "SHA: ${{ steps.sha.outputs.sha }}"
+          echo "Environment: cerebral"
+          echo "Services: MCP API"
+          echo "Status: Deployed and verified"
+
+  deploy-cerebral-staging:
+    runs-on: ubuntu-latest
+    environment: cerebral-staging
+    if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'cerebral-staging')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get SHA
+        id: sha
+        run: echo "sha=${GITHUB_SHA}" >> $GITHUB_OUTPUT
+      
+      - name: Deploy to staging
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.CEREBRAL_STAGING_SSH_KEY }}
+        run: |
+          echo "🚀 Deploying to cerebral-staging..."
+          echo "SHA: ${{ steps.sha.outputs.sha }}"
+          
+          # Deploy to staging cluster (10.34.0.30)
+          ssh cerebral@10.34.0.30 << 'EOF'
+          mkdir -p /opt/cerebral-platform-staging/mcp-api/${{ steps.sha.outputs.sha }}
+          EOF
+          
+          scp -r cflow_platform/ cerebral@10.34.0.30:/opt/cerebral-platform-staging/mcp-api/${{ steps.sha.outputs.sha }}/
+          
+          echo "✅ Staging deployment complete"

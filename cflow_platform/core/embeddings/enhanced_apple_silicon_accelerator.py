@@ -48,21 +48,21 @@ try:
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
-    logger.warning("️ PyTorch not available - Apple Silicon acceleration disabled")
+    logger.warning("[INFO] PyTorch not available - Apple Silicon acceleration disabled")
 
 try:
     from sentence_transformers import SentenceTransformer
     SENTENCE_TRANSFORMERS_AVAILABLE = True
 except ImportError:
     SENTENCE_TRANSFORMERS_AVAILABLE = False
-    logger.warning("️ Sentence Transformers not available")
+    logger.warning("[INFO] Sentence Transformers not available")
 
 try:
     import numpy as np
     NUMPY_AVAILABLE = True
 except ImportError:
     NUMPY_AVAILABLE = False
-    logger.warning("️ NumPy not available")
+    logger.warning("[INFO] NumPy not available")
 
 class AppleSiliconChip(Enum):
     """Apple Silicon chip variants"""
@@ -567,7 +567,7 @@ class EnhancedAppleSiliconAccelerator:
     def create_optimized_model(self, model_name: Optional[str] = None, target_dimensions: Optional[int] = None) -> Optional[Any]:
         """Create optimized sentence transformer model"""
         if not SENTENCE_TRANSFORMERS_AVAILABLE:
-            self.logger.warning("️ Sentence Transformers not available")
+            self.logger.warning("[INFO] Sentence Transformers not available")
             return None
         
         # Use provided model or select optimal
@@ -730,7 +730,7 @@ class EnhancedAppleSiliconAccelerator:
         while len(self.model_cache) > self.config["max_models_cached"]:
             oldest_key = next(iter(self.model_cache))
             del self.model_cache[oldest_key]
-            self.logger.info(f"️ Removed cached model: {oldest_key}")
+            self.logger.info(f"[INFO] Removed cached model: {oldest_key}")
     
     def benchmark_models(self, test_texts: Optional[List[str]] = None) -> Dict[str, Any]:
         """Benchmark available models for optimal selection"""

@@ -21,6 +21,8 @@ dependencies = [
     "psutil>=7.0.0",
     "supabase>=2.18.1",
     "psycopg[binary]>=3.2.1",
+    "hvac>=2.3.0",
+    "redis>=6.4.0",
 ]
 readme = "README.md"
 license = { text = "MIT" }

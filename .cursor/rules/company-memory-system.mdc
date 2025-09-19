@@ -1,0 +1,320 @@
+---
+description: Company memory system and knowledge base management rules
+globs:
+  - '.cerebraflow/**/*.md'
+  - '.cerebraflow/**/*.mdc'
+  - 'docs/**/*.md'
+  - 'docs/**/*.mdc'
+  - 'AGENTS.md'
+  - 'README.md'
+---
+
+# Company Memory System and Knowledge Base Rules
+
+## Core Memory Management Principles
+
+### 1. Centralized Knowledge Base
+All company knowledge MUST be stored in the `.cerebraflow/` directory structure:
+
+```
+.cerebraflow/
+├── knowledge/
+│   ├── deployment.md          # Deployment strategies and decisions
+│   ├── infrastructure.md     # Infrastructure configurations
+│   ├── architecture.md        # System architecture decisions
+│   ├── security.md           # Security policies and procedures
+│   └── troubleshooting.md    # Common issues and solutions
+├── progress/
+│   ├── iteration_*.mdc        # Iteration progress tracking
+│   └── milestones.md         # Project milestones
+└── decisions/
+    ├── technical_decisions.md # Technical decision log
+    └── business_decisions.md  # Business decision log
+```
+
+### 2. Decision Documentation Requirements
+Every significant decision MUST be documented with:
+
+```markdown
+# .cerebraflow/decisions/technical_decisions.md
+
+## Decision: SHA-Based Deployments
+**Date:** 2025-01-XX
+**Context:** Need for reliable, traceable deployments
+**Decision:** Implement SHA-based Docker image tagging
+**Rationale:** 
+- Enables precise rollbacks
+- Provides deployment traceability
+- Prevents deployment confusion
+**Consequences:**
+- All deployments must use GitHub CI/CD
+- Docker images tagged with commit SHA
+- Kubernetes deployments updated with SHA tags
+**Status:** Implemented
+**Review Date:** 2025-04-XX
+```
+
+### 3. Knowledge Base Update Rules
+Knowledge MUST be updated when:
+
+```bash
+# ✅ CORRECT: Update knowledge base after decisions
+echo "## Decision: Implemented SHA-based deployments" >> .cerebraflow/knowledge/deployment.md
+echo "- Date: $(date)" >> .cerebraflow/knowledge/deployment.md
+echo "- Rationale: Enables precise rollbacks and traceability" >> .cerebraflow/knowledge/deployment.md
+
+# ✅ CORRECT: Document troubleshooting solutions
+echo "## Issue: SSH connection failures" >> .cerebraflow/knowledge/troubleshooting.md
+echo "**Solution:** Use IP addresses instead of hostnames" >> .cerebraflow/knowledge/troubleshooting.md
+echo "**Command:** ssh -i ~/.ssh/cerebral_xo_ed25519 cerebral@10.34.0.22" >> .cerebraflow/knowledge/troubleshooting.md
+
+# ❌ WRONG: No documentation of decisions
+# Make changes without recording rationale
+```
+
+## Memory System Integration
+
+### 4. Agent Memory Integration
+BMAD agents MUST integrate with company memory:
+
+```python
+# ✅ CORRECT: Agent memory integration
+class BMADAgent:
+    def __init__(self):
+        self.memory = CompanyMemory()
+        self.knowledge_base = KnowledgeBase()
+    
+    def make_decision(self, context):
+        # Check existing decisions
+        similar_decisions = self.memory.search_decisions(context)
+        
+        # Document new decision
+        decision = Decision(
+            context=context,
+            rationale=self.generate_rationale(),
+            consequences=self.predict_consequences()
+        )
+        self.memory.store_decision(decision)
+        
+        return decision
+```
+
+### 5. Progress Tracking Requirements
+All iterations MUST be tracked in `.cerebraflow/progress/`:
+
+```markdown
+# .cerebraflow/progress/iteration_20.mdc
+
+## Iteration 20: SHA-Based Deployment Implementation
+**Date:** 2025-01-XX
+**Duration:** 2 hours
+**Status:** Completed
+
+### Objectives
+- [x] Implement GitHub CI/CD workflow
+- [x] Configure SHA-based Docker tagging
+- [x] Update Kubernetes manifests
+- [x] Create deployment documentation
+
+### Key Decisions
+- SHA-based deployments for traceability
+- SSH-based cerebral cluster deployment
+- GitHub Actions for CI/CD automation
+
+### Lessons Learned
+- Direct cluster pushes cause confusion
+- SHA tags enable precise rollbacks
+- GitHub CI/CD provides audit trail
+
+### Next Steps
+- Implement health check verification
+- Add rollback procedures
+- Document troubleshooting guide
+```
+
+## Knowledge Base Content Rules
+
+### 6. Documentation Standards
+All knowledge base entries MUST follow this format:
+
+```markdown
+# Knowledge Base Entry Template
+
+## Title: [Clear, descriptive title]
+**Category:** [deployment|infrastructure|architecture|security|troubleshooting]
+**Last Updated:** [YYYY-MM-DD]
+**Status:** [Active|Deprecated|Under Review]
+
+### Context
+[Background information and situation]
+
+### Solution/Decision
+[Specific solution or decision made]
+
+### Implementation
+[Step-by-step implementation details]
+
+### Verification
+[How to verify the solution works]
+
+### Related Decisions
+[Links to related decisions or knowledge]
+
+### Review Schedule
+[When this entry should be reviewed next]
+```
+
+### 7. Troubleshooting Knowledge Base
+Common issues MUST be documented with solutions:
+
+```markdown
+# .cerebraflow/knowledge/troubleshooting.md
+
+## SSH Connection Issues
+
+### Problem: Cannot connect to cerebral cluster
+**Symptoms:** Connection timeout or permission denied
+**Root Cause:** DNS resolution issues or incorrect SSH key
+
+### Solution 1: Use IP Address
+```bash
+ssh -i ~/.ssh/cerebral_xo_ed25519 cerebral@10.34.0.22
+```
+
+### Solution 2: Check SSH Key
+```bash
+ssh-add -l
+ssh-add ~/.ssh/cerebral_xo_ed25519
+```
+
+### Solution 3: Verify Network
+```bash
+ping 10.34.0.22
+telnet 10.34.0.22 22
+```
+
+### Prevention
+- Always use IP addresses for external connections
+- Keep SSH keys in ~/.ssh/cerebral_xo_ed25519
+- Test connectivity before deployment
+
+## Docker Build Issues
+
+### Problem: Docker build fails on cerebral cluster
+**Symptoms:** Build errors or missing dependencies
+**Root Cause:** Missing files or incorrect Dockerfile
+
+### Solution 1: Verify File Transfer
+```bash
+scp -r cflow_platform/ cerebral@10.34.0.22:/opt/cerebral-platform/
+ssh cerebral@10.34.0.22 "ls -la /opt/cerebral-platform/"
+```
+
+### Solution 2: Check Dockerfile
+```bash
+ssh cerebral@10.34.0.22 "cd /opt/cerebral-platform && docker build -f Dockerfile.mcp-api ."
+```
+
+### Prevention
+- Use GitHub CI/CD for consistent builds
+- Test Dockerfiles locally first
+- Verify all dependencies are included
+```
+
+## Memory System Maintenance
+
+### 8. Regular Review Schedule
+Knowledge base MUST be reviewed regularly:
+
+```bash
+# ✅ CORRECT: Schedule knowledge base reviews
+echo "## Review Schedule" >> .cerebraflow/knowledge/maintenance.md
+echo "- Weekly: Check for outdated information" >> .cerebraflow/knowledge/maintenance.md
+echo "- Monthly: Review decision logs" >> .cerebraflow/knowledge/maintenance.md
+echo "- Quarterly: Update architecture documentation" >> .cerebraflow/knowledge/maintenance.md
+
+# ✅ CORRECT: Archive outdated knowledge
+mv .cerebraflow/knowledge/old_deployment.md .cerebraflow/archive/
+echo "Archived: $(date)" >> .cerebraflow/knowledge/old_deployment.md
+```
+
+### 9. Knowledge Base Search Integration
+Memory system MUST support search:
+
+```python
+# ✅ CORRECT: Searchable knowledge base
+class KnowledgeBase:
+    def search(self, query):
+        """Search across all knowledge base entries"""
+        results = []
+        for file in self.get_all_files():
+            if self.matches_query(file, query):
+                results.append(file)
+        return results
+    
+    def get_related_decisions(self, context):
+        """Find related decisions for context"""
+        return self.search_decisions(context)
+```
+
+## Integration with Development Workflow
+
+### 10. Pre-commit Knowledge Updates
+Knowledge MUST be updated during development:
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+- repo: local
+  hooks:
+  - id: update-knowledge-base
+    name: Update knowledge base with changes
+    entry: |
+      if git diff --cached --name-only | grep -E "(deploy|infrastructure|config)"; then
+        echo "Updating knowledge base with infrastructure changes..."
+        echo "## Infrastructure Update: $(date)" >> .cerebraflow/knowledge/infrastructure.md
+        echo "Files changed: $(git diff --cached --name-only | grep -E "(deploy|infrastructure|config)")" >> .cerebraflow/knowledge/infrastructure.md
+      fi
+    language: system
+```
+
+### 11. CI/CD Knowledge Integration
+Deployment processes MUST update knowledge base:
+
+```yaml
+# .github/workflows/update-knowledge.yml
+name: Update Knowledge Base
+on:
+  workflow_run:
+    workflows: ["Cerebral Cluster Deployment"]
+    types: [completed]
+jobs:
+  update-knowledge:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Update deployment knowledge
+      run: |
+        echo "## Deployment: $(date)" >> .cerebraflow/knowledge/deployment.md
+        echo "SHA: ${{ github.sha }}" >> .cerebraflow/knowledge/deployment.md
+        echo "Status: ${{ github.event.workflow_run.conclusion }}" >> .cerebraflow/knowledge/deployment.md
+```
+
+## Summary
+
+**Key Memory System Rules:**
+1. **Centralized storage** - All knowledge in `.cerebraflow/`
+2. **Decision documentation** - Record all significant decisions
+3. **Progress tracking** - Track iterations and milestones
+4. **Troubleshooting guide** - Document common issues and solutions
+5. **Regular reviews** - Schedule knowledge base maintenance
+6. **Search integration** - Make knowledge findable
+7. **Workflow integration** - Update knowledge during development
+8. **CI/CD integration** - Automate knowledge updates
+
+**Company Memory Benefits:**
+- Prevents repeated mistakes
+- Enables knowledge sharing
+- Provides decision audit trail
+- Facilitates troubleshooting
+- Supports team onboarding
+- Maintains institutional knowledge

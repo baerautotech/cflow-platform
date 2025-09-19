@@ -294,7 +294,29 @@ class ToolRegistry:
             ),
         ]
 
+        # BMAD Workflow Engine
+        tools += [
+            tool("bmad_workflow_list", "List available BMAD workflows"),
+            tool("bmad_workflow_get", "Get BMAD workflow details", {"type": "object", "properties": {"workflow_id": {"type": "string"}}, "required": ["workflow_id"]}),
+            tool("bmad_workflow_execute", "Execute BMAD workflow", {"type": "object", "properties": {"workflow_id": {"type": "string"}, "project_context": {"type": "object"}, "profile_name": {"type": "string"}, "max_iterations": {"type": "integer"}, "wallclock_limit_sec": {"type": "integer"}, "step_budget": {"type": "integer"}}, "required": ["workflow_id"]}),
+            tool("bmad_agent_execute", "Execute BMAD agent step", {"type": "object", "properties": {"agent": {"type": "string"}, "action": {"type": "string"}, "creates": {"type": "string"}, "requires": {"type": "array", "items": {"type": "string"}}, "project_context": {"type": "object"}, "agent_content": {"type": "string"}, "notes": {"type": "string"}}, "required": ["agent", "action"]}),
+            tool("bmad_action_execute", "Execute BMAD action step", {"type": "object", "properties": {"action": {"type": "string"}, "project_context": {"type": "object"}, "notes": {"type": "string"}}, "required": ["action"]}),
+        ]
+        
+        # BMAD Git Workflow Tools
+        tools += [
+            tool("bmad_git_commit_changes", "Commit BMAD workflow changes with validation and tracking", {"type": "object", "properties": {"workflow_id": {"type": "string"}, "project_id": {"type": "string"}, "changes_summary": {"type": "string"}, "document_ids": {"type": "array", "items": {"type": "string"}}, "validate": {"type": "boolean"}}, "required": ["workflow_id", "project_id", "changes_summary"]}),
+            tool("bmad_git_push_changes", "Push BMAD workflow changes to remote repository", {"type": "object", "properties": {"tracking_id": {"type": "string"}, "remote": {"type": "string"}, "branch": {"type": "string"}}, "required": ["tracking_id"]}),
+            tool("bmad_git_validate_changes", "Validate BMAD workflow changes before commit", {"type": "object", "properties": {"workflow_id": {"type": "string"}, "project_id": {"type": "string"}, "validation_type": {"type": "string"}}, "required": ["workflow_id", "project_id"]}),
+            tool("bmad_git_get_history", "Get BMAD commit history for a project", {"type": "object", "properties": {"project_id": {"type": "string"}, "limit": {"type": "integer"}}, "required": ["project_id"]}),
+        ]
+
         return tools
+
+    @staticmethod
+    def get_available_tools() -> List[Dict[str, Any]]:
+        """Get available tools for compatibility with gap analysis."""
+        return ToolRegistry.get_tools_for_mcp()
 
     @staticmethod
     def get_version_info() -> Dict[str, Any]:

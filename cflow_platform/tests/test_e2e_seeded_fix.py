@@ -4,7 +4,8 @@ from pathlib import Path
 
 from cflow_platform.core.test_runner import run_tests
 from cflow_platform.core.minimal_edit_applier import EditPlan, ApplyOptions, apply_minimal_edits
-from cflow_platform.core.agent_loop import run_lint_and_hooks
+# CAEF agent_loop removed - using direct linting handler
+from cflow_platform.handlers.linting_handlers import LintingHandlers
 
 
 def test_e2e_seeded_failing_test_turns_green(tmp_path: Path, monkeypatch) -> None:
@@ -65,7 +66,11 @@ def test_add():
 
     # 4) Lint gate should pass (simulate pass)
     monkeypatch.setenv("CFLOW_PRE_COMMIT_MODE", "pass")
-    lint = run_lint_and_hooks()
+    # Use linting handler directly instead of removed agent_loop function
+    lint_handler = LintingHandlers()
+    import asyncio
+    lint_result = asyncio.get_event_loop().run_until_complete(lint_handler.handle_lint_full({}))
+    lint = {"status": "success" if lint_result.get("status") == "success" else "error"}
     assert lint.get("status") == "success"
 
     # 5) Re-run tests (should pass)

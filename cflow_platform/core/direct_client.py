@@ -197,6 +197,67 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             return await handler.bmad_hil_session_status(**kwargs)
         elif tool_name == "bmad_workflow_status":
             return await handler.bmad_workflow_status(**kwargs)
+        elif tool_name == "bmad_workflow_list":
+            from .bmad_workflow_engine import get_workflow_engine
+            engine = get_workflow_engine()
+            workflows = engine.get_available_workflows()
+            return {"status": "success", "workflows": workflows}
+        elif tool_name == "bmad_workflow_get":
+            from .bmad_workflow_engine import get_workflow_engine
+            engine = get_workflow_engine()
+            workflow = engine.get_workflow(kwargs.get("workflow_id", ""))
+            if workflow:
+                return {"status": "success", "workflow": {
+                    "id": workflow.id,
+                    "name": workflow.name,
+                    "description": workflow.description,
+                    "type": workflow.type,
+                    "project_types": workflow.project_types,
+                    "sequence": [
+                        {
+                            "agent": step.agent,
+                            "action": step.action,
+                            "creates": step.creates,
+                            "requires": step.requires,
+                            "condition": step.condition,
+                            "optional": step.optional,
+                            "repeats": step.repeats,
+                            "notes": step.notes
+                        }
+                        for step in workflow.sequence
+                    ],
+                    "flow_diagram": workflow.flow_diagram,
+                    "decision_guidance": workflow.decision_guidance,
+                    "handoff_prompts": workflow.handoff_prompts
+                }}
+            else:
+                return {"status": "error", "message": f"Workflow {kwargs.get('workflow_id')} not found"}
+        elif tool_name == "bmad_workflow_execute":
+            from .bmad_workflow_engine import run_bmad_workflow
+            import asyncio
+            result = await run_bmad_workflow(
+                workflow_id=kwargs.get("workflow_id", ""),
+                project_context=kwargs.get("project_context", {}),
+                profile_name=kwargs.get("profile_name", "quick"),
+                max_iterations=kwargs.get("max_iterations", 1),
+                wallclock_limit_sec=kwargs.get("wallclock_limit_sec"),
+                step_budget=kwargs.get("step_budget")
+            )
+            return result
+        elif tool_name == "bmad_agent_execute":
+            # For now, return a placeholder - this will be implemented in BMAD handlers
+            return {"status": "success", "message": f"BMAD agent {kwargs.get('agent')} execution placeholder", "agent": kwargs.get("agent"), "action": kwargs.get("action")}
+        elif tool_name == "bmad_action_execute":
+            # For now, return a placeholder - this will be implemented in BMAD handlers
+            return {"status": "success", "message": f"BMAD action {kwargs.get('action')} execution placeholder", "action": kwargs.get("action")}
+        elif tool_name == "bmad_git_commit_changes":
+            return await handler.bmad_git_commit_changes(**kwargs)
+        elif tool_name == "bmad_git_push_changes":
+            return await handler.bmad_git_push_changes(**kwargs)
+        elif tool_name == "bmad_git_validate_changes":
+            return await handler.bmad_git_validate_changes(**kwargs)
+        elif tool_name == "bmad_git_get_history":
+            return await handler.bmad_git_get_history(**kwargs)
         else:
             return {"status": "error", "message": f"Unknown BMAD tool: {tool_name}"}
     if tool_name in {"internet_search"}:

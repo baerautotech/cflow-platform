@@ -16,10 +16,11 @@ from typing import Any, Dict, List, Optional, Tuple
 from dotenv import load_dotenv
 from cflow_platform.core.config.supabase_config import get_api_key, get_rest_url
 from cflow_platform.core.bmad_hil_integration import BMADHILIntegration
+from cflow_platform.core.bmad_git_workflow import BMADGitWorkflow
 from supabase import create_client
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from project root
+load_dotenv(Path(__file__).parent.parent.parent / ".env")
 
 
 class BMADHandlers:
@@ -28,6 +29,7 @@ class BMADHandlers:
     def __init__(self):
         self.supabase_client = None
         self.bmad_hil = BMADHILIntegration()
+        self.bmad_git = BMADGitWorkflow()
         self._ensure_supabase()
 
     def _ensure_supabase(self) -> None:
@@ -1455,4 +1457,122 @@ This document outlines the epics for {project_name} based on the PRD and Archite
             return {
                 "success": False,
                 "error": f"Failed to check BMAD workflow status: {str(e)}"
+            }
+
+    # BMAD Git Workflow Integration
+
+    async def bmad_git_commit_changes(
+        self,
+        workflow_id: str,
+        project_id: str,
+        changes_summary: str,
+        document_ids: Optional[List[str]] = None,
+        validate: bool = True
+    ) -> Dict[str, Any]:
+        """Commit BMAD workflow changes with validation and tracking."""
+        try:
+            validation_results = None
+            if validate:
+                validation = await self.bmad_git.validate_bmad_changes(
+                    workflow_id, project_id, "comprehensive"
+                )
+                if not validation.get("success"):
+                    return {
+                        "status": "error",
+                        "message": f"Validation failed: {validation.get('error')}",
+                        "validation_results": validation
+                    }
+                validation_results = validation.get("validation_results")
+            
+            commit_result = await self.bmad_git.commit_bmad_changes(
+                workflow_id=workflow_id,
+                project_id=project_id,
+                changes_summary=changes_summary,
+                document_ids=document_ids,
+                validation_results=validation_results
+            )
+            
+            return {
+                "status": "success" if commit_result.get("success") else "error",
+                "message": "BMAD changes committed successfully" if commit_result.get("success") else f"Commit failed: {commit_result.get('error')}",
+                "commit_result": commit_result
+            }
+            
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"BMAD git commit failed: {str(e)}"
+            }
+
+    async def bmad_git_push_changes(
+        self,
+        tracking_id: str,
+        remote: str = "origin",
+        branch: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Push BMAD workflow changes to remote repository."""
+        try:
+            push_result = await self.bmad_git.push_bmad_changes(
+                tracking_id=tracking_id,
+                remote=remote,
+                branch=branch
+            )
+            
+            return {
+                "status": "success" if push_result.get("success") else "error",
+                "message": "BMAD changes pushed successfully" if push_result.get("success") else f"Push failed: {push_result.get('error')}",
+                "push_result": push_result
+            }
+            
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"BMAD git push failed: {str(e)}"
+            }
+
+    async def bmad_git_validate_changes(
+        self,
+        workflow_id: str,
+        project_id: str,
+        validation_type: str = "comprehensive"
+    ) -> Dict[str, Any]:
+        """Validate BMAD workflow changes before commit."""
+        try:
+            validation_result = await self.bmad_git.validate_bmad_changes(
+                workflow_id, project_id, validation_type
+            )
+            
+            return {
+                "status": "success" if validation_result.get("success") else "error",
+                "message": "BMAD changes validated successfully" if validation_result.get("success") else f"Validation failed: {validation_result.get('error')}",
+                "validation_result": validation_result
+            }
+            
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"BMAD validation failed: {str(e)}"
+            }
+
+    async def bmad_git_get_history(
+        self,
+        project_id: str,
+        limit: int = 10
+    ) -> Dict[str, Any]:
+        """Get BMAD commit history for a project."""
+        try:
+            history_result = await self.bmad_git.get_bmad_commit_history(
+                project_id, limit
+            )
+            
+            return {
+                "status": "success" if history_result.get("success") else "error",
+                "message": "BMAD commit history retrieved successfully" if history_result.get("success") else f"History retrieval failed: {history_result.get('error')}",
+                "history_result": history_result
+            }
+            
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"BMAD history retrieval failed: {str(e)}"
             }

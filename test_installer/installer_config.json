@@ -1,0 +1,26 @@
+{
+  "user_id": "test_user_123",
+  "redis": {
+    "host": "redis.cerebral.baerautotech.com",
+    "port": 6380,
+    "token": "user_test_user_123_d7eda8e450ae4edd",
+    "ssl": true,
+    "ssl_cert_reqs": null,
+    "ssl_check_hostname": false
+  },
+  "mcp": {
+    "api_url": "https://mcp.dev.baerautotech.com",
+    "auth_token": "user_test_user_123_d7eda8e450ae4edd"
+  },
+  "bmad": {
+    "vendor_path": "vendor/bmad",
+    "expansion_packs": [
+      "bmad-infrastructure-devops",
+      "bmad-creative-writing",
+      "bmad-godot-game-dev"
+    ]
+  },
+  "generated_at": "2025-09-19T18:42:09.989966",
+  "expires_at": "2025-09-20T18:42:09.989517",
+  "version": "1.0.0"
+}

@@ -12,8 +12,12 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 from pathlib import Path
 
+from dotenv import load_dotenv
 from .config.supabase_config import get_api_key, get_rest_url
 from supabase import create_client
+
+# Load environment variables from project root
+load_dotenv(Path(__file__).parent.parent.parent / ".env")
 
 
 class BMADHILIntegration:

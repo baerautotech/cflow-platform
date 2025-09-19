@@ -2,6 +2,11 @@ from __future__ import annotations
 
 import os
 from typing import Optional
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from project root
+load_dotenv(Path(__file__).parent.parent.parent.parent / ".env")
 
 
 def _normalize_rest_url(url: Optional[str], dsn: Optional[str], override: Optional[str]) -> Optional[str]:
