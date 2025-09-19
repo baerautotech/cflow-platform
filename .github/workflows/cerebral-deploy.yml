@@ -49,26 +49,25 @@ jobs:
           echo "🚀 Deploying MCP API to cerebral cluster via GitHub CI/CD..."
           echo "SHA: ${{ steps.sha.outputs.sha }}"
           
-          # Create deployment directory on cerebral cluster
-          ssh cerebral@10.34.0.22 "mkdir -p /opt/cerebral-platform/mcp-api/${{ steps.sha.outputs.sha }}"
+          # Update cflow-platform repository and deploy MCP API
+          ssh cerebral@10.34.0.22 << 'EOF'
+          # Update the repository to the specific SHA
+          cd /opt/cerebral-platform/cflow-platform
+          git fetch origin
+          git checkout ${{ steps.sha.outputs.sha }}
           
-          # Copy MCP API files
-          scp -r cflow_platform/ cerebral@10.34.0.22:/opt/cerebral-platform/mcp-api/${{ steps.sha.outputs.sha }}/
-          scp requirements-mcp.txt cerebral@10.34.0.22:/opt/cerebral-platform/mcp-api/${{ steps.sha.outputs.sha }}/
-          scp deploy/cerebral-cluster.yaml cerebral@10.34.0.22:/opt/cerebral-platform/mcp-api/${{ steps.sha.outputs.sha }}/
-          scp Dockerfile.mcp-api cerebral@10.34.0.22:/opt/cerebral-platform/mcp-api/${{ steps.sha.outputs.sha }}/
+          # Update symbolic links to point to the new SHA
+          ln -sf $(pwd)/cflow_platform/api/mcp_endpoints.py /opt/cerebral-platform/mcp-api/
+          ln -sf $(pwd)/infrastructure/docker/requirements-mcp.txt /opt/cerebral-platform/mcp-api/requirements.txt
+          ln -sf $(pwd)/infrastructure/docker/Dockerfile.mcp-api /opt/cerebral-platform/mcp-api/Dockerfile
+          ln -sf $(pwd)/deploy/cerebral-cluster.yaml /opt/cerebral-platform/mcp-api/
           
           # Build Docker image with SHA tag
-          ssh cerebral@10.34.0.22 << 'EOF'
-          cd /opt/cerebral-platform/mcp-api/${{ steps.sha.outputs.sha }}
-          docker build -f Dockerfile.mcp-api -t cerebral/mcp-api:${{ steps.sha.outputs.sha }} .
+          cd /opt/cerebral-platform/mcp-api
+          docker build -t cerebral/mcp-api:${{ steps.sha.outputs.sha }} .
           docker tag cerebral/mcp-api:${{ steps.sha.outputs.sha }} cerebral/mcp-api:latest
-          EOF
           
           # Deploy to Kubernetes with SHA
-          ssh cerebral@10.34.0.22 << 'EOF'
-          cd /opt/cerebral-platform/mcp-api/${{ steps.sha.outputs.sha }}
-          # Replace ${SHA} placeholder in YAML with actual SHA
           sed -i "s/\${SHA}/${{ steps.sha.outputs.sha }}/g" cerebral-cluster.yaml
           kubectl apply -f cerebral-cluster.yaml
           kubectl set image deployment/cerebral-mcp-api mcp-api=cerebral/mcp-api:${{ steps.sha.outputs.sha }}
