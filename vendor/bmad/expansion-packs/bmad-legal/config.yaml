@@ -1,0 +1,34 @@
+name: "BMAD Legal Expansion Pack"
+description: "Specialized agents, templates, and workflows for legal software development with compliance management and legal document automation"
+version: "1.0.0"
+author: "BMAD Method"
+license: "Commercial"
+category: "Legal"
+tags: ["legal", "compliance", "document-automation", "regulatory", "law"]
+commercial: true
+price: "$349/year"
+features:
+  - "Legal Compliance Agents"
+  - "Document Automation Templates"
+  - "Regulatory Reporting Workflows"
+  - "Legal Data Management Templates"
+  - "Audit Trail Templates"
+agents:
+  - "legal-pm"
+  - "compliance-officer"
+  - "legal-architect"
+  - "document-specialist"
+  - "regulatory-analyst"
+templates:
+  - "legal-prd-tmpl.yaml"
+  - "compliance-architecture-tmpl.yaml"
+  - "legal-document-tmpl.yaml"
+  - "regulatory-reporting-tmpl.yaml"
+workflows:
+  - "legal-greenfield.yaml"
+  - "compliance-management.yaml"
+  - "document-automation.yaml"
+checklists:
+  - "legal-compliance-checklist.md"
+  - "document-automation-checklist.md"
+  - "regulatory-reporting-checklist.md"

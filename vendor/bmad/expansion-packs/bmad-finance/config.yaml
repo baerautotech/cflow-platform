@@ -1,0 +1,34 @@
+name: "BMAD Finance Expansion Pack"
+description: "Specialized agents, templates, and workflows for financial software development with banking systems and payment processing"
+version: "1.0.0"
+author: "BMAD Method"
+license: "Commercial"
+category: "Finance"
+tags: ["finance", "banking", "payment", "compliance", "financial"]
+commercial: true
+price: "$449/year"
+features:
+  - "Financial Compliance Agents"
+  - "Payment Processing Templates"
+  - "Banking Systems Workflows"
+  - "Financial Data Management Templates"
+  - "Risk Management Templates"
+agents:
+  - "finance-pm"
+  - "banking-architect"
+  - "payment-specialist"
+  - "financial-analyst"
+  - "risk-manager"
+templates:
+  - "finance-prd-tmpl.yaml"
+  - "banking-architecture-tmpl.yaml"
+  - "payment-processing-tmpl.yaml"
+  - "financial-reporting-tmpl.yaml"
+workflows:
+  - "finance-greenfield.yaml"
+  - "banking-system.yaml"
+  - "payment-gateway.yaml"
+checklists:
+  - "financial-compliance-checklist.md"
+  - "payment-security-checklist.md"
+  - "banking-system-checklist.md"

@@ -1,0 +1,290 @@
+# TDD (Test-Driven Development) Template
+# Standardized template for creating TDD documents
+
+metadata:
+  document_type: "TDD"
+  version: "1.0.0"
+  template_id: "tdd-tmpl"
+  description: "Test-Driven Development document template"
+  downstream_processing:
+    - task_creation
+    - story_generation
+    - epic_planning
+    - development_workflow
+
+structure:
+  header:
+    title: "TDD: {{feature_name}}"
+    subtitle: "Test-Driven Development Document"
+    created_date: "{{current_date}}"
+    author: "{{author}}"
+    project: "{{project_name}}"
+    version: "{{version}}"
+  
+  sections:
+    - name: "overview"
+      title: "Overview"
+      required: true
+      content_template: |
+        ## Feature Description
+        {{feature_description}}
+        
+        ## Business Value
+        {{business_value}}
+        
+        ## Acceptance Criteria
+        {{acceptance_criteria}}
+    
+    - name: "test_scenarios"
+      title: "Test Scenarios"
+      required: true
+      content_template: |
+        ## Test Cases
+        
+        ### Happy Path Tests
+        {{happy_path_tests}}
+        
+        ### Edge Cases
+        {{edge_case_tests}}
+        
+        ### Error Handling
+        {{error_handling_tests}}
+        
+        ### Integration Tests
+        {{integration_tests}}
+    
+    - name: "implementation_plan"
+      title: "Implementation Plan"
+      required: true
+      content_template: |
+        ## Development Steps
+        
+        ### Phase 1: Test Setup
+        {{test_setup_steps}}
+        
+        ### Phase 2: Implementation
+        {{implementation_steps}}
+        
+        ### Phase 3: Refactoring
+        {{refactoring_steps}}
+        
+        ### Phase 4: Integration
+        {{integration_steps}}
+    
+    - name: "technical_requirements"
+      title: "Technical Requirements"
+      required: true
+      content_template: |
+        ## Dependencies
+        {{dependencies}}
+        
+        ## Technical Constraints
+        {{technical_constraints}}
+        
+        ## Performance Requirements
+        {{performance_requirements}}
+        
+        ## Security Considerations
+        {{security_considerations}}
+    
+    - name: "deliverables"
+      title: "Deliverables"
+      required: true
+      content_template: |
+        ## Code Deliverables
+        {{code_deliverables}}
+        
+        ## Test Deliverables
+        {{test_deliverables}}
+        
+        ## Documentation Deliverables
+        {{documentation_deliverables}}
+        
+        ## Deployment Requirements
+        {{deployment_requirements}}
+
+variables:
+  feature_name:
+    type: "string"
+    required: true
+    description: "Name of the feature being developed"
+    example: "User Authentication"
+  
+  feature_description:
+    type: "text"
+    required: true
+    description: "Detailed description of the feature"
+    example: "Implement secure user authentication with JWT tokens"
+  
+  business_value:
+    type: "text"
+    required: true
+    description: "Business value and justification for the feature"
+    example: "Enables secure user access and personalized experiences"
+  
+  acceptance_criteria:
+    type: "text"
+    required: true
+    description: "Acceptance criteria for the feature"
+    example: "User can login, logout, and access protected resources"
+  
+  happy_path_tests:
+    type: "text"
+    required: true
+    description: "Tests for normal operation scenarios"
+    example: "Valid login, successful logout, token refresh"
+  
+  edge_case_tests:
+    type: "text"
+    required: false
+    description: "Tests for edge cases and boundary conditions"
+    example: "Empty credentials, expired tokens, concurrent sessions"
+  
+  error_handling_tests:
+    type: "text"
+    required: true
+    description: "Tests for error conditions and exception handling"
+    example: "Invalid credentials, network failures, server errors"
+  
+  integration_tests:
+    type: "text"
+    required: false
+    description: "Tests for integration with other systems"
+    example: "Database integration, external API integration"
+  
+  test_setup_steps:
+    type: "text"
+    required: true
+    description: "Steps for setting up test environment"
+    example: "Create test database, mock external services, setup test data"
+  
+  implementation_steps:
+    type: "text"
+    required: true
+    description: "Steps for implementing the feature"
+    example: "Write failing tests, implement authentication logic, add validation"
+  
+  refactoring_steps:
+    type: "text"
+    required: false
+    description: "Steps for refactoring and optimization"
+    example: "Extract common code, optimize database queries, improve error handling"
+  
+  integration_steps:
+    type: "text"
+    required: true
+    description: "Steps for integrating with existing systems"
+    example: "Integrate with user management, update API endpoints, deploy to staging"
+  
+  dependencies:
+    type: "text"
+    required: true
+    description: "External dependencies and libraries"
+    example: "JWT library, bcrypt, database driver"
+  
+  technical_constraints:
+    type: "text"
+    required: false
+    description: "Technical constraints and limitations"
+    example: "Must support 1000 concurrent users, 99.9% uptime"
+  
+  performance_requirements:
+    type: "text"
+    required: false
+    description: "Performance requirements and benchmarks"
+    example: "Login response time < 200ms, token validation < 50ms"
+  
+  security_considerations:
+    type: "text"
+    required: true
+    description: "Security considerations and requirements"
+    example: "Password hashing, token expiration, rate limiting"
+  
+  code_deliverables:
+    type: "text"
+    required: true
+    description: "Code components to be delivered"
+    example: "Authentication service, middleware, models, controllers"
+  
+  test_deliverables:
+    type: "text"
+    required: true
+    description: "Test components to be delivered"
+    example: "Unit tests, integration tests, test utilities"
+  
+  documentation_deliverables:
+    type: "text"
+    required: true
+    description: "Documentation to be delivered"
+    example: "API documentation, deployment guide, user manual"
+  
+  deployment_requirements:
+    type: "text"
+    required: true
+    description: "Deployment and infrastructure requirements"
+    example: "Environment variables, database migrations, monitoring setup"
+
+validation:
+  required_fields:
+    - feature_name
+    - feature_description
+    - business_value
+    - acceptance_criteria
+    - happy_path_tests
+    - error_handling_tests
+    - test_setup_steps
+    - implementation_steps
+    - integration_steps
+    - dependencies
+    - security_considerations
+    - code_deliverables
+    - test_deliverables
+    - documentation_deliverables
+    - deployment_requirements
+  
+  field_validation:
+    feature_name:
+      min_length: 3
+      max_length: 100
+      pattern: "^[a-zA-Z0-9\\s\\-_]+$"
+    
+    feature_description:
+      min_length: 10
+      max_length: 1000
+    
+    business_value:
+      min_length: 10
+      max_length: 500
+
+output_format:
+  markdown: true
+  yaml: true
+  json: true
+  
+processing:
+  task_creation:
+    enabled: true
+    template: "task-creation-tmpl.yaml"
+    fields_mapping:
+      task_title: "feature_name"
+      task_description: "feature_description"
+      acceptance_criteria: "acceptance_criteria"
+      technical_requirements: "technical_requirements"
+  
+  story_generation:
+    enabled: true
+    template: "story-generation-tmpl.yaml"
+    fields_mapping:
+      story_title: "feature_name"
+      story_description: "feature_description"
+      acceptance_criteria: "acceptance_criteria"
+      test_scenarios: "test_scenarios"
+  
+  epic_planning:
+    enabled: true
+    template: "epic-planning-tmpl.yaml"
+    fields_mapping:
+      epic_title: "feature_name"
+      epic_description: "feature_description"
+      business_value: "business_value"
+      deliverables: "deliverables"

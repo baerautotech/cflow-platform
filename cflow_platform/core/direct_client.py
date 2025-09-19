@@ -187,6 +187,16 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             return await handler.bmad_expansion_packs_install(**kwargs)
         elif tool_name == "bmad_expansion_packs_enable":
             return await handler.bmad_expansion_packs_enable(**kwargs)
+        elif tool_name == "bmad_hil_start_session":
+            return await handler.bmad_hil_start_session(**kwargs)
+        elif tool_name == "bmad_hil_continue_session":
+            return await handler.bmad_hil_continue_session(**kwargs)
+        elif tool_name == "bmad_hil_end_session":
+            return await handler.bmad_hil_end_session(**kwargs)
+        elif tool_name == "bmad_hil_session_status":
+            return await handler.bmad_hil_session_status(**kwargs)
+        elif tool_name == "bmad_workflow_status":
+            return await handler.bmad_workflow_status(**kwargs)
         else:
             return {"status": "error", "message": f"Unknown BMAD tool: {tool_name}"}
     if tool_name in {"internet_search"}:

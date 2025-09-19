@@ -1,43 +1,27 @@
-# BMAD Core Platform Integration – Phased Implementation Tasks
+# BMAD Core Platform Integration – AEMI SRP Task Breakdown
 
-Document version: 2.0  
-Date: 2025-09-18  
+Document version: 1.0  
+Date: 2025-09-14  
 Source Plan: `docs/plans/BMAD_CORE_PLATFORM_INTEGRATION_PLAN.md`  
-Strategic Revision: Core-First Approach with Multi-Agent Foundation
+External Context: `docs/external/BMAD-METHOD/gitingest.md` (GitIngest snapshot of BMAD repo)
 
 Notes
-- **PHASED APPROACH**: Tasks organized by implementation phases (1-5) with clear dependencies
-- **CORE-FIRST**: Focus on core BMAD-Cerebral integration before advanced features
-- **MULTI-AGENT FOUNDATION**: Build multi-agent parallel system as testing foundation
-- **ATOMIC TASKS**: All tasks are SRP-compliant, atomic (15–60 min where possible)
-- **GATE ENFORCEMENT**: Multi-agent system must be operational before advanced features
+- All tasks are SRP-compliant, atomic (15–60 min where possible), with explicit dependencies and acceptance criteria.  
+- Use KnowledgeRAG/KnowledgeGraph lookups where marked to retrieve plan excerpts, BMAD repo context, and code references.  
+- Gate: Codegen orchestration is blocked until Planning Gate is approved (Story complete).
 
 ---
 
-## Phase 1: Core BMAD-Cerebral Integration (Weeks 1-4)
+## 1. Compliance & Vendoring
 
-### 1.1 BMAD Core Integration
-
-[ ] 1.1.1 Vendor BMAD (MIT) into platform
-- Description: Add BMAD core to `vendor/bmad/` with legal attribution. Include BMAD `LICENSE` and Third-Party Notice entry.
+[ ] 1.1 Vendor BMAD (MIT) into platform
+- Description: Add BMAD core to `vendor/bmad/` or as a submodule with legal attribution. Include BMAD `LICENSE` and Third-Party Notice entry. Ensure no executable BMAD web UI is enabled.
+- Context: Plan → Summary; Licensing; Installer Integration.
+- RAG/KG: RAG query for “BMAD LICENSE and structure” using `docs/external/BMAD-METHOD/gitingest.md`.
+- Inputs: BMAD repo snapshot; internal vendor policy.
 - Outputs: `vendor/bmad/` tree; NOTICE update.
 - Acceptance: License headers present; NOTICE updated; build unaffected.
 - Dependencies: None.
-- Story Points: 2
-
-[ ] 1.1.2 Replace CAEF orchestrator with BMAD workflow engine
-- Description: Remove `cflow_platform/core/orchestrator.py` and `agent_loop.py`, implement BMAD workflow engine integration.
-- Outputs: BMAD workflow engine operational in Cerebral cluster.
-- Acceptance: Basic PRD → Architecture → Story workflow functional.
-- Dependencies: 1.1.1
-- Story Points: 8
-
-[ ] 1.1.3 Implement BMAD database schema extensions
-- Description: Extend Supabase schema for BMAD documents, workflows, HIL sessions, expansion packs.
-- Outputs: Database migrations for BMAD tables.
-- Acceptance: Database schema supports BMAD document lifecycle.
-- Dependencies: 1.1.1
-- Story Points: 5
 
 [ ] 1.2 Define upstream sync policy and contract tests
 - Description: Establish monthly upstream sync procedure and contract tests for BMAD planning/story APIs to detect breaking changes before merge.

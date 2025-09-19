@@ -1,0 +1,303 @@
+# Task Creation Template
+# Standardized template for creating tasks from document analysis
+
+metadata:
+  document_type: "TASK_CREATION"
+  version: "1.0.0"
+  template_id: "task-creation-tmpl"
+  description: "Task creation template for downstream processing"
+  downstream_processing:
+    - story_generation
+    - epic_planning
+    - development_workflow
+    - project_management
+
+structure:
+  header:
+    task_id: "{{task_id}}"
+    title: "{{task_title}}"
+    created_date: "{{current_date}}"
+    author: "{{author}}"
+    project: "{{project_name}}"
+    priority: "{{priority}}"
+    status: "{{status}}"
+  
+  sections:
+    - name: "task_details"
+      title: "Task Details"
+      required: true
+      content_template: |
+        ## Description
+        {{task_description}}
+        
+        ## Type
+        {{task_type}}
+        
+        ## Category
+        {{category}}
+        
+        ## Estimated Effort
+        {{estimated_effort}}
+        
+        ## Dependencies
+        {{dependencies}}
+    
+    - name: "requirements"
+      title: "Requirements"
+      required: true
+      content_template: |
+        ## Functional Requirements
+        {{functional_requirements}}
+        
+        ## Technical Requirements
+        {{technical_requirements}}
+        
+        ## Acceptance Criteria
+        {{acceptance_criteria}}
+        
+        ## Constraints
+        {{constraints}}
+    
+    - name: "implementation"
+      title: "Implementation Plan"
+      required: true
+      content_template: |
+        ## Steps
+        {{implementation_steps}}
+        
+        ## Resources Needed
+        {{resources_needed}}
+        
+        ## Testing Strategy
+        {{testing_strategy}}
+        
+        ## Deliverables
+        {{deliverables}}
+    
+    - name: "metadata"
+      title: "Metadata"
+      required: true
+      content_template: |
+        ## Tags
+        {{tags}}
+        
+        ## Related Documents
+        {{related_documents}}
+        
+        ## Stakeholders
+        {{stakeholders}}
+        
+        ## Timeline
+        {{timeline}}
+
+variables:
+  task_id:
+    type: "string"
+    required: true
+    description: "Unique identifier for the task"
+    example: "TASK-001"
+    auto_generate: true
+  
+  task_title:
+    type: "string"
+    required: true
+    description: "Title of the task"
+    example: "Implement User Authentication"
+    max_length: 100
+  
+  task_description:
+    type: "text"
+    required: true
+    description: "Detailed description of the task"
+    example: "Implement secure user authentication with JWT tokens"
+    min_length: 10
+  
+  task_type:
+    type: "enum"
+    required: true
+    options: ["development", "testing", "documentation", "deployment", "research", "analysis"]
+    description: "Type of task"
+    example: "development"
+  
+  category:
+    type: "enum"
+    required: true
+    options: ["feature", "bug", "enhancement", "refactoring", "maintenance", "research"]
+    description: "Category of the task"
+    example: "feature"
+  
+  priority:
+    type: "enum"
+    required: true
+    options: ["low", "medium", "high", "critical"]
+    description: "Priority level of the task"
+    example: "high"
+  
+  status:
+    type: "enum"
+    required: true
+    options: ["todo", "in_progress", "review", "done", "blocked"]
+    description: "Current status of the task"
+    example: "todo"
+  
+  estimated_effort:
+    type: "enum"
+    required: true
+    options: ["1-2 hours", "half day", "1 day", "2-3 days", "1 week", "2+ weeks"]
+    description: "Estimated effort required"
+    example: "2-3 days"
+  
+  dependencies:
+    type: "text"
+    required: false
+    description: "Dependencies on other tasks or resources"
+    example: "Database setup, API key configuration"
+  
+  functional_requirements:
+    type: "text"
+    required: true
+    description: "Functional requirements for the task"
+    example: "User can login, logout, and access protected resources"
+  
+  technical_requirements:
+    type: "text"
+    required: true
+    description: "Technical requirements for the task"
+    example: "JWT tokens, bcrypt password hashing, rate limiting"
+  
+  acceptance_criteria:
+    type: "text"
+    required: true
+    description: "Acceptance criteria for task completion"
+    example: "All tests pass, documentation updated, code reviewed"
+  
+  constraints:
+    type: "text"
+    required: false
+    description: "Constraints and limitations"
+    example: "Must support 1000 concurrent users, 99.9% uptime"
+  
+  implementation_steps:
+    type: "text"
+    required: true
+    description: "Step-by-step implementation plan"
+    example: "1. Setup authentication service, 2. Implement JWT logic, 3. Add validation, 4. Write tests"
+  
+  resources_needed:
+    type: "text"
+    required: true
+    description: "Resources needed for implementation"
+    example: "JWT library, bcrypt, database access, test environment"
+  
+  testing_strategy:
+    type: "text"
+    required: true
+    description: "Testing strategy for the task"
+    example: "Unit tests, integration tests, security testing, performance testing"
+  
+  deliverables:
+    type: "text"
+    required: true
+    description: "Deliverables from the task"
+    example: "Authentication service, tests, documentation, deployment scripts"
+  
+  tags:
+    type: "array"
+    required: false
+    description: "Tags for categorization and filtering"
+    example: ["authentication", "security", "backend", "api"]
+  
+  related_documents:
+    type: "array"
+    required: false
+    description: "Related documents and references"
+    example: ["TDD-001", "API-DOCS-001", "ARCH-001"]
+  
+  stakeholders:
+    type: "array"
+    required: false
+    description: "Stakeholders involved in the task"
+    example: ["developer", "qa", "product-owner"]
+  
+  timeline:
+    type: "text"
+    required: false
+    description: "Timeline and milestones"
+    example: "Start: 2024-01-15, Review: 2024-01-18, Complete: 2024-01-20"
+
+validation:
+  required_fields:
+    - task_title
+    - task_description
+    - task_type
+    - category
+    - priority
+    - status
+    - estimated_effort
+    - functional_requirements
+    - technical_requirements
+    - acceptance_criteria
+    - implementation_steps
+    - resources_needed
+    - testing_strategy
+    - deliverables
+  
+  field_validation:
+    task_title:
+      min_length: 3
+      max_length: 100
+      pattern: "^[a-zA-Z0-9\\s\\-_]+$"
+    
+    task_description:
+      min_length: 10
+      max_length: 1000
+    
+    estimated_effort:
+      enum: ["1-2 hours", "half day", "1 day", "2-3 days", "1 week", "2+ weeks"]
+
+output_format:
+  yaml: true
+  json: true
+  markdown: true
+  
+processing:
+  story_generation:
+    enabled: true
+    template: "story-generation-tmpl.yaml"
+    fields_mapping:
+      story_title: "task_title"
+      story_description: "task_description"
+      acceptance_criteria: "acceptance_criteria"
+      technical_requirements: "technical_requirements"
+      implementation_steps: "implementation_steps"
+  
+  epic_planning:
+    enabled: true
+    template: "epic-planning-tmpl.yaml"
+    fields_mapping:
+      epic_title: "task_title"
+      epic_description: "task_description"
+      business_value: "functional_requirements"
+      deliverables: "deliverables"
+      timeline: "timeline"
+  
+  development_workflow:
+    enabled: true
+    template: "development-workflow-tmpl.yaml"
+    fields_mapping:
+      workflow_title: "task_title"
+      workflow_description: "task_description"
+      steps: "implementation_steps"
+      resources: "resources_needed"
+      testing: "testing_strategy"
+  
+  project_management:
+    enabled: true
+    template: "project-management-tmpl.yaml"
+    fields_mapping:
+      project_title: "task_title"
+      project_description: "task_description"
+      priority: "priority"
+      effort: "estimated_effort"
+      timeline: "timeline"
+      stakeholders: "stakeholders"

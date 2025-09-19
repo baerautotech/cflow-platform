@@ -1,0 +1,15 @@
+# <!-- Powered by BMAD™ Core -->
+name: bmad-technical-research
+version: 1.0.0
+short-title: Technical Research Studio
+description: >-
+  Comprehensive AI-powered technical research framework providing specialized
+  agents for code analysis, documentation research, vector search, and
+  knowledge graph integration. Includes 6 specialized research agents,
+  4 workflows from analysis to documentation, YAML template-based document
+  generation, and integration with existing cflow knowledge systems.
+author: Cerebral Team
+slashPrefix: bmad-tr
+commercial: false
+price: $0/year
+tags: [technical, research, documentation, code-analysis, vector-search, knowledge-graph]

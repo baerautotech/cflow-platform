@@ -175,6 +175,15 @@ class ToolRegistry:
             tool("bmad_expansion_packs_enable", "Enable expansion pack for project", {"type": "object", "properties": {"project_id": {"type": "string"}, "pack_id": {"type": "string"}}, "required": ["project_id", "pack_id"]}),
         ]
 
+        # BMAD Human-in-the-Loop (HIL) Interactive Sessions
+        tools += [
+            tool("bmad_hil_start_session", "Start BMAD-style HIL interactive session for document completion", {"type": "object", "properties": {"doc_id": {"type": "string"}, "doc_type": {"type": "string", "enum": ["PRD", "ARCH", "STORY"]}, "session_type": {"type": "string", "enum": ["elicitation", "review", "approval"]}}, "required": ["doc_id", "doc_type", "session_type"]}),
+            tool("bmad_hil_continue_session", "Continue BMAD-style HIL interactive session with user response", {"type": "object", "properties": {"session_id": {"type": "string"}, "user_response": {"type": "string"}}, "required": ["session_id", "user_response"]}),
+            tool("bmad_hil_end_session", "End BMAD-style HIL interactive session and update document", {"type": "object", "properties": {"session_id": {"type": "string"}, "finalize": {"type": "boolean"}}, "required": ["session_id"]}),
+            tool("bmad_hil_session_status", "Get status of BMAD-style HIL interactive session", {"type": "object", "properties": {"session_id": {"type": "string"}}, "required": ["session_id"]}),
+            tool("bmad_workflow_status", "Check BMAD workflow status and HIL session state", {"type": "object", "properties": {"project_id": {"type": "string"}}, "required": []}),
+        ]
+
         # Internet search (DuckDuckGo)
         tools += [
             tool(

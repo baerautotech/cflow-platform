@@ -1,0 +1,34 @@
+name: "BMAD Healthcare Expansion Pack"
+description: "Specialized agents, templates, and workflows for healthcare software development with HIPAA compliance and medical device integration"
+version: "1.0.0"
+author: "BMAD Method"
+license: "Commercial"
+category: "Healthcare"
+tags: ["healthcare", "hipaa", "medical-device", "fda", "compliance"]
+commercial: true
+price: "$299/year"
+features:
+  - "HIPAA Compliance Agents"
+  - "Medical Device Integration Templates"
+  - "Healthcare Data Management Workflows"
+  - "Regulatory Compliance Templates"
+  - "FDA Submission Support"
+agents:
+  - "healthcare-pm"
+  - "hipaa-compliance-officer"
+  - "medical-device-architect"
+  - "healthcare-data-analyst"
+  - "regulatory-specialist"
+templates:
+  - "hipaa-prd-tmpl.yaml"
+  - "medical-device-architecture-tmpl.yaml"
+  - "healthcare-data-flow-tmpl.yaml"
+  - "fda-submission-tmpl.yaml"
+workflows:
+  - "healthcare-greenfield.yaml"
+  - "medical-device-development.yaml"
+  - "hipaa-compliance-audit.yaml"
+checklists:
+  - "hipaa-compliance-checklist.md"
+  - "medical-device-checklist.md"
+  - "healthcare-data-security-checklist.md"

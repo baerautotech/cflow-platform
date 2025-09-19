@@ -1,0 +1,215 @@
+# Documentation Generation Workflow
+# Complete workflow for template-based document generation
+
+name: "Documentation Generation Workflow"
+version: "1.0.0"
+description: "Complete workflow for generating technical documentation using YAML templates"
+
+workflow:
+  steps:
+    - step: 1
+      agent: "documentation-specialist"
+      task: "create-documentation.md"
+      inputs:
+        document_type: "{{document_type}}"
+        template_selection: "{{template_selection}}"
+        document_info: "{{document_info}}"
+      outputs:
+        document: "{{generated_document}}"
+        metadata: "{{document_metadata}}"
+    
+    - step: 2
+      agent: "documentation-specialist"
+      task: "validate-documentation.md"
+      inputs:
+        document: "{{generated_document}}"
+        template: "{{selected_template}}"
+      outputs:
+        validation_results: "{{validation_results}}"
+        quality_score: "{{quality_score}}"
+    
+    - step: 3
+      agent: "task-research-coordinator"
+      task: "create-tasks-from-document.md"
+      inputs:
+        document: "{{generated_document}}"
+        document_metadata: "{{document_metadata}}"
+        task_template: "task-creation-tmpl.yaml"
+      outputs:
+        tasks: "{{generated_tasks}}"
+        task_count: "{{task_count}}"
+    
+    - step: 4
+      agent: "task-research-coordinator"
+      task: "create-stories-from-document.md"
+      inputs:
+        document: "{{generated_document}}"
+        document_metadata: "{{document_metadata}}"
+        story_template: "story-generation-tmpl.yaml"
+      outputs:
+        stories: "{{generated_stories}}"
+        story_count: "{{story_count}}"
+    
+    - step: 5
+      agent: "task-research-coordinator"
+      task: "create-epics-from-document.md"
+      inputs:
+        document: "{{generated_document}}"
+        document_metadata: "{{document_metadata}}"
+        epic_template: "epic-planning-tmpl.yaml"
+      outputs:
+        epics: "{{generated_epics}}"
+        epic_count: "{{epic_count}}"
+    
+    - step: 6
+      agent: "documentation-specialist"
+      task: "save-documentation.md"
+      inputs:
+        document: "{{generated_document}}"
+        metadata: "{{document_metadata}}"
+        location: "{{save_location}}"
+      outputs:
+        saved_path: "{{saved_path}}"
+        success: "{{save_success}}"
+
+templates:
+  document_types:
+    - name: "TDD"
+      template: "tdd-tmpl.yaml"
+      description: "Test-Driven Development document"
+      downstream_processing: ["task_creation", "story_generation", "epic_planning"]
+    
+    - name: "API_DOCS"
+      template: "api-docs-tmpl.yaml"
+      description: "API documentation"
+      downstream_processing: ["task_creation", "story_generation", "epic_planning"]
+    
+    - name: "USER_GUIDE"
+      template: "user-guide-tmpl.yaml"
+      description: "User guide documentation"
+      downstream_processing: ["task_creation", "story_generation"]
+    
+    - name: "TECHNICAL_SPEC"
+      template: "spec-tmpl.yaml"
+      description: "Technical specification"
+      downstream_processing: ["task_creation", "story_generation", "epic_planning"]
+    
+    - name: "README"
+      template: "readme-tmpl.yaml"
+      description: "Project README"
+      downstream_processing: ["task_creation"]
+    
+    - name: "ARCHITECTURE_DOC"
+      template: "architecture-doc-tmpl.yaml"
+      description: "Architecture documentation"
+      downstream_processing: ["task_creation", "story_generation", "epic_planning"]
+    
+    - name: "DEPLOYMENT_GUIDE"
+      template: "deployment-guide-tmpl.yaml"
+      description: "Deployment guide"
+      downstream_processing: ["task_creation", "story_generation"]
+    
+    - name: "TROUBLESHOOTING_GUIDE"
+      template: "troubleshooting-guide-tmpl.yaml"
+      description: "Troubleshooting guide"
+      downstream_processing: ["task_creation"]
+    
+    - name: "CHANGELOG"
+      template: "changelog-tmpl.yaml"
+      description: "Changelog documentation"
+      downstream_processing: ["task_creation"]
+
+  task_creation:
+    template: "task-creation-tmpl.yaml"
+    fields_mapping:
+      task_title: "document_title"
+      task_description: "document_description"
+      acceptance_criteria: "acceptance_criteria"
+      technical_requirements: "technical_requirements"
+      deliverables: "deliverables"
+  
+  story_generation:
+    template: "story-generation-tmpl.yaml"
+    fields_mapping:
+      story_title: "document_title"
+      story_description: "document_description"
+      acceptance_criteria: "acceptance_criteria"
+      test_scenarios: "test_scenarios"
+      implementation_plan: "implementation_plan"
+  
+  epic_planning:
+    template: "epic-planning-tmpl.yaml"
+    fields_mapping:
+      epic_title: "document_title"
+      epic_description: "document_description"
+      business_value: "business_value"
+      deliverables: "deliverables"
+      timeline: "timeline"
+
+validation:
+  document_quality:
+    min_score: 0.8
+    required_sections: ["overview", "requirements", "implementation"]
+    content_validation: true
+    template_compliance: true
+  
+  task_quality:
+    min_score: 0.7
+    required_fields: ["task_title", "task_description", "acceptance_criteria"]
+    effort_estimation: true
+    dependency_mapping: true
+  
+  story_quality:
+    min_score: 0.7
+    required_fields: ["story_title", "story_description", "acceptance_criteria"]
+    user_focus: true
+    testability: true
+  
+  epic_quality:
+    min_score: 0.7
+    required_fields: ["epic_title", "epic_description", "business_value"]
+    business_alignment: true
+    deliverable_specificity: true
+
+output:
+  formats:
+    - markdown
+    - yaml
+    - json
+  
+  locations:
+    - database: "cerebral_documents"
+    - file_system: "docs/generated/"
+    - object_storage: "s3://cerebraflow-docs/"
+  
+  metadata:
+    - processing_time
+    - template_used
+    - quality_scores
+    - downstream_artifacts
+    - validation_results
+
+error_handling:
+  template_not_found:
+    action: "provide_available_templates"
+    fallback: "use_default_template"
+  
+  validation_failure:
+    action: "show_validation_errors"
+    fallback: "allow_correction"
+  
+  generation_error:
+    action: "show_error_details"
+    fallback: "retry_with_different_template"
+  
+  save_error:
+    action: "show_save_error"
+    fallback: "save_to_alternative_location"
+
+success_criteria:
+  - document_generated: true
+  - document_validated: true
+  - quality_score_met: true
+  - downstream_processing_complete: true
+  - document_saved: true
+  - metadata_recorded: true

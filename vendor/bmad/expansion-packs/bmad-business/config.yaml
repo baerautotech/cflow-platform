@@ -1,0 +1,34 @@
+name: "BMAD Business Expansion Pack"
+description: "Specialized agents, templates, and workflows for enterprise business software development with ERP integration and business process automation"
+version: "1.0.0"
+author: "BMAD Method"
+license: "Commercial"
+category: "Business"
+tags: ["business", "enterprise", "erp", "automation", "process"]
+commercial: true
+price: "$399/year"
+features:
+  - "Enterprise Architecture Agents"
+  - "Business Process Automation Templates"
+  - "ERP Integration Workflows"
+  - "Business Intelligence Templates"
+  - "Enterprise Security Templates"
+agents:
+  - "enterprise-pm"
+  - "business-process-analyst"
+  - "erp-architect"
+  - "business-intelligence-specialist"
+  - "enterprise-security-officer"
+templates:
+  - "enterprise-prd-tmpl.yaml"
+  - "erp-architecture-tmpl.yaml"
+  - "business-process-tmpl.yaml"
+  - "enterprise-security-tmpl.yaml"
+workflows:
+  - "enterprise-greenfield.yaml"
+  - "erp-integration.yaml"
+  - "business-process-automation.yaml"
+checklists:
+  - "enterprise-compliance-checklist.md"
+  - "erp-integration-checklist.md"
+  - "business-process-checklist.md"

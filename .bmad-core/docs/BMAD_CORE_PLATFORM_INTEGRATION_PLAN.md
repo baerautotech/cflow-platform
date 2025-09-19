@@ -1,15 +1,15 @@
 # BMAD Core Platform Integration Plan
 
-Document version: 2.0  
-Date: 2025-09-18  
+Document version: 1.0  
+Date: 2025-09-14  
 Owner: Cerebral Platform Architecture
 
 Summary
-- **STRATEGIC REVISION**: Replace CAEF entirely with BMAD as the complete multi-agent orchestration platform.
-- **CORE-FIRST APPROACH**: Focus on core BMAD-Cerebral integration and infrastructure before advanced features.
-- **HYBRID ARCHITECTURE**: Keep cflow-platform as Cerebral integration layer, replace CAEF with BMAD workflow engine.
-- **MULTI-AGENT FOUNDATION**: Build multi-agent parallel system as testing foundation for remaining features.
-- **PHASED IMPLEMENTATION**: Core Integration → Infrastructure → Multi-Agent System → Testing → Advanced Features.
+- Make BMAD-METHOD (MIT) the authoritative planning/PM/story core of the Cerebral platform.  
+- Keep CAEF as the orchestrator for multi-agent code/test/validation after planning gates.  
+- Use hosted LLM APIs for agent reasoning (BMAD agents). Keep Ollama/Apple Silicon only for embeddings (RAG/KG) to avoid contention and simplify agent runtime.  
+- Replace BMAD’s web UI with Cerebral Web/mobile/wearable UIs; no IDE requirement.  
+- Vendor BMAD into our stack with proper attribution; expose as headless services with strict security, tenancy, and compliance.
 
 Links
 - BMAD-METHOD (MIT): https://github.com/bmadcode/BMAD-METHOD
@@ -19,213 +19,69 @@ Links
 ## I. Base Project Description (PRD)
 
 ### 1) Problem & Goals
-- **Problem**: CAEF's single-agent sequential execution limits scalability and sophistication. Planning inconsistency and context loss reduce code quality and increase rework.
-- **Goal**: Replace CAEF entirely with BMAD's sophisticated multi-agent orchestration platform, providing complete workflow management, HIL integration, and parallel execution capabilities.
+- Problem: Planning inconsistency and context loss reduce code quality and increase rework. Existing flows allow codegen to start before PRD/Architecture/Story are sufficiently complete.
+- Goal: Adopt BMAD’s agentic planning and context-engineered development as the mandatory planning/PM/story system, enforce gates before codegen, and integrate artifacts into Cerebral’s RAG/KG and PM.
 
 ### 2) Scope
-- **In scope**: 
-  - **Phase 1**: Core BMAD-Cerebral integration (workflow engine, database schema, basic agents)
-  - **Phase 2**: Infrastructure components (HashiCorp Vault, expansion pack storage, memory migration)
-  - **Phase 3**: Multi-agent parallel system (orchestration, parallel execution, testing framework)
-  - **Phase 4**: Testing & validation (end-to-end testing, performance validation, integration testing)
-  - **Phase 5**: Advanced features (expansion packs, HIL, brownfield/greenfield workflows)
-- **Out of scope**: CAEF components (orchestrator, agent_loop, generic agents), BMAD's web UI, legacy TaskMaster systems.
+- In scope: BMAD planning agents (Analyst/PM/Architect/SM/Dev/QA), PRD/Architecture/Story lifecycle, CAEF-gated code/test/validation, storage and RAG/KG indexing, web/mobile/wearable UX, security/tenancy/audit, 1‑touch installer integration, local runner + IDE tools optional, BMAD expansion packs integration, comprehensive brownfield vs greenfield project type detection and workflow routing, Human-in-the-Loop (HIL) approval processes and interactive components.
+- Out of scope: Retaining BMAD's web UI; legacy TaskMaster file/json systems; non-compliant mock systems.
 
 ### 3) Success Criteria (VEG & AEMI)
 - VEG: Code and services must be production-ready, zero placeholders/TODOs, testable, validated under performance SLOs, with acceptance tests and clear interfaces.
 - AEMI: Atomic tasks with micro-validations and gates; documentation-first plan; gated transitions; audited orchestration; no elaborate theater; real integrations only.
 
 ### 4) Technical Stack
-- **Core Platform**: 
-  - **BMAD Workflow Engine**: Complete multi-agent orchestration replacing CAEF
-  - **BMAD Specialized Agents**: Analyst, PM, Architect, SM, Dev, QA with domain expertise
-  - **BMAD HIL System**: Interactive sessions, elicitation, approval workflows
-  - **BMAD Monitoring**: Workflow status, progress tracking, artifact management
-- **Cerebral Integration Layer** (cflow-platform):
-  - **Supabase Integration**: Multi-user database, knowledge graph, embeddings
-  - **Apple Silicon Accelerator**: Optimized MPS embeddings for local development
-  - **MCP Tool Registry**: Centralized tool definitions and handler system
-  - **Code Intelligence**: Function indexing, vectorization, enterprise search
-- **Infrastructure**:
-  - **HashiCorp Vault**: Centralized secret management
-  - **MinIO S3**: Object storage for artifacts and expansion packs
-  - **Postgres (Supabase)**: Database with pgvector for embeddings
-  - **WebMCP Server**: Runs on cerebral cluster, imports tools from cflow-platform
-- **Clients**: Cerebral Web (React Native + React Native Web), mobile/wearables (React Native)
+- Services:  
+  - BMAD core (Node v20, headless) vendored into `vendor/bmad/` and exposed via HTTP API facade on cerebral cluster.  
+  - BMAD Expansion Packs: Domain-specific agent teams, templates, and workflows (Game Dev, Creative Writing, DevOps, etc.) integrated into cerebral cluster.
+  - BMAD Technical Research Expansion Pack: Comprehensive technical research framework with YAML template-based document generation, replacing Enhanced Research infrastructure.
+  - BMAD Project Type Detection: Automatic greenfield vs brownfield workflow routing with appropriate templates and processes.
+  - BMAD Brownfield Support: Comprehensive existing system analysis, documentation generation, integration strategy planning.
+  - BMAD HIL Approval System: Human-in-the-Loop approval processes, interactive Q&A sessions, workflow gate enforcement.
+  - CAEF Orchestrator (Python) controls gated execution.  
+  - RAG/KG: Supabase + pgvector (cluster), Knowledge Graph builder.  
+  - WebMCP Server: Runs on cerebral cluster, imports tools from cflow-platform.  
+  - API Gateway/Ingress, Service Mesh (istio/linkerd if applicable).  
+  - Secrets: HashiCorp Vault for centralized secret management.  
+  - Storage: Postgres (Supabase), Object storage (MinIO S3) for artifacts.
+- Clients: Cerebral Web (React Native + React Native Web), mobile/wearables (React Native) using platform APIs.
+- Development: cflow-platform provides tool definitions and HTTP client for cluster APIs.
 
-### 5) Phased Implementation Strategy
-
-#### **Phase 1: Core BMAD-Cerebral Integration** (Weeks 1-4)
-**Goal**: Establish foundational BMAD workflow engine integration with Cerebral infrastructure
-
-**Key Components**:
-- ✅ **BMAD Workflow Engine**: Replace CAEF orchestrator with BMAD workflow management
-- ✅ **Database Schema**: Extend Supabase schema for BMAD documents, workflows, HIL sessions
-- ✅ **Basic Agent Integration**: Core BMAD agents (Analyst, PM, Architect, SM, Dev, QA)
-- ✅ **MCP Tool Registry**: BMAD tool definitions and handler integration
-- ✅ **Direct Client**: BMAD tool execution via cflow-platform handlers
-
-**Success Criteria**:
-- BMAD workflow engine operational in Cerebral cluster
-- Basic PRD → Architecture → Story workflow functional
-- Database schema supports BMAD document lifecycle
-- MCP tools accessible via cflow-platform
-
-#### **Phase 2: Infrastructure Components** (Weeks 5-8)
-**Goal**: Complete infrastructure migration and multi-user cluster readiness
-
-**Key Components**:
-- ✅ **HashiCorp Vault Integration**: Centralized secret management
-- ✅ **Expansion Pack Storage**: Database/S3 storage for BMAD expansion packs
-- ✅ **Memory Migration**: Move from local JSONL to Supabase memory_items table
-- ✅ **RAG Document Storage**: Database/S3 storage for generated documents
-- ✅ **Multi-User Testing**: Validate cluster accessibility and performance
-
-**Success Criteria**:
-- All secrets managed via HashiCorp Vault
-- Expansion packs accessible across cluster nodes
-- Memory system supports multi-user access
-- Performance meets multi-user SLOs
-
-#### **Phase 3: Multi-Agent Parallel System** (Weeks 9-12)
-**Goal**: Build sophisticated multi-agent orchestration as testing foundation
-
-**Key Components**:
-- ✅ **BMAD Orchestrator**: Multi-agent coordination and state management
-- ✅ **Parallel Execution Engine**: Simultaneous agent execution capabilities
-- ✅ **Agent Specialization System**: Domain-specific agent roles and capabilities
-- ✅ **Workflow State Management**: Complex workflow transitions and artifact tracking
-- ✅ **Integration Testing**: End-to-end workflow validation
-
-**Success Criteria**:
-- Multi-agent parallel execution operational
-- Workflow state transitions working correctly
-- Agent specialization functioning properly
-- Integration tests passing consistently
-
-#### **Phase 4: Testing & Validation Framework** (Weeks 13-16)
-**Goal**: Comprehensive testing framework using multi-agent system as foundation
-
-**Key Components**:
-- ✅ **End-to-End Testing**: Complete workflow testing from PRD to deployment
-- ✅ **Performance Validation**: Multi-agent system performance under load
-- ✅ **Integration Testing**: Cross-component integration validation
-- ✅ **User Acceptance Testing**: Real-world scenario validation
-- ✅ **Monitoring & Observability**: Production-ready monitoring and alerting
-
-**Success Criteria**:
-- All workflows tested end-to-end
-- Performance meets production SLOs
-- Monitoring provides actionable insights
-- System ready for production deployment
-
-#### **Phase 5: Advanced Features & Expansion Packs** (Weeks 17-20)
-**Goal**: Complete advanced features using proven multi-agent foundation
-
-**Key Components**:
-- ✅ **BMAD Expansion Packs**: Domain-specific capabilities (Game Dev, DevOps, etc.)
-- ✅ **HIL Integration**: Interactive sessions and approval workflows
-- ✅ **Brownfield/Greenfield Workflows**: Project type detection and routing
-- ✅ **Advanced Monitoring**: Sophisticated workflow analytics and insights
-- ✅ **Production Deployment**: Full production rollout with monitoring
-
-**Success Criteria**:
-- Expansion packs integrated and functional
-- HIL system providing interactive capabilities
-- Brownfield/greenfield workflows operational
-- Production deployment successful with monitoring
-
-#### **Phase 6: Final Cleanup & 100% Completion Validation** (Weeks 21-22)
-**Goal**: Complete cleanup, validation, and ensure 100% project completion
-
-**Key Components**:
-- ✅ **Final Code Cleanup**: Remove all CAEF references, unused code, dead imports
-- ✅ **100% Completion Validation**: Comprehensive functionality, performance, security validation
-- ✅ **Production Deployment**: Deploy to production cerebral cluster with monitoring
-- ✅ **Final Documentation**: Complete project documentation and deployment runbook
-- ✅ **Git Workflow**: Final commit and push of all changes to GitHub
-
-**Success Criteria**:
-- All CAEF components completely removed
-- 100% functionality validation complete
-- Production deployment operational
-- Complete documentation and runbooks available
-- All changes committed and pushed to GitHub
-
-### 6) High‑Level Architecture
+### 5) High‑Level Architecture
 ```mermaid
-graph TB
-  subgraph "Client Layer"
-    U[Web/Mobile/Wearables]
-    CLI[CLI Tools]
-    IDE[IDE Integration]
-  end
-  
-  subgraph "API Gateway"
-    GW[API Gateway]
-    AUTH[Authentication/Authorization]
-  end
-  
-  subgraph "BMAD Core Platform"
-    BMAD_ORCH[BMAD Orchestrator]
-    BMAD_WORKFLOW[BMAD Workflow Engine]
-    BMAD_AGENTS[BMAD Specialized Agents]
-    BMAD_HIL[BMAD HIL System]
-    BMAD_MONITOR[BMAD Monitoring]
-  end
-  
-  subgraph "Cerebral Integration Layer"
-    MCP[MCP Tool Registry]
-    HANDLERS[Handler System]
-    DIRECT_CLIENT[Direct Client]
-  end
-  
-  subgraph "Cerebral Infrastructure"
-    SUPABASE[Supabase Database]
-    KNOWLEDGE_GRAPH[Knowledge Graph]
-    EMBEDDINGS[Apple Silicon Embeddings]
-    VAULT[HashiCorp Vault]
-    S3[MinIO S3 Storage]
-  end
-  
-  U --> GW
-  CLI --> GW
-  IDE --> GW
-  
-  GW --> AUTH
-  AUTH --> BMAD_ORCH
-  
-  BMAD_ORCH --> BMAD_WORKFLOW
-  BMAD_WORKFLOW --> BMAD_AGENTS
-  BMAD_WORKFLOW --> BMAD_HIL
-  BMAD_WORKFLOW --> BMAD_MONITOR
-  
-  BMAD_ORCH --> MCP
-  MCP --> HANDLERS
-  HANDLERS --> DIRECT_CLIENT
-  
-  BMAD_AGENTS --> SUPABASE
-  BMAD_HIL --> SUPABASE
-  BMAD_MONITOR --> SUPABASE
-  
-  DIRECT_CLIENT --> KNOWLEDGE_GRAPH
-  DIRECT_CLIENT --> EMBEDDINGS
-  DIRECT_CLIENT --> VAULT
-  DIRECT_CLIENT --> S3
+graph TD
+  U[Web/Mobile/Wearables] -->|Forms & Actions| GW[API Gateway]
+  GW -->|AuthZ/JWT| BMAD[BMAD HTTP API Facade]
+  GW --> CAEF[CAEF Orchestrator]
+  GW --> WebMCP[WebMCP Server]
+  BMAD -->|Project Type Detection| PTD[Project Type Detector]
+  PTD -->|Greenfield| GREEN[Greenfield Workflow]
+  PTD -->|Brownfield| BROWN[Brownfield Workflow]
+  GREEN -->|Core Agents| CORE[BMAD Core Agents]
+  BROWN -->|Core Agents| CORE
+  BROWN -->|Document Project| DOC[Project Documentation]
+  BROWN -->|Integration Strategy| INT[Integration Planning]
+  BMAD -->|Expansion Packs| EXP[BMAD Expansion Packs]
+  BMAD -->|Artifacts| DB[(Supabase DB)]
+  BMAD -->|Index| RAG[(Supabase pgvector)]
+  BMAD -->|Edges| KG[Knowledge Graph]
+  CAEF -->|Jobs| EXEC[Code/Test/Validate Agents]
+  EXEC -->|Results| DB
+  WebMCP -->|Import Tools| CFlow[cflow-platform Tool Registry]
+  CFlow -->|HTTP Client| BMAD
+  EXP -->|Domain Agents| CORE
+  EXP -->|Templates| DB
+  EXP -->|Workflows| CAEF
 ```
 
-### 7) Database Schema Design (BMAD-Cerebral Integration)
-- **BMAD Documents**: `cerebral_documents` (id, tenant_id, project_id, kind: PRD|ARCH|STORY|EPIC, status, content, authored_by, created_at, updated_at)
-- **BMAD Workflows**: `bmad_workflows` (id, tenant_id, project_id, workflow_type, status, current_step, artifacts, created_at, updated_at)
-- **BMAD HIL Sessions**: `bmad_hil_sessions` (id, doc_id, doc_type, session_type, status, questions_asked, responses_received, document_sections, created_at, updated_at)
-- **BMAD Expansion Packs**: `bmad_expansion_packs` (id, tenant_id, pack_name, version, status, agents, templates, workflows, metadata)
-- **Project Expansion Packs**: `project_expansion_packs` (project_id, expansion_pack_id, enabled, configuration)
-- **Memory Items**: `memory_items` (id, tenant_id, title, content, metadata, created_at, updated_at)
-- **Knowledge Items**: `knowledge_items` (id, tenant_id, title, content, metadata, created_at, updated_at)
-- **Knowledge Embeddings**: `knowledge_embeddings` (id, knowledge_item_id, tenant_id, content_chunk, embedding, chunk_index, content_type, metadata)
-- **Activities/Audit**: `cerebral_activities` (actor, action, resource, timestamp, metadata)
+### 6) Database Schema Design (mapping)
+- Documents: `cerebral_documents` (doc_id, tenant_id, project_id, type: PRD|ARCH|STORY, versioning, status, content, authored_by, artifacts)
+- Tasks: `cerebral_tasks` (task_id, tenant_id, project_id, derived_from_story, status, priority, dependencies, metadata)
+- Activities/Audit: `cerebral_activities` (actor, action, resource, timestamp, metadata)
+- Expansion Packs: `bmad_expansion_packs` (pack_id, tenant_id, pack_name, version, status, agents, templates, workflows, metadata)
+- RAG: `agentic_knowledge_chunks` + vectors tables; link docs↔chunks↔tasks; maintain 1024D code embeddings; allow 384D for docs where configured.
 
-### 8) Code Style & Compliance
+### 7) Code Style & Compliance
 - Python/TypeScript standards; typing enforced; linting required; pre-commit hooks.  
 - SOC2/GDPR/HIPAA alignment (audits, PII detection/redaction, data retention/deletion flows).
 

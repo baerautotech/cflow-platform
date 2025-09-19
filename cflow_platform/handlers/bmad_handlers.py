@@ -11,10 +11,11 @@ import os
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from dotenv import load_dotenv
 from cflow_platform.core.config.supabase_config import get_api_key, get_rest_url
+from cflow_platform.core.bmad_hil_integration import BMADHILIntegration
 from supabase import create_client
 
 # Load environment variables
@@ -26,6 +27,7 @@ class BMADHandlers:
 
     def __init__(self):
         self.supabase_client = None
+        self.bmad_hil = BMADHILIntegration()
         self._ensure_supabase()
 
     def _ensure_supabase(self) -> None:
@@ -275,7 +277,7 @@ class BMADHandlers:
             if project_id:
                 query = query.eq("project_id", project_id)
             if doc_type:
-                query = query.eq("type", doc_type)
+                query = query.eq("kind", doc_type)
             if status:
                 query = query.eq("status", status)
 
@@ -519,8 +521,8 @@ This document outlines the user stories and implementation approach for {project
 
             # Master checklist validation
             checklist_results = {
-                "prd_complete": prd_doc.get("status") == "approved",
-                "arch_complete": arch_doc.get("status") == "approved",
+                "prd_complete": prd_doc.get("status") in ["approved", "review"] and not self._has_template_placeholders(prd_doc.get("content", "")),
+                "arch_complete": arch_doc.get("status") in ["approved", "review"] and not self._has_template_placeholders(arch_doc.get("content", "")),
                 "prd_arch_aligned": self._validate_prd_arch_alignment(prd_doc, arch_doc),
                 "tech_stack_defined": bool(arch_doc.get("content", "").strip()),
                 "goals_defined": bool(prd_doc.get("content", "").strip())
@@ -528,12 +530,45 @@ This document outlines the user stories and implementation approach for {project
 
             all_passed = all(checklist_results.values())
             
+            # If checklist fails, trigger BMAD HIL sessions
+            if not all_passed:
+                # Determine which documents need HIL completion
+                hil_triggered = False
+                hil_sessions = []
+                
+                if not checklist_results["prd_complete"]:
+                    hil_result = await self.bmad_hil.trigger_hil_session(
+                        prd_id, "PRD", {"workflow_step": "master_checklist", "checklist_results": checklist_results}
+                    )
+                    if hil_result["success"]:
+                        hil_triggered = True
+                        hil_sessions.append(hil_result)
+                
+                if not checklist_results["arch_complete"]:
+                    hil_result = await self.bmad_hil.trigger_hil_session(
+                        arch_id, "ARCH", {"workflow_step": "master_checklist", "checklist_results": checklist_results}
+                    )
+                    if hil_result["success"]:
+                        hil_triggered = True
+                        hil_sessions.append(hil_result)
+                
+                return {
+                    "success": True,
+                    "checklist_passed": False,
+                    "results": checklist_results,
+                    "bmad_hil_triggered": hil_triggered,
+                    "hil_sessions": hil_sessions,
+                    "workflow_paused": True,
+                    "message": "Master checklist failed - BMAD HIL sessions triggered for document completion",
+                    "next_action": "Complete HIL sessions to continue workflow"
+                }
+            
             return {
                 "success": True,
                 "checklist_passed": all_passed,
                 "results": checklist_results,
-                "message": "Master checklist completed successfully" if all_passed else "Master checklist failed - documents need revision",
-                "next_action": "Create epics" if all_passed else "Revise PRD or Architecture"
+                "message": "Master checklist completed successfully",
+                "next_action": "Create epics"
             }
 
         except Exception as e:
@@ -543,7 +578,7 @@ This document outlines the user stories and implementation approach for {project
             }
 
     async def bmad_epic_create(self, project_name: str, prd_id: str, arch_id: str) -> Dict[str, Any]:
-        """Create epics from PRD and Architecture."""
+        """Create epics in cluster database with proper multi-user support."""
         try:
             # First run master checklist
             checklist_result = await self.bmad_master_checklist(prd_id, arch_id)
@@ -554,62 +589,51 @@ This document outlines the user stories and implementation approach for {project
                     "checklist_results": checklist_result.get("results", {})
                 }
 
-            # Create epic document record
-            doc_id = str(uuid.uuid4())
-            doc_data = {
-                "id": doc_id,
-                "tenant_id": "00000000-0000-0000-0000-000000000100",
-                "project_id": str(uuid.uuid4()),
-                "kind": "EPIC",
-                "version": 1,
-                "status": "draft",
-                "content": self._generate_epic_content(project_name, prd_id, arch_id),
-                "created_at": datetime.utcnow().isoformat(),
-                "updated_at": datetime.utcnow().isoformat()
-            }
+            # Get PRD document to extract epics
+            prd_doc = await self._get_document(prd_id)
+            if not prd_doc:
+                return {"success": False, "error": "PRD document not found"}
 
-            # Store in Supabase if available
-            if self.supabase_client:
-                try:
-                    result = self.supabase_client.table("cerebral_documents").insert(doc_data).execute()
-                    if result.data:
-                        # Index into Knowledge Graph
-                        kg_result = await self._index_to_knowledge_graph(
-                            doc_id=doc_id,
-                            title=f"{project_name} Epic Document",
-                            content=self._generate_epic_content(project_name, prd_id, arch_id),
-                            content_type="EPIC",
-                            metadata={"project_name": project_name, "prd_id": prd_id, "arch_id": arch_id}
-                        )
-                        
-                        kg_status = " and indexed to Knowledge Graph" if kg_result.get("success") else " (KG indexing failed)"
-                        
-                        return {
-                            "success": True,
-                            "doc_id": doc_id,
-                            "message": f"Epic document created successfully for {project_name} and stored in Supabase{kg_status}",
-                            "data": result.data[0],
-                            "kg_indexed": kg_result.get("success", False)
-                        }
-                except Exception as e:
-                    return {
-                        "success": False,
-                        "error": f"Failed to store in Supabase: {str(e)}",
-                        "doc_id": doc_id
-                    }
-            else:
+            # Parse PRD content to extract epic sections
+            epics = await self._extract_epics_from_prd(prd_doc['content'])
+            
+            if not epics:
                 return {
-                    "success": True,
-                    "doc_id": doc_id,
-                    "message": f"Epic document created successfully for {project_name} (local only)",
-                    "data": doc_data
+                    "success": False,
+                    "error": "No epics found in PRD content. PRD must contain epic sections."
                 }
+            
+            # Create epic documents in database
+            created_epics = []
+            for epic_data in epics:
+                epic_doc = await self._create_epic_document(
+                    project_id=prd_doc['project_id'],
+                    epic_data=epic_data,
+                    prd_id=prd_id,
+                    arch_id=arch_id
+                )
+                if epic_doc:
+                    created_epics.append(epic_doc)
+
+            if not created_epics:
+                return {
+                    "success": False,
+                    "error": "Failed to create any epic documents"
+                }
+
+            return {
+                "success": True,
+                "epics_created": len(created_epics),
+                "epic_ids": [epic['id'] for epic in created_epics],
+                "message": f"Created {len(created_epics)} epics for {project_name} in cluster database",
+                "next_action": "create_stories_from_epics",
+                "note": "Epics stored in cluster database for multi-user access"
+            }
 
         except Exception as e:
             return {
                 "success": False,
-                "error": f"Failed to create epic: {str(e)}",
-                "doc_id": None
+                "error": f"Failed to create epics: {str(e)}"
             }
 
     async def bmad_orchestrator_status(self, project_id: Optional[str] = None) -> Dict[str, Any]:
@@ -689,6 +713,124 @@ This document outlines the user stories and implementation approach for {project
         # Check if both documents have substantial content
         return len(prd_content.strip()) > 100 and len(arch_content.strip()) > 100
 
+    async def _get_document(self, doc_id: str) -> Optional[Dict[str, Any]]:
+        """Get a document by ID from Supabase."""
+        try:
+            if not self.supabase_client:
+                return None
+            
+            result = self.supabase_client.table("cerebral_documents").select("*").eq("id", doc_id).execute()
+            
+            if result.data and len(result.data) > 0:
+                return result.data[0]
+            return None
+            
+        except Exception as e:
+            print(f"Error getting document {doc_id}: {e}")
+            return None
+
+    async def _extract_epics_from_prd(self, prd_content: str) -> List[Dict[str, Any]]:
+        """Extract epic data from PRD content."""
+        epics = []
+        
+        # Parse PRD content to find epic sections
+        # Look for patterns like "Epic 1:", "Epic 2:", etc.
+        import re
+        
+        epic_pattern = r'Epic (\d+):\s*([^\n]+)\s*\n(.*?)(?=Epic \d+:|$)'
+        matches = re.findall(epic_pattern, prd_content, re.DOTALL | re.IGNORECASE)
+        
+        for match in matches:
+            epic_number = int(match[0])
+            epic_title = match[1].strip()
+            epic_content = match[2].strip()
+            
+            # Extract epic goal from content
+            goal_match = re.search(r'goal[:\s]+([^\n]+)', epic_content, re.IGNORECASE)
+            epic_goal = goal_match.group(1).strip() if goal_match else f"Complete {epic_title}"
+            
+            epics.append({
+                'number': epic_number,
+                'title': epic_title,
+                'goal': epic_goal,
+                'content': f"# Epic {epic_number}: {epic_title}\n\n## Epic Goal\n\n{epic_goal}\n\n## Epic Content\n\n{epic_content}"
+            })
+        
+        return epics
+
+    async def _create_epic_document(self, project_id: str, epic_data: Dict[str, Any], prd_id: str, arch_id: str) -> Optional[Dict[str, Any]]:
+        """Create epic document in database with metadata."""
+        try:
+            # Create epic document record
+            epic_doc_id = str(uuid.uuid4())
+            epic_doc = {
+                "id": epic_doc_id,
+                "tenant_id": "00000000-0000-0000-0000-000000000100",
+                "project_id": project_id,
+                "kind": "EPIC",  # Now supported in database
+                "version": 1,
+                "status": "draft",
+                "content": epic_data['content'],
+                "created_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat()
+            }
+            
+            # Store in database
+            result = await self.supabase_client.table("cerebral_documents").insert(epic_doc).execute()
+            
+            if result.data:
+                # Create epic metadata
+                epic_metadata = {
+                    "epic_doc_id": epic_doc_id,
+                    "epic_number": epic_data['number'],
+                    "epic_title": epic_data['title'],
+                    "epic_goal": epic_data['goal'],
+                    "epic_status": "draft",
+                    "parent_prd_id": prd_id
+                }
+                
+                await self.supabase_client.table("epic_metadata").insert(epic_metadata).execute()
+                
+                # Store epic content in object storage if large
+                if len(epic_data['content']) > 10000:  # 10KB threshold
+                    await self._store_epic_content_in_s3(epic_doc_id, epic_data['content'])
+                
+                # Index in Knowledge Graph
+                try:
+                    await self._index_document_in_kg(epic_doc_id, epic_data['content'], 'EPIC')
+                except Exception as e:
+                    print(f"KG indexing failed for epic {epic_doc_id}: {e}")
+                
+                return epic_doc
+            
+            return None
+            
+        except Exception as e:
+            print(f"Error creating epic document: {e}")
+            return None
+
+    async def _store_epic_content_in_s3(self, epic_doc_id: str, content: str) -> bool:
+        """Store large epic content in S3 bucket."""
+        try:
+            # This would integrate with MinIO S3
+            # For now, just create a reference record
+            storage_ref = {
+                "document_id": epic_doc_id,
+                "storage_type": "epic_content",
+                "bucket_name": "bmad-epics",
+                "object_key": f"epics/{epic_doc_id}/content.md",
+                "object_size": len(content),
+                "content_type": "text/markdown",
+                "storage_metadata": {"epic_doc_id": epic_doc_id}
+            }
+            
+            await self.supabase_client.table("object_storage_refs").insert(storage_ref).execute()
+            return True
+            
+        except Exception as e:
+            print(f"Error storing epic content in S3: {e}")
+            return False
+
     def _generate_epic_content(self, project_name: str, prd_id: str, arch_id: str) -> str:
         """Generate epic content from PRD and Architecture."""
         return f"""# {project_name} Epic Document
@@ -760,3 +902,557 @@ This document outlines the epics for {project_name} based on the PRD and Archite
             return "Create Architecture"
         else:
             return "Create PRD"
+
+    # BMAD Expansion Packs
+
+    async def bmad_expansion_packs_list(self) -> Dict[str, Any]:
+        """List available BMAD expansion packs."""
+        try:
+            # List available expansion packs from vendor directory
+            expansion_packs_dir = Path(__file__).parent.parent.parent / "vendor" / "bmad" / "expansion-packs"
+            
+            if not expansion_packs_dir.exists():
+                return {
+                    "success": False,
+                    "error": "BMAD expansion packs directory not found"
+                }
+
+            packs = []
+            for pack_dir in expansion_packs_dir.iterdir():
+                if pack_dir.is_dir() and pack_dir.name.startswith("bmad-"):
+                    config_path = pack_dir / "config.yaml"
+                    if config_path.exists():
+                        try:
+                            import yaml
+                            with open(config_path, 'r') as f:
+                                config = yaml.safe_load(f)
+                            packs.append({
+                                "id": pack_dir.name,
+                                "name": config.get("name", pack_dir.name),
+                                "description": config.get("description", ""),
+                                "version": config.get("version", "1.0.0"),
+                                "category": config.get("category", "General"),
+                                "commercial": config.get("commercial", False),
+                                "price": config.get("price", "Free"),
+                                "features": config.get("features", []),
+                                "agents": config.get("agents", []),
+                                "path": str(pack_dir)
+                            })
+                        except ImportError:
+                            # YAML module not available, parse manually
+                            with open(config_path, 'r') as f:
+                                content = f.read()
+                            # Simple parsing for key fields
+                            name = pack_dir.name.replace('bmad-', '').replace('-', ' ').title()
+                            commercial = 'commercial: true' in content.lower()
+                            price = 'Free'
+                            if commercial:
+                                if '$299' in content:
+                                    price = '$299/year'
+                                elif '$349' in content:
+                                    price = '$349/year'
+                                elif '$399' in content:
+                                    price = '$399/year'
+                                elif '$449' in content:
+                                    price = '$449/year'
+                            
+                            packs.append({
+                                "id": pack_dir.name,
+                                "name": name,
+                                "description": f"BMAD {name} Expansion Pack",
+                                "version": "1.0.0",
+                                "category": "Commercial" if commercial else "Free",
+                                "commercial": commercial,
+                                "price": price,
+                                "features": [],
+                                "agents": [],
+                                "path": str(pack_dir)
+                            })
+                        except Exception as e:
+                            packs.append({
+                                "id": pack_dir.name,
+                                "name": pack_dir.name,
+                                "description": "Expansion pack",
+                                "version": "1.0.0",
+                                "category": "General",
+                                "commercial": False,
+                                "price": "Free",
+                                "features": [],
+                                "agents": [],
+                                "path": str(pack_dir)
+                            })
+
+            return {
+                "success": True,
+                "expansion_packs": packs,
+                "count": len(packs)
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to list expansion packs: {str(e)}"
+            }
+
+    async def bmad_expansion_packs_install(self, pack_id: str) -> Dict[str, Any]:
+        """Install BMAD expansion pack."""
+        try:
+            # For now, expansion packs are already in vendor directory
+            # This would typically download and install from a registry
+            expansion_packs_dir = Path(__file__).parent.parent.parent / "vendor" / "bmad" / "expansion-packs"
+            pack_path = expansion_packs_dir / pack_id
+            
+            if not pack_path.exists():
+                return {
+                    "success": False,
+                    "error": f"Expansion pack {pack_id} not found"
+                }
+
+            return {
+                "success": True,
+                "pack_id": pack_id,
+                "message": f"Expansion pack {pack_id} is already available",
+                "path": str(pack_path)
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to install expansion pack: {str(e)}"
+            }
+
+    async def bmad_expansion_packs_enable(self, project_id: str, pack_id: str) -> Dict[str, Any]:
+        """Enable expansion pack for project."""
+        try:
+            if not self.supabase_client:
+                return {
+                    "success": False,
+                    "error": "Supabase client not available"
+                }
+
+            # Store expansion pack enablement in database
+            enablement_data = {
+                "id": str(uuid.uuid4()),
+                "project_id": project_id,
+                "pack_id": pack_id,
+                "enabled_at": datetime.utcnow().isoformat(),
+                "status": "enabled"
+            }
+
+            result = self.supabase_client.table("project_expansion_packs").insert(enablement_data).execute()
+
+            if result.data:
+                return {
+                    "success": True,
+                    "project_id": project_id,
+                    "pack_id": pack_id,
+                    "message": f"Expansion pack {pack_id} enabled for project {project_id}",
+                    "data": result.data[0]
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": "Failed to enable expansion pack"
+                }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to enable expansion pack: {str(e)}"
+            }
+
+    # Missing Update Methods
+
+    async def bmad_prd_update(self, doc_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+        """Update PRD document."""
+        try:
+            if not self.supabase_client:
+                return {
+                    "success": False,
+                    "error": "Supabase client not available",
+                    "doc_id": doc_id
+                }
+
+            # Add updated timestamp
+            updates["updated_at"] = datetime.utcnow().isoformat()
+
+            result = self.supabase_client.table("cerebral_documents").update(updates).eq("id", doc_id).execute()
+
+            if result.data:
+                return {
+                    "success": True,
+                    "doc_id": doc_id,
+                    "message": f"PRD document {doc_id} updated successfully",
+                    "data": result.data[0]
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": f"PRD document {doc_id} not found",
+                    "doc_id": doc_id
+                }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to update PRD: {str(e)}",
+                "doc_id": doc_id
+            }
+
+    async def bmad_prd_get(self, doc_id: str) -> Dict[str, Any]:
+        """Get PRD document."""
+        try:
+            if not self.supabase_client:
+                return {
+                    "success": False,
+                    "error": "Supabase client not available",
+                    "doc_id": doc_id
+                }
+
+            result = self.supabase_client.table("cerebral_documents").select("*").eq("id", doc_id).eq("kind", "PRD").execute()
+
+            if result.data:
+                return {
+                    "success": True,
+                    "doc_id": doc_id,
+                    "data": result.data[0]
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": f"PRD document {doc_id} not found",
+                    "doc_id": doc_id
+                }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to get PRD: {str(e)}",
+                "doc_id": doc_id
+            }
+
+    async def bmad_arch_update(self, doc_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+        """Update Architecture document."""
+        try:
+            if not self.supabase_client:
+                return {
+                    "success": False,
+                    "error": "Supabase client not available",
+                    "doc_id": doc_id
+                }
+
+            # Add updated timestamp
+            updates["updated_at"] = datetime.utcnow().isoformat()
+
+            result = self.supabase_client.table("cerebral_documents").update(updates).eq("id", doc_id).execute()
+
+            if result.data:
+                return {
+                    "success": True,
+                    "doc_id": doc_id,
+                    "message": f"Architecture document {doc_id} updated successfully",
+                    "data": result.data[0]
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": f"Architecture document {doc_id} not found",
+                    "doc_id": doc_id
+                }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to update Architecture: {str(e)}",
+                "doc_id": doc_id
+            }
+
+    async def bmad_arch_get(self, doc_id: str) -> Dict[str, Any]:
+        """Get Architecture document."""
+        try:
+            if not self.supabase_client:
+                return {
+                    "success": False,
+                    "error": "Supabase client not available",
+                    "doc_id": doc_id
+                }
+
+            result = self.supabase_client.table("cerebral_documents").select("*").eq("id", doc_id).eq("kind", "ARCHITECTURE").execute()
+
+            if result.data:
+                return {
+                    "success": True,
+                    "doc_id": doc_id,
+                    "data": result.data[0]
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": f"Architecture document {doc_id} not found",
+                    "doc_id": doc_id
+                }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to get Architecture: {str(e)}",
+                "doc_id": doc_id
+            }
+
+    # Human-in-the-Loop (HIL) Interactive Sessions
+
+    async def bmad_hil_start_session(self, doc_id: str, doc_type: str, session_type: str) -> Dict[str, Any]:
+        """Start BMAD-style HIL interactive session for document completion."""
+        try:
+            # Use the real BMAD HIL integration
+            workflow_context = {
+                "workflow_step": "manual_hil_start",
+                "session_type": session_type
+            }
+            
+            return await self.bmad_hil.trigger_hil_session(doc_id, doc_type, workflow_context)
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to start BMAD HIL session: {str(e)}"
+            }
+
+    async def bmad_hil_continue_session(self, session_id: str, user_response: str) -> Dict[str, Any]:
+        """Continue BMAD-style HIL interactive session with user response."""
+        try:
+            # Use the real BMAD HIL integration
+            return await self.bmad_hil.process_user_response(session_id, user_response)
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to continue BMAD HIL session: {str(e)}"
+            }
+
+    async def bmad_hil_end_session(self, session_id: str, finalize: bool = True) -> Dict[str, Any]:
+        """End HIL interactive session and update document."""
+        try:
+            if not self.supabase_client:
+                return {
+                    "success": False,
+                    "error": "Supabase client not available"
+                }
+
+            # Get session
+            session_result = self.supabase_client.table("bmad_hil_sessions").select("*").eq("id", session_id).execute()
+            
+            if not session_result.data:
+                return {
+                    "success": False,
+                    "error": f"HIL session {session_id} not found"
+                }
+
+            session = session_result.data[0]
+            doc_id = session["doc_id"]
+            doc_type = session["doc_type"]
+
+            if finalize:
+                # Get original document
+                doc_result = self.supabase_client.table("cerebral_documents").select("*").eq("id", doc_id).execute()
+                
+                if not doc_result.data:
+                    return {
+                        "success": False,
+                        "error": f"Document {doc_id} not found"
+                    }
+
+                document = doc_result.data[0]
+                
+                # Generate updated content based on session responses
+                updated_content = self._generate_updated_content(document["content"], session)
+                
+                # Update document
+                doc_updates = {
+                    "content": updated_content,
+                    "status": "review",  # Move to review status after HIL completion
+                    "updated_at": datetime.utcnow().isoformat()
+                }
+
+                self.supabase_client.table("cerebral_documents").update(doc_updates).eq("id", doc_id).execute()
+
+            # Mark session as finalized
+            self.supabase_client.table("bmad_hil_sessions").update({
+                "status": "finalized",
+                "finalized_at": datetime.utcnow().isoformat()
+            }).eq("id", session_id).execute()
+
+            return {
+                "success": True,
+                "session_id": session_id,
+                "doc_id": doc_id,
+                "doc_type": doc_type,
+                "finalized": finalize,
+                "message": f"HIL session completed and document updated to 'review' status"
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to end HIL session: {str(e)}"
+            }
+
+    async def bmad_hil_session_status(self, session_id: str) -> Dict[str, Any]:
+        """Get status of HIL interactive session."""
+        try:
+            if not self.supabase_client:
+                return {
+                    "success": False,
+                    "error": "Supabase client not available"
+                }
+
+            # Get session
+            session_result = self.supabase_client.table("bmad_hil_sessions").select("*").eq("id", session_id).execute()
+            
+            if not session_result.data:
+                return {
+                    "success": False,
+                    "error": f"HIL session {session_id} not found"
+                }
+
+            session = session_result.data[0]
+
+            return {
+                "success": True,
+                "session_id": session_id,
+                "status": session["status"],
+                "doc_id": session["doc_id"],
+                "doc_type": session["doc_type"],
+                "session_type": session["session_type"],
+                "current_step": session.get("current_step", 0),
+                "questions_asked": session.get("questions_asked", []),
+                "responses_received": session.get("responses_received", []),
+                "document_sections": session.get("document_sections", []),
+                "bmad_pattern": session.get("bmad_pattern", ""),
+                "elicitation_method": session.get("elicitation_method", ""),
+                "created_at": session["created_at"],
+                "updated_at": session.get("updated_at"),
+                "message": f"HIL session is {session['status']}"
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to get HIL session status: {str(e)}"
+            }
+
+    def _identify_incomplete_sections(self, content: str, doc_type: str) -> List[str]:
+        """Identify sections that need completion based on template placeholders."""
+        incomplete_sections = []
+        
+        if "*[To be filled during interactive elicitation]*" in content:
+            if doc_type == "PRD":
+                incomplete_sections = [
+                    "User Research and Personas",
+                    "Functional Requirements", 
+                    "Non-Functional Requirements",
+                    "Success Metrics and KPIs",
+                    "Risks and Assumptions",
+                    "Timeline and Milestones"
+                ]
+            elif doc_type == "ARCH":
+                incomplete_sections = [
+                    "System Architecture",
+                    "Data Architecture", 
+                    "Security Architecture",
+                    "Deployment Architecture",
+                    "Integration Patterns",
+                    "Performance Considerations"
+                ]
+            elif doc_type == "STORY":
+                incomplete_sections = [
+                    "Acceptance Criteria",
+                    "Implementation Notes",
+                    "Testing Strategy",
+                    "Dependencies"
+                ]
+        
+        return incomplete_sections
+
+    def _generate_first_question(self, doc_type: str, incomplete_sections: List[str]) -> str:
+        """Generate the first question for HIL session."""
+        if doc_type == "PRD":
+            return f"I need to gather more details for your PRD. Let's start with the most critical section: {incomplete_sections[0] if incomplete_sections else 'User Research and Personas'}. Can you tell me about your target users and their key pain points?"
+        elif doc_type == "ARCH":
+            return f"I need to understand your system architecture better. Let's start with: {incomplete_sections[0] if incomplete_sections else 'System Architecture'}. Can you describe your overall system design and how components will interact?"
+        elif doc_type == "STORY":
+            return f"I need more details for your user stories. Let's start with: {incomplete_sections[0] if incomplete_sections else 'Acceptance Criteria'}. What specific acceptance criteria should be met for these stories?"
+        else:
+            return "I need more information to complete this document. Can you provide additional details?"
+
+    def _generate_next_question(self, session: Dict[str, Any], user_response: str) -> Tuple[str, bool]:
+        """Generate next question based on session progress and user response."""
+        doc_type = session["doc_type"]
+        current_step = session.get("current_step", 0)
+        incomplete_sections = session.get("document_sections", [])
+        
+        # Check if we've covered all sections
+        if current_step >= len(incomplete_sections):
+            return "", True  # Session complete
+        
+        # Generate next question based on current step
+        next_section = incomplete_sections[current_step] if current_step < len(incomplete_sections) else ""
+        
+        if doc_type == "PRD":
+            questions = {
+                "User Research and Personas": "Great! Now let's define the functional requirements. What specific features and capabilities should the system have?",
+                "Functional Requirements": "Excellent! What about non-functional requirements like performance, security, scalability?",
+                "Non-Functional Requirements": "Perfect! How will we measure success? What KPIs and metrics are important?",
+                "Success Metrics and KPIs": "Good! What are the main risks and assumptions we should consider?",
+                "Risks and Assumptions": "Finally, what's the timeline? What are the key milestones?"
+            }
+        elif doc_type == "ARCH":
+            questions = {
+                "System Architecture": "Great! Now let's define the data architecture. How will data flow through the system?",
+                "Data Architecture": "Excellent! What about security architecture? How will we secure the system?",
+                "Security Architecture": "Perfect! How will the system be deployed? What's the deployment strategy?",
+                "Deployment Architecture": "Good! What integration patterns will we use? How will components communicate?",
+                "Integration Patterns": "Finally, what performance considerations are important?"
+            }
+        elif doc_type == "STORY":
+            questions = {
+                "Acceptance Criteria": "Great! What implementation notes should developers consider?",
+                "Implementation Notes": "Excellent! What testing strategy should be used?",
+                "Testing Strategy": "Perfect! What dependencies exist between stories?"
+            }
+        
+        next_question = questions.get(next_section, "Is there anything else you'd like to add to complete this document?")
+        
+        return next_question, False
+
+    def _generate_updated_content(self, original_content: str, session: Dict[str, Any]) -> str:
+        """Generate updated document content based on HIL session responses."""
+        responses = session.get("responses_received", [])
+        doc_type = session["doc_type"]
+        
+        # Replace template placeholders with actual content
+        updated_content = original_content
+        
+        # Replace all placeholders with responses in order
+        placeholder = "*[To be filled during interactive elicitation]*"
+        for i, response_data in enumerate(responses):
+            if placeholder in updated_content:
+                updated_content = updated_content.replace(placeholder, response_data["response"], 1)
+        
+        return updated_content
+
+    def _has_template_placeholders(self, content: str) -> bool:
+        """Check if document still has template placeholders."""
+        return "*[To be filled during interactive elicitation]*" in content
+
+    async def bmad_workflow_status(self, project_id: Optional[str] = None) -> Dict[str, Any]:
+        """Check BMAD workflow status and HIL session state."""
+        try:
+            # Use the real BMAD HIL integration to check workflow status
+            return await self.bmad_hil.check_workflow_status(project_id or "")
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to check BMAD workflow status: {str(e)}"
+            }
