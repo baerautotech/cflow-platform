@@ -1,0 +1,285 @@
+---
+# Production WebMCP Deployment with Master Tool Pattern
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webmcp-production
+  namespace: cerebral-development
+  labels:
+    app: webmcp-production
+    version: v3.0.0
+    component: mcp-server
+    tier: production
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: webmcp-production
+  template:
+    metadata:
+      labels:
+        app: webmcp-production
+        version: v3.0.0
+        component: mcp-server
+        tier: production
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: webmcp-production-sa
+      containers:
+      - name: webmcp
+        image: registry.baerautotech.com/webmcp:latest  # Will be replaced with SHA-based tag
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        env:
+        - name: WEBMCP_HOST
+          value: "0.0.0.0"
+        - name: WEBMCP_PORT
+          value: "8000"
+        - name: WEBMCP_WORKERS
+          value: "1"
+        - name: WEBMCP_LOG_LEVEL
+          value: "info"
+        - name: PYTHONPATH
+          value: "/app"
+        - name: SUPABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: webmcp-production-secrets
+              key: supabase-url
+              optional: true
+        - name: SUPABASE_ANON_KEY
+          valueFrom:
+            secretKeyRef:
+              name: webmcp-production-secrets
+              key: supabase-anon-key
+              optional: true
+        - name: VAULT_URL
+          valueFrom:
+            secretKeyRef:
+              name: webmcp-production-secrets
+              key: vault-url
+              optional: true
+        - name: VAULT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: webmcp-production-secrets
+              key: vault-token
+              optional: true
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp-storage
+          mountPath: /tmp
+        - name: logs-storage
+          mountPath: /app/logs
+      volumes:
+      - name: tmp-storage
+        emptyDir:
+          sizeLimit: 1Gi
+      - name: logs-storage
+        emptyDir:
+          sizeLimit: 100Mi
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+      restartPolicy: Always
+
+---
+# Service for Production WebMCP
+apiVersion: v1
+kind: Service
+metadata:
+  name: webmcp-production-service
+  namespace: cerebral-development
+  labels:
+    app: webmcp-production
+    component: mcp-server
+spec:
+  selector:
+    app: webmcp-production
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  type: ClusterIP
+
+---
+# ServiceAccount for Production WebMCP
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: webmcp-production-sa
+  namespace: cerebral-development
+  labels:
+    app: webmcp-production
+
+---
+# ConfigMap for Production WebMCP
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: webmcp-production-config
+  namespace: cerebral-development
+  labels:
+    app: webmcp-production
+data:
+  WEBMCP_HOST: "0.0.0.0"
+  WEBMCP_PORT: "8000"
+  WEBMCP_WORKERS: "1"
+  WEBMCP_LOG_LEVEL: "info"
+  PYTHONPATH: "/app"
+
+---
+# Secret for Production WebMCP (placeholder - replace with actual values)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: webmcp-production-secrets
+  namespace: cerebral-development
+  labels:
+    app: webmcp-production
+type: Opaque
+data:
+  # Base64 encoded values - replace with actual secrets
+  supabase-url: ""  # echo -n "your-supabase-url" | base64
+  supabase-anon-key: ""  # echo -n "your-supabase-key" | base64
+  vault-url: ""     # echo -n "your-vault-url" | base64
+  vault-token: ""   # echo -n "your-vault-token" | base64
+
+---
+# HorizontalPodAutoscaler for Production WebMCP
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: webmcp-production-hpa
+  namespace: cerebral-development
+  labels:
+    app: webmcp-production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: webmcp-production
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+
+---
+# Ingress for Production WebMCP
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webmcp-production-ingress
+  namespace: cerebral-development
+  labels:
+    app: webmcp-production
+  annotations:
+    # cert-manager annotations
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    kubernetes.io/ingress.class: "nginx"
+    # nginx annotations
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/rate-limit: "10"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+      add_header X-Content-Type-Options nosniff always;
+      add_header X-Frame-Options DENY always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+spec:
+  tls:
+  - hosts:
+    - mcp.dev.baerautotech.com
+    - mcp.cerebral.baerautotech.com
+    secretName: webmcp-production-tls
+  rules:
+  - host: mcp.dev.baerautotech.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: webmcp-production-service
+            port:
+              number: 8000
+  - host: mcp.cerebral.baerautotech.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: webmcp-production-service
+            port:
+              number: 8000

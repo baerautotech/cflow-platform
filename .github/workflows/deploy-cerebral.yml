@@ -1,0 +1,159 @@
+name: Deploy to Cerebral Cluster
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+        - development
+        - production
+  push:
+    branches: [ main ]
+    paths:
+      - 'cflow_platform/core/webmcp_server.py'
+      - 'cflow_platform/core/master_tool_base.py'
+      - 'cflow_platform/core/bmad_master_tools.py'
+      - 'cflow_platform/core/bmad_advanced_master_tools.py'
+      - 'cflow_platform/core/bmad_expansion_master_tools.py'
+      - 'cflow_platform/core/tool_group_manager.py'
+      - 'cflow_platform/core/client_tool_config.py'
+      - 'cflow_platform/core/project_tool_filter.py'
+      - 'cflow_platform/core/async_tool_executor.py'
+      - 'cflow_platform/core/performance_cache.py'
+      - 'cflow_platform/core/fault_tolerance.py'
+      - 'cflow_platform/core/load_balancer.py'
+      - 'cflow_platform/core/plugin_architecture.py'
+      - 'cflow_platform/core/legacy_tool_migration.py'
+      - 'cflow_platform/core/migration_validator.py'
+      - 'cflow_platform/core/legacy_tool_removal.py'
+      - 'cflow_platform/core/performance_optimizer.py'
+      - 'infrastructure/docker/Dockerfile.webmcp'
+      - 'infrastructure/kubernetes/webmcp-*.yaml'
+      - 'scripts/deploy-webmcp*.sh'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'development' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for SHA
+
+      - name: Get SHA
+        id: sha
+        run: echo "sha=${GITHUB_SHA}" >> $GITHUB_OUTPUT
+
+      - name: Set environment variables
+        run: |
+          echo "NAMESPACE=cerebral-${{ github.event.inputs.environment || 'development' }}" >> $GITHUB_ENV
+          echo "IMAGE_NAME=webmcp" >> $GITHUB_ENV
+          echo "REGISTRY=registry.baerautotech.com" >> $GITHUB_ENV
+          echo "FULL_IMAGE=${REGISTRY}/${IMAGE_NAME}:${GITHUB_SHA}" >> $GITHUB_ENV
+          echo "SSH_KEY_PATH=/tmp/cerebral_key" >> $GITHUB_ENV
+          echo "CEREBRAL_HOST=10.34.0.10" >> $GITHUB_ENV
+
+      - name: Setup SSH key
+        run: |
+          echo "${{ secrets.CEREBRAL_SSH_KEY }}" > $SSH_KEY_PATH
+          chmod 600 $SSH_KEY_PATH
+          ssh-add $SSH_KEY_PATH
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "Host cerebral" >> ~/.ssh/config
+          echo "  HostName $CEREBRAL_HOST" >> ~/.ssh/config
+          echo "  User cerebral" >> ~/.ssh/config
+          echo "  IdentityFile $SSH_KEY_PATH" >> ~/.ssh/config
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "  UserKnownHostsFile /dev/null" >> ~/.ssh/config
+
+      - name: Test SSH connection
+        run: |
+          ssh cerebral "echo 'SSH connection successful'"
+
+      - name: Build Docker image
+        run: |
+          docker build -f infrastructure/docker/Dockerfile.webmcp -t $FULL_IMAGE .
+          docker tag $FULL_IMAGE $REGISTRY/$IMAGE_NAME:latest
+
+      - name: Push Docker image
+        run: |
+          echo "${{ secrets.DOCKER_REGISTRY_PASSWORD }}" | docker login $REGISTRY -u "${{ secrets.DOCKER_REGISTRY_USERNAME }}" --password-stdin
+          docker push $FULL_IMAGE
+          docker push $REGISTRY/$IMAGE_NAME:latest
+
+      - name: Deploy to Cerebral cluster
+        run: |
+          # Copy deployment files to cerebral cluster
+          scp -r infrastructure/kubernetes/ cerebral:/tmp/webmcp-deployment/
+          scp scripts/deploy-webmcp.sh cerebral:/tmp/webmcp-deployment/
+          
+          # Execute deployment on cerebral cluster
+          ssh cerebral "cd /tmp/webmcp-deployment && \
+            export NAMESPACE=$NAMESPACE && \
+            export IMAGE_NAME=$IMAGE_NAME && \
+            export REGISTRY=$REGISTRY && \
+            export VERSION=$GITHUB_SHA && \
+            export FULL_IMAGE=$FULL_IMAGE && \
+            chmod +x deploy-webmcp.sh && \
+            ./deploy-webmcp.sh"
+
+      - name: Verify deployment
+        run: |
+          # Apply production deployment if it doesn't exist
+          ssh cerebral "kubectl apply -f /tmp/webmcp-deployment/webmcp-production.yaml"
+          
+          # Update deployment with new image
+          ssh cerebral "kubectl set image deployment/webmcp-production webmcp=$FULL_IMAGE -n $NAMESPACE"
+          
+          # Wait for deployment to be ready
+          ssh cerebral "kubectl rollout status deployment/webmcp-production -n $NAMESPACE --timeout=300s"
+          
+          # Check pod status
+          ssh cerebral "kubectl get pods -n $NAMESPACE -l app=webmcp-production"
+          
+          # Check service status
+          ssh cerebral "kubectl get svc -n $NAMESPACE -l app=webmcp-production"
+
+      - name: Health check
+        run: |
+          # Get service endpoint
+          SERVICE_IP=$(ssh cerebral "kubectl get svc webmcp-production-service -n $NAMESPACE -o jsonpath='{.spec.clusterIP}'")
+          SERVICE_PORT=$(ssh cerebral "kubectl get svc webmcp-production-service -n $NAMESPACE -o jsonpath='{.spec.ports[0].port}'")
+          
+          # Test health endpoint
+          ssh cerebral "kubectl run test-pod --image=curlimages/curl --rm -i --restart=Never -- curl -f http://$SERVICE_IP:$SERVICE_PORT/health"
+          
+          # Test help endpoint
+          ssh cerebral "kubectl run test-pod --image=curlimages/curl --rm -i --restart=Never -- curl -f http://$SERVICE_IP:$SERVICE_PORT/help"
+          
+          # Test master tools endpoint
+          ssh cerebral "kubectl run test-pod --image=curlimages/curl --rm -i --restart=Never -- curl -f http://$SERVICE_IP:$SERVICE_PORT/mcp/master-tools"
+
+      - name: Cleanup
+        run: |
+          ssh cerebral "rm -rf /tmp/webmcp-deployment"
+          rm -f $SSH_KEY_PATH
+
+      - name: Deployment summary
+        run: |
+          echo "🎉 Deployment completed successfully!"
+          echo "📊 Deployment Summary:"
+          echo "  SHA: $GITHUB_SHA"
+          echo "  Image: $FULL_IMAGE"
+          echo "  Namespace: $NAMESPACE"
+          echo "  Environment: ${{ github.event.inputs.environment || 'development' }}"
+          echo ""
+          echo "🌐 Access URLs:"
+          echo "  Health: http://webmcp-production-service.$NAMESPACE.svc.cluster.local:8000/health"
+          echo "  Help: http://webmcp-production-service.$NAMESPACE.svc.cluster.local:8000/help"
+          echo "  Master Tools: http://webmcp-production-service.$NAMESPACE.svc.cluster.local:8000/mcp/master-tools"
+          echo "  API Docs: http://webmcp-production-service.$NAMESPACE.svc.cluster.local:8000/docs"
