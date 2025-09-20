@@ -134,8 +134,8 @@ class BMADRedisClusterMessaging:
                     "username": redis_username,
                     "password": redis_password,
                     "ssl": True,
-                    "ssl_cert_reqs": 'required',
-                    "ssl_check_hostname": True
+                    "ssl_cert_reqs": None,  # Accept self-signed certificates
+                    "ssl_check_hostname": False  # Disable hostname verification for self-signed
                 })
             
             self.redis_client = redis.Redis(**redis_config)
