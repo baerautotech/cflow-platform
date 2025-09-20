@@ -4,7 +4,7 @@ from pathlib import Path
 
 from cflow_platform.core.test_runner import run_tests
 from cflow_platform.core.minimal_edit_applier import EditPlan, ApplyOptions, apply_minimal_edits
-# CAEF agent_loop removed - using direct linting handler
+# Using direct linting handler for test execution
 from cflow_platform.handlers.linting_handlers import LintingHandlers
 
 

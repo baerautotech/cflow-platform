@@ -1,0 +1,244 @@
+---
+# Updated WebMCP Deployment with FastAPI
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cerebraflow-webmcp
+  namespace: cerebral-development
+  labels:
+    app: cerebraflow-webmcp
+    security-level: high
+    tier: web
+    version: v2.0.0
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cerebraflow-webmcp
+  template:
+    metadata:
+      labels:
+        app: cerebraflow-webmcp
+        version: v2.0.0
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "8000"
+        prometheus.io/scrape: "true"
+    spec:
+      containers:
+      - name: webmcp
+        image: python:3.11-slim
+        ports:
+        - containerPort: 8000
+          name: http
+        - containerPort: 9090
+          name: metrics
+        - containerPort: 8090
+          name: health
+        command: ["/bin/bash"]
+        args:
+        - -c
+        - |
+          set -e
+          echo "Installing dependencies..."
+          pip install --no-cache-dir fastapi uvicorn httpx pydantic
+          
+          echo "Creating application directory..."
+          mkdir -p /app/cflow_platform/core
+          
+          echo "Creating WebMCP server..."
+          cat > /app/cflow_platform/core/webmcp_server.py << 'EOF'
+          import asyncio
+          import json
+          import logging
+          import os
+          from typing import Any, Dict, List, Optional
+          from datetime import datetime
+          
+          from fastapi import FastAPI, HTTPException, Request, Response
+          from fastapi.middleware.cors import CORSMiddleware
+          from fastapi.middleware.trustedhost import TrustedHostMiddleware
+          from fastapi.responses import JSONResponse
+          import uvicorn
+          
+          # Configure logging
+          logging.basicConfig(level=logging.INFO)
+          logger = logging.getLogger(__name__)
+          
+          # Initialize FastAPI app
+          app = FastAPI(
+              title="CFlow WebMCP Server",
+              description="HTTP-based MCP server for Cerebral Platform",
+              version="2.0.0",
+              docs_url="/docs",
+              redoc_url="/redoc"
+          )
+          
+          # Security middleware
+          app.add_middleware(
+              TrustedHostMiddleware, 
+              allowed_hosts=["*"]
+          )
+          
+          app.add_middleware(
+              CORSMiddleware,
+              allow_origins=["*"],
+              allow_credentials=True,
+              allow_methods=["*"],
+              allow_headers=["*"],
+          )
+          
+          # Mock tool registry for now
+          tool_registry = [
+              {
+                  "name": "sys_test",
+                  "description": "System test tool",
+                  "inputSchema": {
+                      "type": "object",
+                      "properties": {},
+                      "required": []
+                  }
+              },
+              {
+                  "name": "sys_stats",
+                  "description": "System statistics",
+                  "inputSchema": {
+                      "type": "object",
+                      "properties": {},
+                      "required": []
+                  }
+              }
+          ]
+          
+          @app.get("/")
+          async def root():
+              return {
+                  "status": "healthy",
+                  "service": "cflow-webmcp",
+                  "timestamp": datetime.utcnow().isoformat(),
+                  "tools_count": len(tool_registry),
+                  "version": "2.0.0"
+              }
+          
+          @app.get("/health")
+          async def health():
+              return {
+                  "status": "healthy",
+                  "service": "cflow-webmcp",
+                  "timestamp": datetime.utcnow().isoformat(),
+                  "tools_count": len(tool_registry),
+                  "version": "2.0.0"
+              }
+          
+          @app.get("/mcp/tools")
+          async def list_tools():
+              return {
+                  "tools": tool_registry,
+                  "count": len(tool_registry)
+              }
+          
+          @app.post("/mcp/tools/call")
+          async def call_tool(request: Request):
+              try:
+                  body = await request.json()
+                  tool_name = body.get("name")
+                  arguments = body.get("arguments", {})
+                  
+                  if not tool_name:
+                      raise HTTPException(status_code=400, detail="Tool name is required")
+                  
+                  # Mock tool execution
+                  if tool_name == "sys_test":
+                      result = {"status": "success", "message": "System test completed"}
+                  elif tool_name == "sys_stats":
+                      result = {"status": "success", "stats": {"cpu": "50%", "memory": "75%"}}
+                  else:
+                      raise HTTPException(status_code=404, detail=f"Tool '{tool_name}' not found")
+                  
+                  logger.info(f"Executing tool: {tool_name} with args: {arguments}")
+                  
+                  return {
+                      "result": result,
+                      "tool": tool_name,
+                      "timestamp": datetime.utcnow().isoformat()
+                  }
+                  
+              except HTTPException:
+                  raise
+              except Exception as e:
+                  logger.error(f"Tool execution error: {e}")
+                  raise HTTPException(status_code=500, detail=f"Tool execution failed: {str(e)}")
+          
+          @app.post("/mcp/initialize")
+          async def initialize_mcp(request: Request):
+              try:
+                  body = await request.json()
+                  client_info = body.get("clientInfo", {})
+                  
+                  logger.info(f"MCP initialization request from: {client_info}")
+                  
+                  return {
+                      "protocolVersion": "2024-11-05",
+                      "capabilities": {
+                          "tools": {
+                              "listChanged": True
+                          }
+                      },
+                      "serverInfo": {
+                          "name": "cflow-webmcp",
+                          "version": "2.0.0"
+                      },
+                      "tools": tool_registry
+                  }
+                  
+              except Exception as e:
+                  logger.error(f"MCP initialization error: {e}")
+                  raise HTTPException(status_code=500, detail=f"Initialization failed: {str(e)}")
+          
+          if __name__ == "__main__":
+              uvicorn.run(app, host="0.0.0.0", port=8000)
+          EOF
+          
+          echo "Starting WebMCP server..."
+          cd /app && python -m cflow_platform.core.webmcp_server
+        env:
+        - name: WEBMCP_HOST
+          value: "0.0.0.0"
+        - name: WEBMCP_PORT
+          value: "8000"
+        - name: WEBMCP_LOG_LEVEL
+          value: "info"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+      securityContext:
+        fsGroup: 1000
+      restartPolicy: Always

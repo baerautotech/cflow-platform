@@ -1,0 +1,221 @@
+---
+# WebMCP Server Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webmcp-deployment
+  namespace: cerebral
+  labels:
+    app: webmcp
+    component: mcp-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: webmcp
+  template:
+    metadata:
+      labels:
+        app: webmcp
+        component: mcp-server
+    spec:
+      containers:
+      - name: webmcp
+        image: webmcp:latest  # Will be replaced with SHA-based tag
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: WEBMCP_HOST
+          value: "0.0.0.0"
+        - name: WEBMCP_PORT
+          value: "8000"
+        - name: WEBMCP_WORKERS
+          value: "1"
+        - name: WEBMCP_LOG_LEVEL
+          value: "info"
+        - name: SUPABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: webmcp-secrets
+              key: supabase-url
+        - name: SUPABASE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: webmcp-secrets
+              key: supabase-key
+        - name: VAULT_URL
+          valueFrom:
+            secretKeyRef:
+              name: webmcp-secrets
+              key: vault-url
+        - name: VAULT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: webmcp-secrets
+              key: vault-token
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+      securityContext:
+        fsGroup: 1000
+      restartPolicy: Always
+
+---
+# WebMCP Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: webmcp-service
+  namespace: cerebral
+  labels:
+    app: webmcp
+spec:
+  selector:
+    app: webmcp
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  type: ClusterIP
+
+---
+# WebMCP Ingress with cert-manager
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webmcp-ingress
+  namespace: cerebral
+  labels:
+    app: webmcp
+  annotations:
+    # cert-manager annotations
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    kubernetes.io/ingress.class: "nginx"
+    # nginx annotations
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/rate-limit: "10"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+      add_header X-Content-Type-Options nosniff always;
+      add_header X-Frame-Options DENY always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+spec:
+  tls:
+  - hosts:
+    - mcp.dev.baerautotech.com
+    - mcp.cerebral.baerautotech.com
+    secretName: webmcp-tls
+  rules:
+  - host: mcp.dev.baerautotech.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: webmcp-service
+            port:
+              number: 8000
+  - host: mcp.cerebral.baerautotech.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: webmcp-service
+            port:
+              number: 8000
+
+---
+# WebMCP Secrets (example - replace with actual values)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: webmcp-secrets
+  namespace: cerebral
+type: Opaque
+data:
+  # Base64 encoded values - replace with actual secrets
+  supabase-url: ""  # echo -n "your-supabase-url" | base64
+  supabase-key: ""  # echo -n "your-supabase-key" | base64
+  vault-url: ""     # echo -n "your-vault-url" | base64
+  vault-token: ""   # echo -n "your-vault-token" | base64
+
+---
+# HorizontalPodAutoscaler for WebMCP
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: webmcp-hpa
+  namespace: cerebral
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: webmcp-deployment
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60

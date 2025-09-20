@@ -1,0 +1,41 @@
+---
+# Ingress for WebMCP Server
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webmcp-ingress
+  namespace: cerebral-development
+  labels:
+    app: webmcp-simple
+  annotations:
+    # nginx annotations
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/rate-limit: "10"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+      add_header X-Content-Type-Options nosniff always;
+      add_header X-Frame-Options DENY always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+spec:
+  tls:
+  - hosts:
+    - mcp.dev.baerautotech.com
+    secretName: webmcp-tls
+  rules:
+  - host: mcp.dev.baerautotech.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: webmcp-simple-service
+            port:
+              number: 8000

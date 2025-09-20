@@ -1,0 +1,114 @@
+---
+# FastAPI WebMCP Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webmcp-fastapi
+  namespace: cerebral-development
+  labels:
+    app: webmcp-fastapi
+    version: v2.0.0
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: webmcp-fastapi
+  template:
+    metadata:
+      labels:
+        app: webmcp-fastapi
+        version: v2.0.0
+    spec:
+      containers:
+      - name: webmcp
+        image: python:3.11-slim
+        ports:
+        - containerPort: 8000
+          name: http
+        command: ["/bin/bash"]
+        args:
+        - -c
+        - |
+          pip install fastapi uvicorn httpx
+          python -c "
+          from fastapi import FastAPI, Request
+          from fastapi.middleware.cors import CORSMiddleware
+          import uvicorn
+          import json
+          
+          app = FastAPI(title='CFlow WebMCP Server', version='2.0.0')
+          app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_credentials=True, allow_methods=['*'], allow_headers=['*'])
+          
+          @app.get('/')
+          def root():
+              return {'status': 'healthy', 'service': 'cflow-webmcp', 'version': '2.0.0'}
+          
+          @app.get('/health')
+          def health():
+              return {'status': 'healthy', 'service': 'cflow-webmcp'}
+          
+          @app.get('/mcp/tools')
+          def list_tools():
+              return {'tools': [{'name': 'sys_test', 'description': 'System test tool'}]}
+          
+          @app.post('/mcp/tools/call')
+          async def call_tool(request: Request):
+              body = await request.json()
+              return {'result': {'status': 'success', 'tool': body.get('name', 'unknown')}}
+          
+          @app.post('/mcp/initialize')
+          async def init_mcp(request: Request):
+              return {'protocolVersion': '2024-11-05', 'tools': [{'name': 'sys_test'}]}
+          
+          uvicorn.run(app, host='0.0.0.0', port=8000)
+          "
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      restartPolicy: Always
+
+---
+# Service for FastAPI WebMCP
+apiVersion: v1
+kind: Service
+metadata:
+  name: webmcp-fastapi-service
+  namespace: cerebral-development
+  labels:
+    app: webmcp-fastapi
+spec:
+  selector:
+    app: webmcp-fastapi
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  type: ClusterIP

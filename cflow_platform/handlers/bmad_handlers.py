@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 from cflow_platform.core.config.supabase_config import get_api_key, get_rest_url
 from cflow_platform.core.bmad_hil_integration import BMADHILIntegration
 from cflow_platform.core.bmad_git_workflow import BMADGitWorkflow
+from cflow_platform.core.vault_integration import get_vault_integration
 from supabase import create_client
 
 # Load environment variables from project root
@@ -30,6 +31,7 @@ class BMADHandlers:
         self.supabase_client = None
         self.bmad_hil = BMADHILIntegration()
         self.bmad_git = BMADGitWorkflow()
+        self.vault = get_vault_integration()
         self._ensure_supabase()
 
     def _ensure_supabase(self) -> None:
@@ -638,51 +640,21 @@ This document outlines the user stories and implementation approach for {project
                 "error": f"Failed to create epics: {str(e)}"
             }
 
-    async def bmad_orchestrator_status(self, project_id: Optional[str] = None) -> Dict[str, Any]:
-        """Check current BMAD workflow status."""
-        try:
-            if not self.supabase_client:
-                return {
-                    "success": False,
-                    "error": "Supabase client not available"
-                }
-
-            # Get all documents for project
-            query = self.supabase_client.table("cerebral_documents")
-            if project_id:
-                query = query.eq("project_id", project_id)
-            
-            result = query.select("*").execute()
-            documents = result.data
-
-            # Analyze workflow status
-            workflow_status = {
-                "prd_exists": any(doc["kind"] == "PRD" for doc in documents),
-                "arch_exists": any(doc["kind"] == "ARCHITECTURE" for doc in documents),
-                "epic_exists": any(doc["kind"] == "EPIC" for doc in documents),
-                "story_exists": any(doc["kind"] == "STORY" for doc in documents),
-                "current_step": self._determine_current_step(documents),
-                "next_action": self._determine_next_action(documents),
-                "documents": documents
-            }
-
-            return {
-                "success": True,
-                "workflow_status": workflow_status,
-                "message": f"Workflow status: {workflow_status['current_step']}"
-            }
-
-        except Exception as e:
-            return {
-                "success": False,
-                "error": f"Failed to get orchestrator status: {str(e)}"
-            }
 
     async def bmad_workflow_next(self, project_id: Optional[str] = None) -> Dict[str, Any]:
         """Get next recommended action in workflow."""
         try:
-            # Get current workflow status
-            status_result = await self.bmad_orchestrator_status(project_id)
+            # Use basic workflow status instead of orchestrator status
+            from ..core.basic_workflow_implementations import get_basic_workflows
+            workflows = get_basic_workflows()
+            
+            if not project_id:
+                return {
+                    "success": False,
+                    "error": "project_id is required"
+                }
+            
+            status_result = await workflows.get_workflow_status(project_id)
             if not status_result.get("success"):
                 return status_result
 
@@ -1575,4 +1547,147 @@ This document outlines the epics for {project_name} based on the PRD and Archite
             return {
                 "status": "error",
                 "message": f"BMAD history retrieval failed: {str(e)}"
+            }
+
+    # BMAD Vault Integration (Phase 2.1)
+
+    async def bmad_vault_store_secret(
+        self,
+        path: str,
+        secret_data: Dict[str, Any],
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Store secret in HashiCorp Vault."""
+        try:
+            result = await self.vault.store_secret(path, secret_data, metadata)
+            
+            return {
+                "status": "success" if result.get("success") else "error",
+                "message": "Secret stored successfully" if result.get("success") else f"Secret storage failed: {result.get('error')}",
+                "vault_result": result
+            }
+            
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Vault secret storage failed: {str(e)}"
+            }
+
+    async def bmad_vault_retrieve_secret(
+        self,
+        path: str,
+        version: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Retrieve secret from HashiCorp Vault."""
+        try:
+            result = await self.vault.retrieve_secret(path, version)
+            
+            return {
+                "status": "success" if result.get("success") else "error",
+                "message": "Secret retrieved successfully" if result.get("success") else f"Secret retrieval failed: {result.get('error')}",
+                "vault_result": result
+            }
+            
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Vault secret retrieval failed: {str(e)}"
+            }
+
+    async def bmad_vault_list_secrets(
+        self,
+        path: str = ""
+    ) -> Dict[str, Any]:
+        """List secrets in HashiCorp Vault."""
+        try:
+            result = await self.vault.list_secrets(path)
+            
+            return {
+                "status": "success" if result.get("success") else "error",
+                "message": "Secrets listed successfully" if result.get("success") else f"Secret listing failed: {result.get('error')}",
+                "vault_result": result
+            }
+            
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Vault secret listing failed: {str(e)}"
+            }
+
+    async def bmad_vault_delete_secret(
+        self,
+        path: str,
+        versions: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """Delete secret from HashiCorp Vault."""
+        try:
+            result = await self.vault.delete_secret(path, versions)
+            
+            return {
+                "status": "success" if result.get("success") else "error",
+                "message": "Secret deleted successfully" if result.get("success") else f"Secret deletion failed: {result.get('error')}",
+                "vault_result": result
+            }
+            
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Vault secret deletion failed: {str(e)}"
+            }
+
+    async def bmad_vault_migrate_secrets(self) -> Dict[str, Any]:
+        """Migrate all local secrets to HashiCorp Vault."""
+        try:
+            result = await self.vault.migrate_all_secrets()
+            
+            return {
+                "status": "success" if result.get("success") else "error",
+                "message": f"Secret migration completed: {result.get('migrated_secrets', 0)}/{result.get('total_secrets', 0)} secrets migrated" if result.get("success") else f"Secret migration failed: {result.get('error')}",
+                "migration_result": result
+            }
+            
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Vault secret migration failed: {str(e)}"
+            }
+
+    async def bmad_vault_health_check(self) -> Dict[str, Any]:
+        """Check HashiCorp Vault health status."""
+        try:
+            result = await self.vault.health_check()
+            
+            return {
+                "status": "success" if result.get("success") else "error",
+                "message": f"Vault health check: {result.get('status', 'unknown')}" if result.get("success") else f"Health check failed: {result.get('error')}",
+                "health_result": result
+            }
+            
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Vault health check failed: {str(e)}"
+            }
+
+    async def bmad_vault_get_config(
+        self,
+        category: str
+    ) -> Dict[str, Any]:
+        """Get configuration from HashiCorp Vault."""
+        try:
+            if category == "supabase":
+                result = await self.vault.get_supabase_config()
+            else:
+                result = await self.vault.get_secret_category(category)
+            
+            return {
+                "status": "success" if result.get("success") else "error",
+                "message": f"Configuration retrieved successfully from {result.get('source', 'vault')}" if result.get("success") else f"Configuration retrieval failed: {result.get('error')}",
+                "config_result": result
+            }
+            
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Vault configuration retrieval failed: {str(e)}"
             }

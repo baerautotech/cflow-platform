@@ -175,8 +175,6 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             return await handler.bmad_epic_get(**kwargs)
         elif tool_name == "bmad_epic_list":
             return await handler.bmad_epic_list(**kwargs)
-        elif tool_name == "bmad_orchestrator_status":
-            return await handler.bmad_orchestrator_status(**kwargs)
         elif tool_name == "bmad_workflow_start":
             return await handler.bmad_workflow_start(**kwargs)
         elif tool_name == "bmad_workflow_next":
@@ -256,10 +254,67 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             return await handler.bmad_git_push_changes(**kwargs)
         elif tool_name == "bmad_git_validate_changes":
             return await handler.bmad_git_validate_changes(**kwargs)
-        elif tool_name == "bmad_git_get_history":
-            return await handler.bmad_git_get_history(**kwargs)
-        else:
-            return {"status": "error", "message": f"Unknown BMAD tool: {tool_name}"}
+    elif tool_name == "bmad_git_get_history":
+        return await handler.bmad_git_get_history(**kwargs)
+    
+    # BMAD Vault Integration Tools (Phase 2.1)
+    elif tool_name == "bmad_vault_store_secret":
+        return await handler.bmad_vault_store_secret(**kwargs)
+    elif tool_name == "bmad_vault_retrieve_secret":
+        return await handler.bmad_vault_retrieve_secret(**kwargs)
+    elif tool_name == "bmad_vault_list_secrets":
+        return await handler.bmad_vault_list_secrets(**kwargs)
+    elif tool_name == "bmad_vault_delete_secret":
+        return await handler.bmad_vault_delete_secret(**kwargs)
+    elif tool_name == "bmad_vault_migrate_secrets":
+        return await handler.bmad_vault_migrate_secrets(**kwargs)
+    elif tool_name == "bmad_vault_health_check":
+        return await handler.bmad_vault_health_check(**kwargs)
+    elif tool_name == "bmad_vault_get_config":
+        return await handler.bmad_vault_get_config(**kwargs)
+    
+    # Basic Workflow Tools (Story 1.5)
+    elif tool_name == "bmad_basic_prd_workflow":
+        from .basic_workflow_implementations import get_basic_workflows
+        workflows = get_basic_workflows()
+        return await workflows.create_basic_prd_workflow(
+            project_name=kwargs.get("project_name", ""),
+            goals=kwargs.get("goals"),
+            background=kwargs.get("background")
+        )
+    elif tool_name == "bmad_basic_architecture_workflow":
+        from .basic_workflow_implementations import get_basic_workflows
+        workflows = get_basic_workflows()
+        return await workflows.create_basic_architecture_workflow(
+            project_name=kwargs.get("project_name", ""),
+            prd_id=kwargs.get("prd_id", ""),
+            tech_stack=kwargs.get("tech_stack")
+        )
+    elif tool_name == "bmad_basic_story_workflow":
+        from .basic_workflow_implementations import get_basic_workflows
+        workflows = get_basic_workflows()
+        return await workflows.create_basic_story_workflow(
+            project_name=kwargs.get("project_name", ""),
+            prd_id=kwargs.get("prd_id", ""),
+            arch_id=kwargs.get("arch_id", ""),
+            user_stories=kwargs.get("user_stories")
+        )
+    elif tool_name == "bmad_basic_complete_workflow":
+        from .basic_workflow_implementations import get_basic_workflows
+        workflows = get_basic_workflows()
+        return await workflows.run_complete_basic_workflow(
+            project_name=kwargs.get("project_name", ""),
+            goals=kwargs.get("goals"),
+            background=kwargs.get("background"),
+            tech_stack=kwargs.get("tech_stack"),
+            user_stories=kwargs.get("user_stories")
+        )
+    elif tool_name == "bmad_basic_workflow_status":
+        from .basic_workflow_implementations import get_basic_workflows
+        workflows = get_basic_workflows()
+        return await workflows.get_workflow_status(kwargs.get("project_id", ""))
+    else:
+        return {"status": "error", "message": f"Unknown BMAD tool: {tool_name}"}
     if tool_name in {"internet_search"}:
         mod = load_handler_module("internet_search_handlers")
         handler = mod.InternetSearchHandlers()  # type: ignore[attr-defined]
@@ -290,5 +345,55 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
         handler = mod.ReasoningHandlers()  # type: ignore[attr-defined]
         return await handler.handle_code_reasoning_plan(kwargs or {})
     return {"status": "error", "message": f"Unknown tool: {tool_name}"}
+
+
+# Enhanced async execution with performance monitoring
+async def execute_mcp_tool_enhanced(
+    tool_name: str,
+    **kwargs: Any
+) -> Dict[str, Any]:
+    """
+    Enhanced tool execution with performance monitoring and async optimization.
+    
+    This function provides the same interface as execute_mcp_tool but with
+    additional performance features:
+    - Connection pooling
+    - Performance metrics
+    - Error recovery
+    - Memory monitoring
+    """
+    try:
+        # Use the async tool executor for enhanced performance
+        from .async_tool_executor import execute_tool_async, ToolPriority
+        
+        # Determine priority based on tool type
+        priority = ToolPriority.NORMAL
+        if tool_name.startswith("bmad_"):
+            priority = ToolPriority.HIGH
+        elif tool_name in {"sys_test", "sys_stats", "sys_health"}:
+            priority = ToolPriority.CRITICAL
+        
+        # Execute with enhanced infrastructure
+        result = await execute_tool_async(
+            tool_name=tool_name,
+            kwargs=kwargs,
+            priority=priority,
+            timeout_seconds=kwargs.get("timeout_seconds", 30.0)
+        )
+        
+        # Return the result in the expected format
+        if result.success:
+            return result.result
+        else:
+            return {
+                "status": "error",
+                "message": result.error or "Tool execution failed",
+                "execution_time": result.execution_time
+            }
+            
+    except Exception as e:
+        # Fallback to original implementation
+        logger.warning(f"Enhanced execution failed, falling back to standard: {e}")
+        return await execute_mcp_tool(tool_name, **kwargs)
 
 

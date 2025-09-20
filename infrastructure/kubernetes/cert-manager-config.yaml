@@ -1,0 +1,141 @@
+---
+# cert-manager ClusterIssuer for Let's Encrypt
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: admin@baerautotech.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+    # Optional: DNS-01 challenge for wildcard certificates
+    # - dns01:
+    #     cloudflare:
+    #       email: admin@baerautotech.com
+    #       apiTokenSecretRef:
+    #         name: cloudflare-api-token
+    #         key: api-token
+
+---
+# cert-manager ClusterIssuer for staging (testing)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    # The ACME staging server URL
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: admin@baerautotech.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+
+---
+# Certificate for WebMCP
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: webmcp-cert
+  namespace: cerebral
+spec:
+  secretName: webmcp-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+  - mcp.dev.baerautotech.com
+  - mcp.cerebral.baerautotech.com
+  # Certificate will be automatically renewed
+  renewBefore: 30d
+
+---
+# Certificate for staging/testing
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: webmcp-cert-staging
+  namespace: cerebral
+spec:
+  secretName: webmcp-tls-staging
+  issuerRef:
+    name: letsencrypt-staging
+    kind: ClusterIssuer
+  dnsNames:
+  - mcp-staging.dev.baerautotech.com
+  # Certificate will be automatically renewed
+  renewBefore: 30d
+
+---
+# NetworkPolicy for WebMCP
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: webmcp-network-policy
+  namespace: cerebral
+spec:
+  podSelector:
+    matchLabels:
+      app: webmcp
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow ingress from nginx-ingress
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8000
+  # Allow ingress from monitoring
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 8000
+  egress:
+  # Allow DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # Allow HTTPS to external services
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+  # Allow HTTP to external services (for ACME challenges)
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 80
+  # Allow internal cluster communication
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: cerebral
+    ports:
+    - protocol: TCP
+      port: 8000

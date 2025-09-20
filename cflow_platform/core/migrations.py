@@ -1,6 +1,8 @@
 """
 BMAD Database Migrations
 
+⚠️  DEPRECATED: This module is deprecated. Use cflow_platform.core.unified_database_schema instead.
+
 Database migration utilities for BMAD.
 """
 

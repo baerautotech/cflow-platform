@@ -1,7 +1,7 @@
 """
 BMAD Workflow Engine
 
-This module implements the BMAD workflow engine to replace the CAEF orchestrator.
+This module implements the BMAD workflow engine for multi-agent orchestration.
 It integrates BMAD's workflow definitions with the cflow platform infrastructure.
 """
 
@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from .bmad_hil_integration import BMADHILIntegration
 from .public_api import get_direct_client_executor
 from .telemetry import log_event, telemetry_enabled
+from .config.vault_config import get_vault_config
 from .test_runner import run_tests
 from .profiles import InstructionProfile, resolve_profile
 from .git_ops import attempt_auto_commit
@@ -60,7 +61,7 @@ class BMADWorkflow:
 
 class BMADWorkflowEngine:
     """
-    BMAD Workflow Engine that replaces the CAEF orchestrator.
+    BMAD Workflow Engine for multi-agent orchestration.
     
     This engine executes BMAD workflows using BMAD's agent definitions,
     templates, and HIL integration patterns.
@@ -70,6 +71,7 @@ class BMADWorkflowEngine:
         self.bmad_root = Path(__file__).parent.parent.parent / "vendor" / "bmad"
         self.hil_integration = BMADHILIntegration()
         self.executor = get_direct_client_executor()
+        self.vault_config = get_vault_config()
         self.workflows: Dict[str, BMADWorkflow] = {}
         self._load_workflows()
     
@@ -136,7 +138,7 @@ class BMADWorkflowEngine:
         """
         Execute a BMAD workflow.
         
-        This replaces the CAEF agent loop with BMAD workflow execution.
+        This provides multi-agent orchestration with BMAD workflow execution.
         """
         workflow = self.workflows.get(workflow_id)
         if not workflow:
@@ -545,7 +547,7 @@ async def run_bmad_workflow(
     """
     Run a BMAD workflow.
     
-    This is the main entry point that replaces the CAEF agent loop.
+    This is the main entry point for multi-agent workflow orchestration.
     """
     profile = resolve_profile(profile_name)
     if not profile:

@@ -8,6 +8,14 @@ from dotenv import load_dotenv
 # Load environment variables from project root
 load_dotenv(Path(__file__).parent.parent.parent.parent / ".env")
 
+# Import Vault-aware configuration
+try:
+    from .vault_config import get_vault_config, is_secure_mode
+    _vault_config = get_vault_config()
+    VAULT_AVAILABLE = True
+except ImportError:
+    VAULT_AVAILABLE = False
+
 
 def _normalize_rest_url(url: Optional[str], dsn: Optional[str], override: Optional[str]) -> Optional[str]:
     """Normalize Supabase REST base URL.
@@ -64,13 +72,48 @@ def _normalize_rest_url(url: Optional[str], dsn: Optional[str], override: Option
 
 
 def get_rest_url() -> Optional[str]:
-    return _normalize_rest_url(
-        url=(
+    """Get Supabase REST URL from Vault with fallback to environment variables."""
+    if VAULT_AVAILABLE:
+        try:
+            import asyncio
+            # Try to get from Vault synchronously if possible
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # If we're in an async context, use environment fallback
+                url = (
+                    os.getenv("CEREBRAL_SUPABASE_URL")
+                    or os.getenv("SUPABASE_URL")
+                    or os.getenv("CEREBRAL_SUPABASE_REST_URL")
+                    or os.getenv("SUPABASE_REST_URL")
+                )
+            else:
+                # Run async function in new event loop
+                url = loop.run_until_complete(_vault_config.get_config_value("supabase_url", "supabase"))
+                if not url:
+                    url = (
+                        os.getenv("CEREBRAL_SUPABASE_URL")
+                        or os.getenv("SUPABASE_URL")
+                        or os.getenv("CEREBRAL_SUPABASE_REST_URL")
+                        or os.getenv("SUPABASE_REST_URL")
+                    )
+        except Exception:
+            # Fallback to environment variables on any error
+            url = (
+                os.getenv("CEREBRAL_SUPABASE_URL")
+                or os.getenv("SUPABASE_URL")
+                or os.getenv("CEREBRAL_SUPABASE_REST_URL")
+                or os.getenv("SUPABASE_REST_URL")
+            )
+    else:
+        url = (
             os.getenv("CEREBRAL_SUPABASE_URL")
             or os.getenv("SUPABASE_URL")
             or os.getenv("CEREBRAL_SUPABASE_REST_URL")
             or os.getenv("SUPABASE_REST_URL")
-        ),
+        )
+    
+    return _normalize_rest_url(
+        url=url,
         dsn=(os.getenv("CEREBRAL_SUPABASE_DB_URL") or os.getenv("SUPABASE_DB_URL")),
         override=(os.getenv("SUPABASE_REST_URL") or os.getenv("CEREBRAL_SUPABASE_REST_URL")),
     )
@@ -82,8 +125,43 @@ def is_secure_mode() -> bool:
 
 
 def get_api_key(secure: Optional[bool] = None) -> Optional[str]:
+    """Get Supabase API key from Vault with fallback to environment variables."""
     if secure is None:
         secure = is_secure_mode()
+    
+    if VAULT_AVAILABLE:
+        try:
+            import asyncio
+            # Try to get from Vault synchronously if possible
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # If we're in an async context, use environment fallback
+                if secure:
+                    return (
+                        os.getenv("CEREBRAL_SUPABASE_SERVICE_ROLE_KEY")
+                        or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+                        or os.getenv("CEREBRAL_SUPABASE_KEY")
+                        or os.getenv("SUPABASE_KEY")
+                    )
+                return (
+                    os.getenv("CEREBRAL_SUPABASE_SERVICE_ROLE_KEY")
+                    or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+                    or os.getenv("CEREBRAL_SUPABASE_KEY")
+                    or os.getenv("SUPABASE_KEY")
+                    or os.getenv("CEREBRAL_SUPABASE_ANON_KEY")
+                    or os.getenv("SUPABASE_ANON_KEY")
+                )
+            else:
+                # Run async function in new event loop
+                config = loop.run_until_complete(_vault_config.get_supabase_config())
+                if config.get("url"):  # If we got config from Vault
+                    if secure:
+                        return config.get("service_role_key")
+                    return config.get("service_role_key") or config.get("anon_key")
+        except Exception:
+            pass  # Fall through to environment variables
+    
+    # Fallback to environment variables
     if secure:
         return (
             os.getenv("CEREBRAL_SUPABASE_SERVICE_ROLE_KEY")

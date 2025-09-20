@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List
+from .tool_group_manager import ToolGroupManager
 
 
 class ToolRegistry:
@@ -15,10 +16,21 @@ class ToolRegistry:
         tools: List[Dict[str, Any]] = []
 
         def tool(name: str, description: str, schema: Dict[str, Any] | None = None) -> Dict[str, Any]:
+            # Get tool group information
+            tool_group = ToolGroupManager.get_group_for_tool(name)
+            group_name = tool_group.value if tool_group else "unassigned"
+            
             return {
                 "name": name,
                 "description": description,
                 "inputSchema": schema or {"type": "object", "properties": {}, "required": []},
+                "group": group_name,
+                "metadata": {
+                    "group": group_name,
+                    "required": ToolGroupManager.TOOL_GROUPS[tool_group].required if tool_group else False,
+                    "client_types": ToolGroupManager.TOOL_GROUPS[tool_group].client_types if tool_group else None,
+                    "project_types": ToolGroupManager.TOOL_GROUPS[tool_group].project_types if tool_group else None
+                }
             }
 
         # System
@@ -163,7 +175,6 @@ class ToolRegistry:
             tool("bmad_epic_update", "Update epic document", {"type": "object", "properties": {"doc_id": {"type": "string"}, "updates": {"type": "object"}}, "required": ["doc_id", "updates"]}),
             tool("bmad_epic_get", "Get epic document", {"type": "object", "properties": {"doc_id": {"type": "string"}}, "required": ["doc_id"]}),
             tool("bmad_epic_list", "List epics for project", {"type": "object", "properties": {"project_id": {"type": "string"}}, "required": []}),
-            tool("bmad_orchestrator_status", "Check current BMAD workflow status", {"type": "object", "properties": {"project_id": {"type": "string"}}, "required": []}),
             tool("bmad_workflow_start", "Start specific BMAD workflow", {"type": "object", "properties": {"workflow_id": {"type": "string"}, "project_name": {"type": "string"}}, "required": ["workflow_id", "project_name"]}),
             tool("bmad_workflow_next", "Get next recommended action in workflow", {"type": "object", "properties": {"project_id": {"type": "string"}}, "required": []}),
         ]
@@ -173,6 +184,15 @@ class ToolRegistry:
             tool("bmad_expansion_packs_list", "List available BMAD expansion packs", {"type": "object", "properties": {}, "required": []}),
             tool("bmad_expansion_packs_install", "Install BMAD expansion pack", {"type": "object", "properties": {"pack_id": {"type": "string"}}, "required": ["pack_id"]}),
             tool("bmad_expansion_packs_enable", "Enable expansion pack for project", {"type": "object", "properties": {"project_id": {"type": "string"}, "pack_id": {"type": "string"}}, "required": ["project_id", "pack_id"]}),
+        ]
+
+        # BMAD Basic Workflow Tools (Story 1.5)
+        tools += [
+            tool("bmad_basic_prd_workflow", "Create basic PRD using BMAD templates and Cerebral storage", {"type": "object", "properties": {"project_name": {"type": "string"}, "goals": {"type": "array", "items": {"type": "string"}}, "background": {"type": "string"}}, "required": ["project_name"]}),
+            tool("bmad_basic_architecture_workflow", "Create basic Architecture using BMAD templates and Cerebral storage", {"type": "object", "properties": {"project_name": {"type": "string"}, "prd_id": {"type": "string"}, "tech_stack": {"type": "array", "items": {"type": "string"}}}, "required": ["project_name", "prd_id"]}),
+            tool("bmad_basic_story_workflow", "Create basic Story using BMAD templates and Cerebral storage", {"type": "object", "properties": {"project_name": {"type": "string"}, "prd_id": {"type": "string"}, "arch_id": {"type": "string"}, "user_stories": {"type": "array", "items": {"type": "string"}}}, "required": ["project_name", "prd_id", "arch_id"]}),
+            tool("bmad_basic_complete_workflow", "Run complete basic workflow: PRD → Architecture → Story", {"type": "object", "properties": {"project_name": {"type": "string"}, "goals": {"type": "array", "items": {"type": "string"}}, "background": {"type": "string"}, "tech_stack": {"type": "array", "items": {"type": "string"}}, "user_stories": {"type": "array", "items": {"type": "string"}}}, "required": ["project_name"]}),
+            tool("bmad_basic_workflow_status", "Get current status of basic BMAD workflows for a project", {"type": "object", "properties": {"project_id": {"type": "string"}}, "required": ["project_id"]}),
         ]
 
         # BMAD Human-in-the-Loop (HIL) Interactive Sessions
@@ -311,6 +331,17 @@ class ToolRegistry:
             tool("bmad_git_get_history", "Get BMAD commit history for a project", {"type": "object", "properties": {"project_id": {"type": "string"}, "limit": {"type": "integer"}}, "required": ["project_id"]}),
         ]
 
+        # BMAD Vault Integration Tools (Phase 2.1)
+        tools += [
+            tool("bmad_vault_store_secret", "Store secret in HashiCorp Vault", {"type": "object", "properties": {"path": {"type": "string"}, "secret_data": {"type": "object"}, "metadata": {"type": "object"}}, "required": ["path", "secret_data"]}),
+            tool("bmad_vault_retrieve_secret", "Retrieve secret from HashiCorp Vault", {"type": "object", "properties": {"path": {"type": "string"}, "version": {"type": "string"}}, "required": ["path"]}),
+            tool("bmad_vault_list_secrets", "List secrets in HashiCorp Vault", {"type": "object", "properties": {"path": {"type": "string"}}, "required": []}),
+            tool("bmad_vault_delete_secret", "Delete secret from HashiCorp Vault", {"type": "object", "properties": {"path": {"type": "string"}, "versions": {"type": "array", "items": {"type": "string"}}}, "required": ["path"]}),
+            tool("bmad_vault_migrate_secrets", "Migrate all local secrets to HashiCorp Vault", {"type": "object", "properties": {}}, "required": []}),
+            tool("bmad_vault_health_check", "Check HashiCorp Vault health status", {"type": "object", "properties": {}}, "required": []}),
+            tool("bmad_vault_get_config", "Get configuration from HashiCorp Vault", {"type": "object", "properties": {"category": {"type": "string"}}, "required": ["category"]}),
+        ]
+
         return tools
 
     @staticmethod
@@ -319,8 +350,47 @@ class ToolRegistry:
         return ToolRegistry.get_tools_for_mcp()
 
     @staticmethod
+    def get_tools_by_group(group_name: str) -> List[Dict[str, Any]]:
+        """Get tools filtered by group name"""
+        all_tools = ToolRegistry.get_tools_for_mcp()
+        return [tool for tool in all_tools if tool.get("group") == group_name]
+    
+    @staticmethod
+    def get_tools_by_client_type(client_type: str) -> List[Dict[str, Any]]:
+        """Get tools available for a specific client type"""
+        all_tools = ToolRegistry.get_tools_for_mcp()
+        available_groups = ToolGroupManager.get_groups_for_client_type(client_type)
+        group_names = [group.value for group in available_groups]
+        
+        return [tool for tool in all_tools if tool.get("group") in group_names]
+    
+    @staticmethod
+    def get_tools_by_project_type(project_type: str) -> List[Dict[str, Any]]:
+        """Get tools available for a specific project type"""
+        all_tools = ToolRegistry.get_tools_for_mcp()
+        available_groups = ToolGroupManager.get_groups_for_project_type(project_type)
+        group_names = [group.value for group in available_groups]
+        
+        return [tool for tool in all_tools if tool.get("group") in group_names]
+    
+    @staticmethod
+    def get_required_tools() -> List[Dict[str, Any]]:
+        """Get all required tools"""
+        all_tools = ToolRegistry.get_tools_for_mcp()
+        return [tool for tool in all_tools if tool.get("metadata", {}).get("required", False)]
+    
+    @staticmethod
+    def validate_tool_grouping() -> Dict[str, Any]:
+        """Validate that all tools are properly grouped"""
+        all_tools = ToolRegistry.get_tools_for_mcp()
+        tool_names = [tool["name"] for tool in all_tools]
+        return ToolGroupManager.validate_tool_grouping(tool_names)
+
+    @staticmethod
     def get_version_info() -> Dict[str, Any]:
         total = len(ToolRegistry.get_tools_for_mcp())
+        grouping_validation = ToolRegistry.validate_tool_grouping()
+        
         return {
             "mcp_server_version": "1.0.0",
             "api_version": "1.0.0",
@@ -329,11 +399,17 @@ class ToolRegistry:
             "deprecation_date": "2025-12-31T23:59:59Z",
             "versioning_standard": "CEREBRAL_191_INTEGRATION_API_VERSIONING_STANDARDS.md",
             "total_tools": total,
+            "tool_grouping": {
+                "coverage_percentage": grouping_validation["coverage_percentage"],
+                "missing_from_groups": grouping_validation["missing_from_groups"],
+                "extra_in_groups": grouping_validation["extra_in_groups"]
+            },
             "version_metadata": {
                 "semantic_versioning": True,
                 "backward_compatibility": True,
                 "migration_support": True,
                 "enterprise_grade": True,
+                "tool_management": True
             },
         }
 
