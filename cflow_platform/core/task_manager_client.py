@@ -48,8 +48,7 @@ class TaskManagerClient:
             try:
                 chroma_path = os.environ.get(
                     "CFLOW_CHROMADB_PATH",
-                    str((os.getcwd() if os.getcwd() else ".")
-                        + "")
+                    str(os.getcwd()) if os.getcwd() else "."
                 )
                 # Attempt default canonical path if not provided
                 if not chroma_path or chroma_path == ".":
