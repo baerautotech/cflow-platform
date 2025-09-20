@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ .Values.name }}-config"
+  namespace: "{{ .Values.namespace }}"
+  labels:
+    app: "{{ .Values.name }}"
+    component: "{{ .Values.component }}"
+    tier: "{{ .Values.tier }}"
+    environment: "{{ .Values.environment }}"
+    {{- include "common.labels" . | nindent 8 }}
+data:
+  {{- range $key, $value := .Values.config }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}

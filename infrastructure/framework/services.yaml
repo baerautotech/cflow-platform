@@ -1,0 +1,360 @@
+# Cerebral Platform Service Definitions
+# Defines all services and their configurations for the pod framework
+
+services:
+  # Core Services
+  webmcp:
+    component: "mcp-server"
+    tier: "core"
+    port: 8000
+    image: "webmcp"
+    description: "WebMCP Server with Master Tool Pattern"
+    health_path: "/health"
+    env:
+      WEBMCP_HOST: "0.0.0.0"
+      WEBMCP_PORT: "8000"
+      WEBMCP_WORKERS: "1"
+      WEBMCP_LOG_LEVEL: "info"
+    config:
+      WEBMCP_HOST: "0.0.0.0"
+      WEBMCP_PORT: "8000"
+      WEBMCP_WORKERS: "1"
+      WEBMCP_LOG_LEVEL: "info"
+    secrets:
+      SUPABASE_URL: "supabase-url"
+      SUPABASE_ANON_KEY: "supabase-anon-key"
+      VAULT_URL: "vault-url"
+      VAULT_TOKEN: "vault-token"
+    volumes:
+      - name: "logs-storage"
+        emptyDir:
+          sizeLimit: "100Mi"
+    volumeMounts:
+      - name: "logs-storage"
+        mountPath: "/app/logs"
+
+  bmad-api:
+    component: "api"
+    tier: "backend"
+    port: 8001
+    image: "bmad-api"
+    description: "BMAD HTTP API Facade for agent orchestration"
+    health_path: "/health"
+    env:
+      BMAD_API_HOST: "0.0.0.0"
+      BMAD_API_PORT: "8001"
+      BMAD_LOG_LEVEL: "info"
+      BMAD_WORKFLOW_TIMEOUT: "300"
+    config:
+      BMAD_API_HOST: "0.0.0.0"
+      BMAD_API_PORT: "8001"
+      BMAD_LOG_LEVEL: "info"
+      BMAD_WORKFLOW_TIMEOUT: "300"
+    secrets:
+      SUPABASE_URL: "supabase-url"
+      SUPABASE_ANON_KEY: "supabase-anon-key"
+      VAULT_URL: "vault-url"
+      VAULT_TOKEN: "vault-token"
+      JWT_SECRET_KEY: "jwt-secret"
+    volumes:
+      - name: "workflow-storage"
+        emptyDir:
+          sizeLimit: "2Gi"
+      - name: "logs-storage"
+        emptyDir:
+          sizeLimit: "100Mi"
+    volumeMounts:
+      - name: "workflow-storage"
+        mountPath: "/app/workflows"
+      - name: "logs-storage"
+        mountPath: "/app/logs"
+
+  knowledge-rag:
+    component: "service"
+    tier: "data"
+    port: 8002
+    image: "knowledge-rag"
+    description: "KnowledgeRAG Service with Supabase + pgvector"
+    health_path: "/health"
+    env:
+      RAG_HOST: "0.0.0.0"
+      RAG_PORT: "8002"
+      RAG_LOG_LEVEL: "info"
+      RAG_EMBEDDING_MODEL: "text-embedding-3-small"
+      RAG_CHUNK_SIZE: "1000"
+      RAG_CHUNK_OVERLAP: "200"
+    config:
+      RAG_HOST: "0.0.0.0"
+      RAG_PORT: "8002"
+      RAG_LOG_LEVEL: "info"
+      RAG_EMBEDDING_MODEL: "text-embedding-3-small"
+      RAG_CHUNK_SIZE: "1000"
+      RAG_CHUNK_OVERLAP: "200"
+    secrets:
+      SUPABASE_URL: "supabase-url"
+      SUPABASE_ANON_KEY: "supabase-anon-key"
+    volumes:
+      - name: "vector-cache"
+        emptyDir:
+          sizeLimit: "5Gi"
+      - name: "logs-storage"
+        emptyDir:
+          sizeLimit: "100Mi"
+    volumeMounts:
+      - name: "vector-cache"
+        mountPath: "/app/cache"
+      - name: "logs-storage"
+        mountPath: "/app/logs"
+
+  provider-router:
+    component: "service"
+    tier: "backend"
+    port: 8003
+    image: "provider-router"
+    description: "Provider Router Service for LLM API routing"
+    health_path: "/health"
+    env:
+      ROUTER_HOST: "0.0.0.0"
+      ROUTER_PORT: "8003"
+      ROUTER_LOG_LEVEL: "info"
+      ROUTER_TIMEOUT: "30"
+      ROUTER_RETRY_ATTEMPTS: "3"
+    config:
+      ROUTER_HOST: "0.0.0.0"
+      ROUTER_PORT: "8003"
+      ROUTER_LOG_LEVEL: "info"
+      ROUTER_TIMEOUT: "30"
+      ROUTER_RETRY_ATTEMPTS: "3"
+    secrets:
+      OPENAI_API_KEY: "openai-api-key"
+      ANTHROPIC_API_KEY: "anthropic-api-key"
+      COHERE_API_KEY: "cohere-api-key"
+      CEREBRAL_API_KEY: "cerebral-api-key"
+    volumes:
+      - name: "router-cache"
+        emptyDir:
+          sizeLimit: "1Gi"
+      - name: "logs-storage"
+        emptyDir:
+          sizeLimit: "100Mi"
+    volumeMounts:
+      - name: "router-cache"
+        mountPath: "/app/cache"
+      - name: "logs-storage"
+        mountPath: "/app/logs"
+
+  expansion-manager:
+    component: "service"
+    tier: "backend"
+    port: 8004
+    image: "expansion-manager"
+    description: "Expansion Pack Manager for dynamic pack loading"
+    health_path: "/health"
+    env:
+      MANAGER_HOST: "0.0.0.0"
+      MANAGER_PORT: "8004"
+      MANAGER_LOG_LEVEL: "info"
+      MANAGER_PACK_STORAGE: "/app/packs"
+      MANAGER_CACHE_SIZE: "2Gi"
+    config:
+      MANAGER_HOST: "0.0.0.0"
+      MANAGER_PORT: "8004"
+      MANAGER_LOG_LEVEL: "info"
+      MANAGER_PACK_STORAGE: "/app/packs"
+      MANAGER_CACHE_SIZE: "2Gi"
+    secrets:
+      SUPABASE_URL: "supabase-url"
+      SUPABASE_ANON_KEY: "supabase-anon-key"
+      VAULT_URL: "vault-url"
+      VAULT_TOKEN: "vault-token"
+    volumes:
+      - name: "pack-storage"
+        emptyDir:
+          sizeLimit: "10Gi"
+      - name: "logs-storage"
+        emptyDir:
+          sizeLimit: "100Mi"
+    volumeMounts:
+      - name: "pack-storage"
+        mountPath: "/app/packs"
+      - name: "logs-storage"
+        mountPath: "/app/logs"
+
+  hil-session-manager:
+    component: "service"
+    tier: "backend"
+    port: 8005
+    image: "hil-session-manager"
+    description: "Human-in-the-Loop Session Manager"
+    health_path: "/health"
+    env:
+      HIL_HOST: "0.0.0.0"
+      HIL_PORT: "8005"
+      HIL_LOG_LEVEL: "info"
+      HIL_SESSION_TIMEOUT: "3600"
+      HIL_MAX_SESSIONS: "100"
+    config:
+      HIL_HOST: "0.0.0.0"
+      HIL_PORT: "8005"
+      HIL_LOG_LEVEL: "info"
+      HIL_SESSION_TIMEOUT: "3600"
+      HIL_MAX_SESSIONS: "100"
+    secrets:
+      SUPABASE_URL: "supabase-url"
+      SUPABASE_ANON_KEY: "supabase-anon-key"
+      JWT_SECRET_KEY: "jwt-secret"
+    volumes:
+      - name: "session-storage"
+        emptyDir:
+          sizeLimit: "1Gi"
+      - name: "logs-storage"
+        emptyDir:
+          sizeLimit: "100Mi"
+    volumeMounts:
+      - name: "session-storage"
+        mountPath: "/app/sessions"
+      - name: "logs-storage"
+        mountPath: "/app/logs"
+
+  workflow-orchestrator:
+    component: "service"
+    tier: "backend"
+    port: 8006
+    image: "workflow-orchestrator"
+    description: "BMAD Workflow Orchestrator"
+    health_path: "/health"
+    env:
+      ORCHESTRATOR_HOST: "0.0.0.0"
+      ORCHESTRATOR_PORT: "8006"
+      ORCHESTRATOR_LOG_LEVEL: "info"
+      ORCHESTRATOR_MAX_WORKFLOWS: "50"
+      ORCHESTRATOR_WORKFLOW_TIMEOUT: "1800"
+    config:
+      ORCHESTRATOR_HOST: "0.0.0.0"
+      ORCHESTRATOR_PORT: "8006"
+      ORCHESTRATOR_LOG_LEVEL: "info"
+      ORCHESTRATOR_MAX_WORKFLOWS: "50"
+      ORCHESTRATOR_WORKFLOW_TIMEOUT: "1800"
+    secrets:
+      SUPABASE_URL: "supabase-url"
+      SUPABASE_ANON_KEY: "supabase-anon-key"
+      VAULT_URL: "vault-url"
+      VAULT_TOKEN: "vault-token"
+    volumes:
+      - name: "workflow-storage"
+        emptyDir:
+          sizeLimit: "5Gi"
+      - name: "logs-storage"
+        emptyDir:
+          sizeLimit: "100Mi"
+    volumeMounts:
+      - name: "workflow-storage"
+        mountPath: "/app/workflows"
+      - name: "logs-storage"
+        mountPath: "/app/logs"
+
+  document-approval:
+    component: "service"
+    tier: "backend"
+    port: 8007
+    image: "document-approval"
+    description: "Document Approval Service"
+    health_path: "/health"
+    env:
+      APPROVAL_HOST: "0.0.0.0"
+      APPROVAL_PORT: "8007"
+      APPROVAL_LOG_LEVEL: "info"
+      APPROVAL_TIMEOUT: "86400"
+      APPROVAL_MAX_PENDING: "200"
+    config:
+      APPROVAL_HOST: "0.0.0.0"
+      APPROVAL_PORT: "8007"
+      APPROVAL_LOG_LEVEL: "info"
+      APPROVAL_TIMEOUT: "86400"
+      APPROVAL_MAX_PENDING: "200"
+    secrets:
+      SUPABASE_URL: "supabase-url"
+      SUPABASE_ANON_KEY: "supabase-anon-key"
+      JWT_SECRET_KEY: "jwt-secret"
+    volumes:
+      - name: "approval-storage"
+        emptyDir:
+          sizeLimit: "2Gi"
+      - name: "logs-storage"
+        emptyDir:
+          sizeLimit: "100Mi"
+    volumeMounts:
+      - name: "approval-storage"
+        mountPath: "/app/approvals"
+      - name: "logs-storage"
+        mountPath: "/app/logs"
+
+  project-detector:
+    component: "service"
+    tier: "backend"
+    port: 8008
+    image: "project-detector"
+    description: "Project Type Detector (Greenfield vs Brownfield)"
+    health_path: "/health"
+    env:
+      DETECTOR_HOST: "0.0.0.0"
+      DETECTOR_PORT: "8008"
+      DETECTOR_LOG_LEVEL: "info"
+      DETECTOR_TIMEOUT: "60"
+      DETECTOR_CACHE_SIZE: "1Gi"
+    config:
+      DETECTOR_HOST: "0.0.0.0"
+      DETECTOR_PORT: "8008"
+      DETECTOR_LOG_LEVEL: "info"
+      DETECTOR_TIMEOUT: "60"
+      DETECTOR_CACHE_SIZE: "1Gi"
+    secrets:
+      SUPABASE_URL: "supabase-url"
+      SUPABASE_ANON_KEY: "supabase-anon-key"
+    volumes:
+      - name: "detector-cache"
+        emptyDir:
+          sizeLimit: "1Gi"
+      - name: "logs-storage"
+        emptyDir:
+          sizeLimit: "100Mi"
+    volumeMounts:
+      - name: "detector-cache"
+        mountPath: "/app/cache"
+      - name: "logs-storage"
+        mountPath: "/app/logs"
+
+  monitoring-metrics:
+    component: "service"
+    tier: "monitoring"
+    port: 8009
+    image: "monitoring-metrics"
+    description: "Monitoring and Metrics Service"
+    health_path: "/health"
+    env:
+      METRICS_HOST: "0.0.0.0"
+      METRICS_PORT: "8009"
+      METRICS_LOG_LEVEL: "info"
+      METRICS_RETENTION_DAYS: "30"
+      METRICS_AGGREGATION_INTERVAL: "60"
+    config:
+      METRICS_HOST: "0.0.0.0"
+      METRICS_PORT: "8009"
+      METRICS_LOG_LEVEL: "info"
+      METRICS_RETENTION_DAYS: "30"
+      METRICS_AGGREGATION_INTERVAL: "60"
+    secrets:
+      SUPABASE_URL: "supabase-url"
+      SUPABASE_ANON_KEY: "supabase-anon-key"
+    volumes:
+      - name: "metrics-storage"
+        emptyDir:
+          sizeLimit: "5Gi"
+      - name: "logs-storage"
+        emptyDir:
+          sizeLimit: "100Mi"
+    volumeMounts:
+      - name: "metrics-storage"
+        mountPath: "/app/metrics"
+      - name: "logs-storage"
+        mountPath: "/app/logs"

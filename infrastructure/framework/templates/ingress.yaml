@@ -1,0 +1,49 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "{{ .Values.name }}-ingress"
+  namespace: "{{ .Values.namespace }}"
+  labels:
+    app: "{{ .Values.name }}"
+    component: "{{ .Values.component }}"
+    tier: "{{ .Values.tier }}"
+    environment: "{{ .Values.environment }}"
+    {{- include "common.labels" . | nindent 8 }}
+  annotations:
+    {{- if .Values.ingress.tls }}
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    {{- end }}
+    nginx.ingress.kubernetes.io/ssl-redirect: "{{ .Values.ingress.tls }}"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "{{ .Values.ingress.tls }}"
+    nginx.ingress.kubernetes.io/proxy-body-size: "{{ .Values.ingress.proxyBodySize }}"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "{{ .Values.ingress.proxyReadTimeout }}"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "{{ .Values.ingress.proxySendTimeout }}"
+    {{- if .Values.ingress.rateLimiting }}
+    nginx.ingress.kubernetes.io/rate-limit: "{{ .Values.ingress.rateLimit }}"
+    nginx.ingress.kubernetes.io/rate-limit-window: "{{ .Values.ingress.rateLimitWindow }}"
+    {{- end }}
+spec:
+  ingressClassName: nginx
+  {{- if .Values.ingress.tls }}
+  tls:
+  - hosts:
+    {{- range .Values.ingress.hosts }}
+    - {{ . }}
+    {{- end }}
+    secretName: "{{ .Values.name }}-tls"
+  {{- end }}
+  rules:
+  {{- range .Values.ingress.hosts }}
+  - host: {{ . }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: "{{ $.Values.name }}-service"
+            port:
+              number: {{ $.Values.port }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,460 @@
+# Cerebral Platform Pod Framework
+# Comprehensive framework for consistent pod deployment across all environments
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pod-framework-config
+  namespace: cerebral-development
+data:
+  # Framework Configuration
+  framework_version: "1.0.0"
+  registry_base: "registry.baerautotech.com"
+  
+  # Environment Configurations
+  environments: |
+    development:
+      replicas: 1
+      resources:
+        requests:
+          memory: "256Mi"
+          cpu: "100m"
+        limits:
+          memory: "512Mi"
+          cpu: "250m"
+      security:
+        runAsNonRoot: false
+        allowPrivilegeEscalation: true
+      monitoring:
+        enabled: false
+        prometheus_scrape: false
+      ingress:
+        enabled: false
+        tls: false
+      hpa:
+        enabled: false
+      secrets:
+        vault_integration: false
+        supabase_integration: false
+        
+    staging:
+      replicas: 2
+      resources:
+        requests:
+          memory: "512Mi"
+          cpu: "250m"
+        limits:
+          memory: "1Gi"
+          cpu: "500m"
+      security:
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+      monitoring:
+        enabled: true
+        prometheus_scrape: true
+      ingress:
+        enabled: true
+        tls: true
+      hpa:
+        enabled: true
+        min_replicas: 2
+        max_replicas: 5
+      secrets:
+        vault_integration: true
+        supabase_integration: true
+        
+    production:
+      replicas: 3
+      resources:
+        requests:
+          memory: "1Gi"
+          cpu: "500m"
+        limits:
+          memory: "2Gi"
+          cpu: "1000m"
+      security:
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+      monitoring:
+        enabled: true
+        prometheus_scrape: true
+      ingress:
+        enabled: true
+        tls: true
+      hpa:
+        enabled: true
+        min_replicas: 3
+        max_replicas: 10
+      secrets:
+        vault_integration: true
+        supabase_integration: true
+        
+    enterprise:
+      replicas: 5
+      resources:
+        requests:
+          memory: "2Gi"
+          cpu: "1000m"
+        limits:
+          memory: "4Gi"
+          cpu: "2000m"
+      security:
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        seccompProfile: "RuntimeDefault"
+      monitoring:
+        enabled: true
+        prometheus_scrape: true
+        detailed_metrics: true
+      ingress:
+        enabled: true
+        tls: true
+        rate_limiting: true
+      hpa:
+        enabled: true
+        min_replicas: 5
+        max_replicas: 20
+      secrets:
+        vault_integration: true
+        supabase_integration: true
+        enterprise_secrets: true
+
+  # Common Labels
+  common_labels: |
+    app.kubernetes.io/managed-by: cerebral-platform
+    app.kubernetes.io/part-of: cerebral-cluster
+    app.kubernetes.io/version: "{{ .Values.version }}"
+    app.kubernetes.io/component: "{{ .Values.component }}"
+    app.kubernetes.io/tier: "{{ .Values.tier }}"
+
+  # Common Annotations
+  common_annotations: |
+    cerebral.baerautotech.com/created-by: pod-framework
+    cerebral.baerautotech.com/framework-version: "1.0.0"
+    cerebral.baerautotech.com/last-updated: "{{ .Values.timestamp }}"
+    prometheus.io/scrape: "{{ .Values.monitoring.enabled }}"
+    prometheus.io/port: "{{ .Values.port }}"
+    prometheus.io/path: "/metrics"
+
+---
+# Pod Framework Library - Base Pod Template
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pod-framework-base-template
+  namespace: cerebral-development
+data:
+  deployment.yaml: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: "{{ .Values.name }}"
+      namespace: "{{ .Values.namespace }}"
+      labels:
+        app: "{{ .Values.name }}"
+        version: "{{ .Values.version }}"
+        component: "{{ .Values.component }}"
+        tier: "{{ .Values.tier }}"
+        environment: "{{ .Values.environment }}"
+        {{- include "common.labels" . | nindent 8 }}
+      annotations:
+        {{- include "common.annotations" . | nindent 8 }}
+    spec:
+      replicas: {{ .Values.replicas }}
+      selector:
+        matchLabels:
+          app: "{{ .Values.name }}"
+      template:
+        metadata:
+          labels:
+            app: "{{ .Values.name }}"
+            version: "{{ .Values.version }}"
+            component: "{{ .Values.component }}"
+            tier: "{{ .Values.tier }}"
+            environment: "{{ .Values.environment }}"
+            {{- include "common.labels" . | nindent 12 }}
+          annotations:
+            {{- include "common.annotations" . | nindent 12 }}
+        spec:
+          serviceAccountName: "{{ .Values.name }}-sa"
+          containers:
+          - name: "{{ .Values.name }}"
+            image: "{{ .Values.registry }}/{{ .Values.image }}:{{ .Values.tag }}"
+            imagePullPolicy: Always
+            ports:
+            - containerPort: {{ .Values.port }}
+              name: http
+              protocol: TCP
+            env:
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- if .Values.secrets }}
+            {{- range $key, $value := .Values.secrets }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ $.Values.name }}-secrets"
+                  key: {{ $value }}
+            {{- end }}
+            {{- end }}
+            resources:
+              requests:
+                memory: {{ .Values.resources.requests.memory }}
+                cpu: {{ .Values.resources.requests.cpu }}
+              limits:
+                memory: {{ .Values.resources.limits.memory }}
+                cpu: {{ .Values.resources.limits.cpu }}
+            livenessProbe:
+              httpGet:
+                path: {{ .Values.health.path }}
+                port: {{ .Values.port }}
+                scheme: HTTP
+              initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+              periodSeconds: {{ .Values.health.periodSeconds }}
+              timeoutSeconds: {{ .Values.health.timeoutSeconds }}
+              failureThreshold: {{ .Values.health.failureThreshold }}
+            readinessProbe:
+              httpGet:
+                path: {{ .Values.health.path }}
+                port: {{ .Values.port }}
+                scheme: HTTP
+              initialDelaySeconds: {{ .Values.health.readinessDelaySeconds }}
+              periodSeconds: {{ .Values.health.periodSeconds }}
+              timeoutSeconds: {{ .Values.health.timeoutSeconds }}
+              failureThreshold: {{ .Values.health.failureThreshold }}
+            securityContext:
+              runAsNonRoot: {{ .Values.security.runAsNonRoot }}
+              {{- if .Values.security.runAsUser }}
+              runAsUser: {{ .Values.security.runAsUser }}
+              {{- end }}
+              {{- if .Values.security.runAsGroup }}
+              runAsGroup: {{ .Values.security.runAsGroup }}
+              {{- end }}
+              allowPrivilegeEscalation: {{ .Values.security.allowPrivilegeEscalation }}
+              {{- if .Values.security.readOnlyRootFilesystem }}
+              readOnlyRootFilesystem: {{ .Values.security.readOnlyRootFilesystem }}
+              {{- end }}
+              {{- if .Values.security.seccompProfile }}
+              seccompProfile:
+                type: {{ .Values.security.seccompProfile }}
+              {{- end }}
+              capabilities:
+                {{- if .Values.security.capabilities.add }}
+                add:
+                {{- range .Values.security.capabilities.add }}
+                - {{ . }}
+                {{- end }}
+                {{- end }}
+                {{- if .Values.security.capabilities.drop }}
+                drop:
+                {{- range .Values.security.capabilities.drop }}
+                - {{ . }}
+                {{- end }}
+                {{- end }}
+            {{- if .Values.volumeMounts }}
+            volumeMounts:
+            {{- range .Values.volumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .readOnly }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
+            {{- end }}
+            {{- end }}
+          {{- if .Values.volumes }}
+          volumes:
+          {{- range .Values.volumes }}
+          - name: {{ .name }}
+            {{- if .emptyDir }}
+            emptyDir:
+              sizeLimit: {{ .emptyDir.sizeLimit }}
+            {{- end }}
+            {{- if .configMap }}
+            configMap:
+              name: {{ .configMap.name }}
+            {{- end }}
+            {{- if .secret }}
+            secret:
+              secretName: {{ .secret.secretName }}
+            {{- end }}
+          {{- end }}
+          {{- end }}
+          securityContext:
+            {{- if .Values.security.fsGroup }}
+            fsGroup: {{ .Values.security.fsGroup }}
+            {{- end }}
+            runAsNonRoot: {{ .Values.security.runAsNonRoot }}
+          restartPolicy: Always
+
+  service.yaml: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: "{{ .Values.name }}-service"
+      namespace: "{{ .Values.namespace }}"
+      labels:
+        app: "{{ .Values.name }}"
+        component: "{{ .Values.component }}"
+        tier: "{{ .Values.tier }}"
+        environment: "{{ .Values.environment }}"
+        {{- include "common.labels" . | nindent 8 }}
+    spec:
+      selector:
+        app: "{{ .Values.name }}"
+      ports:
+      - port: {{ .Values.port }}
+        targetPort: {{ .Values.port }}
+        protocol: TCP
+        name: http
+      type: ClusterIP
+
+  serviceaccount.yaml: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: "{{ .Values.name }}-sa"
+      namespace: "{{ .Values.namespace }}"
+      labels:
+        app: "{{ .Values.name }}"
+        component: "{{ .Values.component }}"
+        tier: "{{ .Values.tier }}"
+        environment: "{{ .Values.environment }}"
+        {{- include "common.labels" . | nindent 8 }}
+
+  configmap.yaml: |
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: "{{ .Values.name }}-config"
+      namespace: "{{ .Values.namespace }}"
+      labels:
+        app: "{{ .Values.name }}"
+        component: "{{ .Values.component }}"
+        tier: "{{ .Values.tier }}"
+        environment: "{{ .Values.environment }}"
+        {{- include "common.labels" . | nindent 8 }}
+    data:
+      {{- range $key, $value := .Values.config }}
+      {{ $key }}: {{ $value | quote }}
+      {{- end }}
+
+  secret.yaml: |
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: "{{ .Values.name }}-secrets"
+      namespace: "{{ .Values.namespace }}"
+      labels:
+        app: "{{ .Values.name }}"
+        component: "{{ .Values.component }}"
+        tier: "{{ .Values.tier }}"
+        environment: "{{ .Values.environment }}"
+        {{- include "common.labels" . | nindent 8 }}
+    type: Opaque
+    data:
+      {{- range $key, $value := .Values.secretData }}
+      {{ $key }}: {{ $value | b64enc }}
+      {{- end }}
+
+  hpa.yaml: |
+    {{- if .Values.hpa.enabled }}
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    metadata:
+      name: "{{ .Values.name }}-hpa"
+      namespace: "{{ .Values.namespace }}"
+      labels:
+        app: "{{ .Values.name }}"
+        component: "{{ .Values.component }}"
+        tier: "{{ .Values.tier }}"
+        environment: "{{ .Values.environment }}"
+        {{- include "common.labels" . | nindent 8 }}
+    spec:
+      scaleTargetRef:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: "{{ .Values.name }}"
+      minReplicas: {{ .Values.hpa.minReplicas }}
+      maxReplicas: {{ .Values.hpa.maxReplicas }}
+      metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: {{ .Values.hpa.cpuTarget }}
+      - type: Resource
+        resource:
+          name: memory
+          target:
+            type: Utilization
+            averageUtilization: {{ .Values.hpa.memoryTarget }}
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: {{ .Values.hpa.scaleDownStabilization }}
+          policies:
+          - type: Percent
+            value: {{ .Values.hpa.scaleDownPercent }}
+            periodSeconds: {{ .Values.hpa.scaleDownPeriod }}
+        scaleUp:
+          stabilizationWindowSeconds: {{ .Values.hpa.scaleUpStabilization }}
+          policies:
+          - type: Percent
+            value: {{ .Values.hpa.scaleUpPercent }}
+            periodSeconds: {{ .Values.hpa.scaleUpPeriod }}
+    {{- end }}
+
+  ingress.yaml: |
+    {{- if .Values.ingress.enabled }}
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: "{{ .Values.name }}-ingress"
+      namespace: "{{ .Values.namespace }}"
+      labels:
+        app: "{{ .Values.name }}"
+        component: "{{ .Values.component }}"
+        tier: "{{ .Values.tier }}"
+        environment: "{{ .Values.environment }}"
+        {{- include "common.labels" . | nindent 8 }}
+      annotations:
+        {{- if .Values.ingress.tls }}
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
+        {{- end }}
+        nginx.ingress.kubernetes.io/ssl-redirect: "{{ .Values.ingress.tls }}"
+        nginx.ingress.kubernetes.io/force-ssl-redirect: "{{ .Values.ingress.tls }}"
+        nginx.ingress.kubernetes.io/proxy-body-size: "{{ .Values.ingress.proxyBodySize }}"
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "{{ .Values.ingress.proxyReadTimeout }}"
+        nginx.ingress.kubernetes.io/proxy-send-timeout: "{{ .Values.ingress.proxySendTimeout }}"
+        {{- if .Values.ingress.rateLimiting }}
+        nginx.ingress.kubernetes.io/rate-limit: "{{ .Values.ingress.rateLimit }}"
+        nginx.ingress.kubernetes.io/rate-limit-window: "{{ .Values.ingress.rateLimitWindow }}"
+        {{- end }}
+    spec:
+      ingressClassName: nginx
+      {{- if .Values.ingress.tls }}
+      tls:
+      - hosts:
+        {{- range .Values.ingress.hosts }}
+        - {{ . }}
+        {{- end }}
+        secretName: "{{ .Values.name }}-tls"
+      {{- end }}
+      rules:
+      {{- range .Values.ingress.hosts }}
+      - host: {{ . }}
+        http:
+          paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ $.Values.name }}-service"
+                port:
+                  number: {{ $.Values.port }}
+      {{- end }}
+    {{- end }}

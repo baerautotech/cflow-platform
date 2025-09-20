@@ -1,0 +1,46 @@
+{{- if .Values.hpa.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: "{{ .Values.name }}-hpa"
+  namespace: "{{ .Values.namespace }}"
+  labels:
+    app: "{{ .Values.name }}"
+    component: "{{ .Values.component }}"
+    tier: "{{ .Values.tier }}"
+    environment: "{{ .Values.environment }}"
+    {{- include "common.labels" . | nindent 8 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: "{{ .Values.name }}"
+  minReplicas: {{ .Values.hpa.minReplicas }}
+  maxReplicas: {{ .Values.hpa.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.hpa.cpuTarget }}
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.hpa.memoryTarget }}
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: {{ .Values.hpa.scaleDownStabilization }}
+      policies:
+      - type: Percent
+        value: {{ .Values.hpa.scaleDownPercent }}
+        periodSeconds: {{ .Values.hpa.scaleDownPeriod }}
+    scaleUp:
+      stabilizationWindowSeconds: {{ .Values.hpa.scaleUpStabilization }}
+      policies:
+      - type: Percent
+        value: {{ .Values.hpa.scaleUpPercent }}
+        periodSeconds: {{ .Values.hpa.scaleUpPeriod }}
+{{- end }}
