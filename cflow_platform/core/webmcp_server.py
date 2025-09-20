@@ -182,6 +182,126 @@ async def health():
         "version": "1.0.0"
     }
 
+@app.get("/help")
+async def help():
+    """Comprehensive help documentation for all available tools and endpoints"""
+    master_tools_docs = {}
+    
+    # Get detailed documentation for each master tool
+    for tool_name, tool in master_tool_manager.registry.tools.items():
+        tool_schema = tool.get_tool_schema()
+        operations_docs = {}
+        
+        for operation_name in tool.list_operations():
+            operation_schema = tool.get_operation_schema(operation_name)
+            operations_docs[operation_name] = {
+                "description": operation_schema.get("description", ""),
+                "input_schema": operation_schema.get("input_schema", {}),
+                "output_schema": operation_schema.get("output_schema", {}),
+                "examples": operation_schema.get("examples", [])
+            }
+        
+        master_tools_docs[tool_name] = {
+            "name": tool_schema.get("name", tool_name),
+            "description": tool_schema.get("description", ""),
+            "version": tool_schema.get("version", "1.0.0"),
+            "operations": operations_docs,
+            "total_operations": len(operations_docs)
+        }
+    
+    return {
+        "service": "CFlow WebMCP Server",
+        "version": "3.0.0",
+        "description": "HTTP-based MCP server for Cerebral Platform with Master Tool Pattern",
+        "documentation": {
+            "overview": "This server provides access to BMAD master tools through a unified API. Each master tool consolidates multiple related operations into a single, efficient interface.",
+            "master_tools": master_tools_docs,
+            "total_master_tools": len(master_tools_docs),
+            "total_operations": sum(tool["total_operations"] for tool in master_tools_docs.values())
+        },
+        "endpoints": {
+            "health": {
+                "path": "/health",
+                "method": "GET",
+                "description": "Service health check with tool counts"
+            },
+            "help": {
+                "path": "/help",
+                "method": "GET", 
+                "description": "This comprehensive help documentation"
+            },
+            "master_tools": {
+                "path": "/mcp/master-tools",
+                "method": "GET",
+                "description": "List all available master tools"
+            },
+            "master_tool_info": {
+                "path": "/mcp/master-tools/{tool_name}",
+                "method": "GET",
+                "description": "Get detailed information about a specific master tool"
+            },
+            "master_tool_operations": {
+                "path": "/mcp/master-tools/{tool_name}/operations",
+                "method": "GET",
+                "description": "Get all operations for a specific master tool"
+            },
+            "master_tool_operation_info": {
+                "path": "/mcp/master-tools/{tool_name}/operations/{operation_name}",
+                "method": "GET",
+                "description": "Get detailed information about a specific master tool operation"
+            },
+            "execute_master_tool_operation": {
+                "path": "/mcp/master-tools/{tool_name}/operations/{operation_name}/execute",
+                "method": "POST",
+                "description": "Execute a master tool operation"
+            },
+            "legacy_tools": {
+                "path": "/mcp/tools",
+                "method": "GET",
+                "description": "List legacy MCP tools (deprecated - use master tools instead)"
+            },
+            "legacy_tool_call": {
+                "path": "/mcp/tools/call",
+                "method": "POST",
+                "description": "Call a legacy MCP tool (deprecated - use master tools instead)"
+            },
+            "migration_status": {
+                "path": "/mcp/migration/status",
+                "method": "GET",
+                "description": "Get status of legacy tool migrations to master tools"
+            },
+            "performance_metrics": {
+                "path": "/mcp/performance/metrics",
+                "method": "GET",
+                "description": "Get current performance metrics"
+            },
+            "api_docs": {
+                "path": "/docs",
+                "method": "GET",
+                "description": "Interactive API documentation (Swagger UI)"
+            },
+            "redoc": {
+                "path": "/redoc",
+                "method": "GET",
+                "description": "Alternative API documentation (ReDoc)"
+            }
+        },
+        "usage_examples": {
+            "list_master_tools": "GET /mcp/master-tools",
+            "get_task_tool_info": "GET /mcp/master-tools/bmad_task",
+            "get_task_operations": "GET /mcp/master-tools/bmad_task/operations",
+            "create_task": "POST /mcp/master-tools/bmad_task/operations/create/execute",
+            "get_plan_tool_info": "GET /mcp/master-tools/bmad_plan",
+            "execute_plan": "POST /mcp/master-tools/bmad_plan/operations/execute/execute"
+        },
+        "master_tool_categories": {
+            "core": ["bmad_task", "bmad_plan", "bmad_doc", "bmad_workflow"],
+            "advanced": ["bmad_hil", "bmad_git", "bmad_orchestrator", "bmad_expansion"],
+            "expansion_packs": ["bmad_gamedev", "bmad_devops", "bmad_creative"]
+        },
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
 @app.post("/mcp/initialize")
 async def initialize_mcp(request: Request):
     """Initialize MCP client with filtered tools based on client and project configuration"""
