@@ -1,15 +1,15 @@
 {
 	"mcpServers": {
-		"cerebraflow-webmcp": {
+		"cerebral-webmcp": {
 			"command": "curl",
 			"args": [
 				"-X", "POST",
 				"-H", "Content-Type: application/json",
-				"https://mcp.cerebral.baerautotech.com/mcp/initialize"
+				"https://mcp.dev.baerautotech.com/mcp/initialize"
 			],
 			"env": {
 				"CEREBRAFLOW_ENV": "production",
-				"CEREBRAFLOW_CLUSTER_URL": "https://mcp.cerebral.baerautotech.com"
+				"CEREBRAFLOW_CLUSTER_URL": "https://mcp.dev.baerautotech.com"
 			}
 		}
 	}

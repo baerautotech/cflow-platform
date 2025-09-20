@@ -23,6 +23,7 @@ dependencies = [
     "psycopg[binary]>=3.2.1",
     "hvac>=2.3.0",
     "redis>=6.4.0",
+    "requests>=2.32.5",
 ]
 readme = "README.md"
 license = { text = "MIT" }
