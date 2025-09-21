@@ -296,6 +296,18 @@ class ToolRegistry:
             tool("bmad_uat_history_get", "Get user acceptance testing execution history"),
         ]
 
+        # BMAD Monitoring & Observability tools (Phase 4.5)
+        tools += [
+            tool("bmad_monitoring_system_health", "Monitor overall system health and status"),
+            tool("bmad_monitoring_performance_metrics", "Collect and analyze performance metrics"),
+            tool("bmad_monitoring_resource_utilization", "Monitor resource usage (CPU, memory, disk, network)"),
+            tool("bmad_alerting_configure", "Configure alerting rules and thresholds"),
+            tool("bmad_alerting_test", "Test alerting system functionality"),
+            tool("bmad_observability_dashboard", "Generate observability dashboard data"),
+            tool("bmad_logging_centralized", "Centralized logging and log analysis"),
+            tool("bmad_monitoring_report_generate", "Generate comprehensive monitoring reports"),
+        ]
+
         return tools
 
     @staticmethod

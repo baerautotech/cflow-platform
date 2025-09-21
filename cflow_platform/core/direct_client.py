@@ -412,6 +412,35 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
                 return await bmad_uat_report_generate(**kwargs)
             elif tool_name == "bmad_uat_history_get":
                 return await bmad_uat_history_get(**kwargs)
+        # BMAD Monitoring & Observability Tools (Phase 4.5)
+        elif tool_name.startswith("bmad_monitoring_") or tool_name.startswith("bmad_alerting_") or tool_name.startswith("bmad_observability_") or tool_name.startswith("bmad_logging_"):
+            from ..handlers.monitoring_observability_handlers import (
+                bmad_monitoring_system_health,
+                bmad_monitoring_performance_metrics,
+                bmad_monitoring_resource_utilization,
+                bmad_alerting_configure,
+                bmad_alerting_test,
+                bmad_observability_dashboard,
+                bmad_logging_centralized,
+                bmad_monitoring_report_generate
+            )
+            
+            if tool_name == "bmad_monitoring_system_health":
+                return await bmad_monitoring_system_health(**kwargs)
+            elif tool_name == "bmad_monitoring_performance_metrics":
+                return await bmad_monitoring_performance_metrics(**kwargs)
+            elif tool_name == "bmad_monitoring_resource_utilization":
+                return await bmad_monitoring_resource_utilization(**kwargs)
+            elif tool_name == "bmad_alerting_configure":
+                return await bmad_alerting_configure(**kwargs)
+            elif tool_name == "bmad_alerting_test":
+                return await bmad_alerting_test(**kwargs)
+            elif tool_name == "bmad_observability_dashboard":
+                return await bmad_observability_dashboard(**kwargs)
+            elif tool_name == "bmad_logging_centralized":
+                return await bmad_logging_centralized(**kwargs)
+            elif tool_name == "bmad_monitoring_report_generate":
+                return await bmad_monitoring_report_generate(**kwargs)
         else:
             return {"status": "error", "message": f"Unknown BMAD tool: {tool_name}"}
     elif tool_name == "bmad_git_get_history":
