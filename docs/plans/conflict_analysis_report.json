@@ -1,0 +1,60 @@
+{
+  "analysis_date": "2025-09-21T08:00:14.651562",
+  "plans_analyzed": [
+    "BMAD_CORE_PLATFORM_INTEGRATION_TASKS.md",
+    "BMAD_PHASED_IMPLEMENTATION_TASKS.md",
+    "BMAD_COMPREHENSIVE_IMPLEMENTATION_PLAN.md",
+    "BMAD_CORE_PLATFORM_INTEGRATION_PLAN.md"
+  ],
+  "conflicts": [
+    {
+      "conflict_id": "req_overlap_BMAD_PHASED_IMPLEMENTATION_TASKS.md_BMAD_CORE_PLATFORM_INTEGRATION_PLAN.md",
+      "type": "requirement_overlap",
+      "severity": "MEDIUM",
+      "description": "Overlapping requirements between BMAD_PHASED_IMPLEMENTATION_TASKS.md and BMAD_CORE_PLATFORM_INTEGRATION_PLAN.md",
+      "affected_plans": [
+        "BMAD_PHASED_IMPLEMENTATION_TASKS.md",
+        "BMAD_CORE_PLATFORM_INTEGRATION_PLAN.md"
+      ],
+      "conflicting_elements": [
+        "BMAD_PHASED_IMPLEMENTATION_TASKS.md_task_19 <-> BMAD_CORE_PLATFORM_INTEGRATION_PLAN.md_task_58",
+        "BMAD_PHASED_IMPLEMENTATION_TASKS.md_task_251 <-> BMAD_CORE_PLATFORM_INTEGRATION_PLAN.md_task_74",
+        "BMAD_PHASED_IMPLEMENTATION_TASKS.md_task_404 <-> BMAD_CORE_PLATFORM_INTEGRATION_PLAN.md_task_90",
+        "BMAD_PHASED_IMPLEMENTATION_TASKS.md_task_504 <-> BMAD_CORE_PLATFORM_INTEGRATION_PLAN.md_task_106",
+        "BMAD_PHASED_IMPLEMENTATION_TASKS.md_task_627 <-> BMAD_CORE_PLATFORM_INTEGRATION_PLAN.md_task_122",
+        "BMAD_PHASED_IMPLEMENTATION_TASKS.md_task_757 <-> BMAD_CORE_PLATFORM_INTEGRATION_PLAN.md_task_138"
+      ],
+      "resolution_strategy": "hil_decision",
+      "resolution_rationale": "Similar requirements detected - HIL decision required for merge/replace strategy",
+      "requires_hil": true,
+      "detected_at": "2025-09-21T08:00:14.651160"
+    }
+  ],
+  "recommendations": {
+    "total_conflicts": 1,
+    "critical_conflicts": 0,
+    "high_conflicts": 0,
+    "medium_conflicts": 1,
+    "low_conflicts": 0,
+    "hil_required": 1,
+    "recommendations": [
+      {
+        "conflict_id": "req_overlap_BMAD_PHASED_IMPLEMENTATION_TASKS.md_BMAD_CORE_PLATFORM_INTEGRATION_PLAN.md",
+        "severity": "MEDIUM",
+        "strategy": "hil_decision",
+        "rationale": "Similar requirements detected - HIL decision required for merge/replace strategy",
+        "requires_hil": true,
+        "affected_plans": [
+          "BMAD_PHASED_IMPLEMENTATION_TASKS.md",
+          "BMAD_CORE_PLATFORM_INTEGRATION_PLAN.md"
+        ],
+        "suggested_actions": [
+          "Review overlapping requirements for duplication",
+          "Determine if requirements can be merged",
+          "Consider requirement prioritization",
+          "Document decision rationale"
+        ]
+      }
+    ]
+  }
+}

@@ -4,7 +4,7 @@ metadata:
   annotations:
     cerebral.baerautotech.com/created-by: pod-framework
     cerebral.baerautotech.com/framework-version: 1.0.0
-    cerebral.baerautotech.com/last-updated: '2025-09-20T23:44:35.349604'
+    cerebral.baerautotech.com/last-updated: '2025-09-21T00:01:26.884674'
   labels:
     app: webmcp
     app.kubernetes.io/managed-by: cerebral-platform

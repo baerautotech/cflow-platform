@@ -303,6 +303,43 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
                 return await bmad_scenario_report(**kwargs)
             elif tool_name == "bmad_scenario_get_history":
                 return await bmad_scenario_get_history(**kwargs)
+        # BMAD Regression Testing Tools (Phase 4.1.3)
+        elif tool_name.startswith("bmad_regression_"):
+            from ..handlers.regression_testing_handlers import (
+                bmad_regression_test_run,
+                bmad_regression_baseline_establish,
+                bmad_regression_baseline_list,
+                bmad_regression_report_generate,
+                bmad_regression_history_get
+            )
+            
+            if tool_name == "bmad_regression_test_run":
+                return await bmad_regression_test_run(**kwargs)
+            elif tool_name == "bmad_regression_baseline_establish":
+                return await bmad_regression_baseline_establish(**kwargs)
+            elif tool_name == "bmad_regression_baseline_list":
+                return await bmad_regression_baseline_list(**kwargs)
+            elif tool_name == "bmad_regression_report_generate":
+                return await bmad_regression_report_generate(**kwargs)
+            elif tool_name == "bmad_regression_history_get":
+                return await bmad_regression_history_get(**kwargs)
+        # BMAD Git Workflow Management Tools (Phase 4.1.3)
+        elif tool_name.startswith("bmad_git_"):
+            from ..handlers.regression_testing_handlers import (
+                bmad_git_auto_commit,
+                bmad_git_auto_push,
+                bmad_git_workflow_status,
+                bmad_git_workflow_configure
+            )
+            
+            if tool_name == "bmad_git_auto_commit":
+                return await bmad_git_auto_commit(**kwargs)
+            elif tool_name == "bmad_git_auto_push":
+                return await bmad_git_auto_push(**kwargs)
+            elif tool_name == "bmad_git_workflow_status":
+                return await bmad_git_workflow_status(**kwargs)
+            elif tool_name == "bmad_git_workflow_configure":
+                return await bmad_git_workflow_configure(**kwargs)
         else:
             return {"status": "error", "message": f"Unknown BMAD tool: {tool_name}"}
     elif tool_name == "bmad_git_get_history":

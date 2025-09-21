@@ -248,6 +248,23 @@ class ToolRegistry:
             tool("bmad_scenario_get_history", "Get scenario execution history"),
         ]
 
+        # BMAD Regression Testing tools (Phase 4.1.3)
+        tools += [
+            tool("bmad_regression_test_run", "Run comprehensive regression tests"),
+            tool("bmad_regression_baseline_establish", "Establish new baseline for regression testing"),
+            tool("bmad_regression_baseline_list", "List available baselines"),
+            tool("bmad_regression_report_generate", "Generate detailed regression reports"),
+            tool("bmad_regression_history_get", "Get regression testing history"),
+        ]
+
+        # BMAD Git Workflow Management tools (Phase 4.1.3)
+        tools += [
+            tool("bmad_git_auto_commit", "Automatically commit changes after testing"),
+            tool("bmad_git_auto_push", "Automatically push committed changes"),
+            tool("bmad_git_workflow_status", "Get status of automated git workflows"),
+            tool("bmad_git_workflow_configure", "Configure automated git workflow settings"),
+        ]
+
         return tools
 
     @staticmethod
