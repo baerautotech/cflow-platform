@@ -265,6 +265,17 @@ class ToolRegistry:
             tool("bmad_git_workflow_configure", "Configure automated git workflow settings"),
         ]
 
+        # BMAD Performance Validation tools (Phase 4.2)
+        tools += [
+            tool("bmad_performance_load_test", "Run load testing for multi-agent system under load"),
+            tool("bmad_performance_stress_test", "Run stress testing for system limits"),
+            tool("bmad_performance_scalability_test", "Run scalability testing for multi-user scenarios"),
+            tool("bmad_performance_metrics_collect", "Collect performance metrics for specified duration"),
+            tool("bmad_performance_slo_validate", "Validate performance against Service Level Objectives"),
+            tool("bmad_performance_report_generate", "Generate comprehensive performance testing report"),
+            tool("bmad_performance_history_get", "Get performance testing execution history"),
+        ]
+
         return tools
 
     @staticmethod

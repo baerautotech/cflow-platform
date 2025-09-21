@@ -340,6 +340,32 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
                 return await bmad_git_workflow_status(**kwargs)
             elif tool_name == "bmad_git_workflow_configure":
                 return await bmad_git_workflow_configure(**kwargs)
+        # BMAD Performance Validation Tools (Phase 4.2)
+        elif tool_name.startswith("bmad_performance_"):
+            from ..handlers.performance_validation_handlers import (
+                bmad_performance_load_test,
+                bmad_performance_stress_test,
+                bmad_performance_scalability_test,
+                bmad_performance_metrics_collect,
+                bmad_performance_slo_validate,
+                bmad_performance_report_generate,
+                bmad_performance_history_get
+            )
+            
+            if tool_name == "bmad_performance_load_test":
+                return await bmad_performance_load_test(**kwargs)
+            elif tool_name == "bmad_performance_stress_test":
+                return await bmad_performance_stress_test(**kwargs)
+            elif tool_name == "bmad_performance_scalability_test":
+                return await bmad_performance_scalability_test(**kwargs)
+            elif tool_name == "bmad_performance_metrics_collect":
+                return await bmad_performance_metrics_collect(**kwargs)
+            elif tool_name == "bmad_performance_slo_validate":
+                return await bmad_performance_slo_validate(**kwargs)
+            elif tool_name == "bmad_performance_report_generate":
+                return await bmad_performance_report_generate(**kwargs)
+            elif tool_name == "bmad_performance_history_get":
+                return await bmad_performance_history_get(**kwargs)
         else:
             return {"status": "error", "message": f"Unknown BMAD tool: {tool_name}"}
     elif tool_name == "bmad_git_get_history":
