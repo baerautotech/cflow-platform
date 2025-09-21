@@ -470,6 +470,35 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
                 return await bmad_webmcp_backup_config(**kwargs)
             elif tool_name == "bmad_webmcp_restore_config":
                 return await bmad_webmcp_restore_config(**kwargs)
+        # BMAD Installation Flow Testing Tools (Sprint 6 - Story 4.2)
+        elif tool_name.startswith("bmad_installation_"):
+            from ..handlers.installation_flow_testing_handlers import (
+                bmad_installation_flow_test,
+                bmad_installation_step_test,
+                bmad_installation_rollback_test,
+                bmad_installation_validate_environment,
+                bmad_installation_validate_components,
+                bmad_installation_get_flow_steps,
+                bmad_installation_test_prerequisites,
+                bmad_installation_generate_report
+            )
+            
+            if tool_name == "bmad_installation_flow_test":
+                return await bmad_installation_flow_test(**kwargs)
+            elif tool_name == "bmad_installation_step_test":
+                return await bmad_installation_step_test(**kwargs)
+            elif tool_name == "bmad_installation_rollback_test":
+                return await bmad_installation_rollback_test(**kwargs)
+            elif tool_name == "bmad_installation_validate_environment":
+                return await bmad_installation_validate_environment(**kwargs)
+            elif tool_name == "bmad_installation_validate_components":
+                return await bmad_installation_validate_components(**kwargs)
+            elif tool_name == "bmad_installation_get_flow_steps":
+                return await bmad_installation_get_flow_steps(**kwargs)
+            elif tool_name == "bmad_installation_test_prerequisites":
+                return await bmad_installation_test_prerequisites(**kwargs)
+            elif tool_name == "bmad_installation_generate_report":
+                return await bmad_installation_generate_report(**kwargs)
         # BMAD Integration Testing Tools (Phase 4.3)
         elif tool_name.startswith("bmad_integration_"):
             from ..handlers.integration_testing_handlers import (

@@ -533,6 +533,56 @@ class ToolRegistry:
             })
         ]
 
+        # BMAD Installation Flow Testing tools (Sprint 6 - Story 4.2)
+        tools += [
+            tool("bmad_installation_flow_test", "Test the complete installation flow", {
+                "type": "object",
+                "properties": {
+                    "test_environment": {"type": "boolean", "description": "Whether to test in a temporary environment", "default": True},
+                    "skip_optional_steps": {"type": "boolean", "description": "Whether to skip optional installation steps", "default": False}
+                },
+                "required": []
+            }),
+            tool("bmad_installation_step_test", "Test a specific installation step", {
+                "type": "object",
+                "properties": {
+                    "step_name": {"type": "string", "description": "Name of the installation step to test"},
+                    "custom_command": {"type": "string", "description": "Custom command to execute (JSON string)"}
+                },
+                "required": ["step_name"]
+            }),
+            tool("bmad_installation_rollback_test", "Test the rollback flow after installation", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_installation_validate_environment", "Validate the installation environment", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_installation_validate_components", "Validate all installation components", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_installation_get_flow_steps", "Get the list of installation flow steps", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_installation_test_prerequisites", "Test installation prerequisites", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_installation_generate_report", "Generate installation flow test report", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            })
+        ]
+
         # BMAD Integration Testing tools (Phase 4.3)
         tools += [
             tool("bmad_integration_cross_component_test", "Run cross-component integration testing"),
