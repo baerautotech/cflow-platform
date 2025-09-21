@@ -1,16 +1,23 @@
-# BMAD is Cerebral - Master Implementation Plan
+# BMAD is Cerebral - Unified Master Implementation Plan
 
-**Version:** 1.0  
+**Version:** 2.0  
 **Date:** 2025-09-21  
-**Status:** ACTIVE - Master Plan  
+**Status:** ACTIVE - Unified Master Plan  
 **Priority:** CRITICAL - Core Vision Implementation  
-**Type:** UNIFIED MASTER PLAN  
+**Type:** COMPLETE UNIFIED MASTER PLAN  
 
 ## 🎯 **EXECUTIVE SUMMARY**
 
-This is the **unified master plan** that consolidates all previous BMAD implementation efforts and establishes **BMAD Master as the central core of the Cerebral platform**. This plan eliminates conflicts, unifies architecture, and provides a clear path to making `@BMAD-master` become Cerebral itself.
+This is the **complete unified master plan** that consolidates ALL previous BMAD implementation efforts, including the initial PRD, all tasks, epics, and implementation stories. This plan establishes **BMAD Master as the central core of the Cerebral platform** and provides a comprehensive path to making `@BMAD-master` become Cerebral itself.
 
 **CORE VISION:** `@BMAD-master` is not just a tool or persona - it **BECOMES Cerebral** - the central orchestration system that manages all aspects of the platform.
+
+**CONSOLIDATION STATUS:** This plan now contains:
+- ✅ Initial PRD requirements (BMAD Master Tool Pattern)
+- ✅ All 68 incomplete items consolidated into 12 major story shards
+- ✅ Background agent orchestration design
+- ✅ Complete implementation roadmap
+- ✅ All tasks, epics, and implementation stories merged
 
 ---
 
@@ -49,6 +56,47 @@ This is the **unified master plan** that consolidates all previous BMAD implemen
 
 ---
 
+## 📋 **INITIAL PRD REQUIREMENTS (CONSOLIDATED)**
+
+### **BMAD Master Tool Pattern Implementation**
+**Source**: BMAD Master Tool Pattern PRD (consolidated)
+
+**Problem**: 94 individual tools exceed Cursor's 50-tool limit
+**Solution**: Master Tool Pattern - consolidate related operations into single master tools
+
+**Tool Count Reduction**: 94 tools → 51 tools (44% reduction)
+
+**Core BMAD Master Tools (8 tools)**:
+1. `bmad_task` - Task management operations
+2. `bmad_plan` - Planning operations  
+3. `bmad_doc` - Document management operations
+4. `bmad_workflow` - Workflow operations
+5. `bmad_hil` - Human-in-the-Loop operations
+6. `bmad_git` - Git integration operations
+7. `bmad_orchestrator` - Orchestration operations
+8. `bmad_expansion` - Expansion pack management
+
+**Master Tool Structure**:
+```json
+{
+  "name": "bmad_task",
+  "description": "BMAD task management operations",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "operation": {
+        "type": "string",
+        "enum": ["add", "get", "list", "update", "delete", "search"]
+      },
+      "task_id": {"type": "string"},
+      "task_data": {"type": "object"},
+      "filters": {"type": "object"}
+    },
+    "required": ["operation"]
+  }
+}
+```
+
 ## 📋 **CONSOLIDATED STORY SHARDS**
 
 ### **Phase 1: Core Unification (Weeks 1-2)**
@@ -58,19 +106,27 @@ This is the **unified master plan** that consolidates all previous BMAD implemen
 - **Effort**: 5 days
 - **Dependencies**: None
 - **Status**: PENDING
+- **Source**: Initial PRD + Implementation Stories (consolidated)
 
 **Tasks:**
 - [ ] Design unified BMAD Master core architecture
+- [ ] Implement Master Tool Base Classes (Story 1.1.1-1.1.3)
 - [ ] Implement persona activation system as Cerebral core
 - [ ] Create unified state management for all BMAD operations
 - [ ] Integrate with existing MCP tool registry
 - [ ] Build core orchestration engine
+- [ ] Implement Master Tool Registry (Story 1.1.2)
+- [ ] Implement Migration Adapter (Story 1.1.3)
 
 **Acceptance Criteria:**
 - `@BMAD-master` activates as Cerebral core
 - All 76+ BMAD tools accessible through unified interface
 - Persona state persists across sessions
 - Core orchestration handles all BMAD operations
+- Master Tool Pattern implemented (94 tools → 51 tools)
+- Abstract `MasterTool` class with operation support
+- `MasterToolRegistry` class with tool registration
+- `ToolMigrationAdapter` for backward compatibility
 
 #### **Shard 1.2: Plan Conflict Detection System**
 - **Priority**: HIGH
@@ -96,6 +152,7 @@ This is the **unified master plan** that consolidates all previous BMAD implemen
 - **Effort**: 4 days
 - **Dependencies**: Shard 1.1
 - **Status**: PENDING
+- **Source**: Implementation Stories (consolidated)
 
 **Tasks:**
 - [ ] Design unified persona activation framework
@@ -103,12 +160,22 @@ This is the **unified master plan** that consolidates all previous BMAD implemen
 - [ ] Create persona switching and context management
 - [ ] Build persona state persistence
 - [ ] Integrate with all existing interfaces
+- [ ] Implement Core BMAD Master Tools (Stories 1.2.1-1.2.4)
+- [ ] Implement Advanced BMAD Master Tools (Stories 1.3.1-1.3.4)
 
 **Acceptance Criteria:**
 - `@BMAD-master` becomes the central Cerebral activation
 - Seamless persona switching with context preservation
 - Unified interface across all platforms
 - Persistent persona state management
+- `BMADTaskMasterTool` with operations: add, get, list, update, delete, search
+- `BMADPlanMasterTool` with operations: create, update, get, list, validate, execute
+- `BMADDocMasterTool` with operations: create, update, get, list, approve, reject
+- `BMADWorkflowMasterTool` with operations: start, next, get, list, execute, status
+- `BMADHILMasterTool` with HIL operations
+- `BMADGitMasterTool` with Git integration operations
+- `BMADOrchestratorMasterTool` with orchestration operations
+- `BMADExpansionMasterTool` with expansion pack management
 
 ### **Phase 2: Advanced Integration (Weeks 3-4)**
 
@@ -410,3 +477,4 @@ This is the **unified master plan** that consolidates all previous BMAD implemen
 **Owner:** BMAD Master Team  
 **Stakeholders:** Development Team, Product Team, Architecture Team  
 **Status:** ACTIVE - Ready for Implementation
+

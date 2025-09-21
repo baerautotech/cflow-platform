@@ -1,0 +1,15 @@
+{
+  "persona_id": "pm",
+  "context": {
+    "cerebral_session_id": null,
+    "activated_at": "2025-09-21T19:48:00.722089",
+    "cerebral_extensions": {
+      "context_preservation": true,
+      "session_management": true,
+      "mcp_integration": true,
+      "webmcp_routing": true
+    }
+  },
+  "timestamp": "2025-09-21T19:48:00.722093",
+  "version": "1.0"
+}

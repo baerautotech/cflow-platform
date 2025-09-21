@@ -143,6 +143,16 @@ class ToolRegistry:
             tool("bmad_epic_list", "List epics for project"),
         ]
 
+        # BMAD Persona Management Tools
+        tools += [
+            tool("bmad_discover_personas", "Discover all available BMAD-Method personas"),
+            tool("bmad_activate_persona", "Activate a BMAD-Method persona"),
+            tool("bmad_deactivate_persona", "Deactivate current persona"),
+            tool("bmad_execute_persona_command", "Execute a command on the active persona"),
+            tool("bmad_get_persona_status", "Get current persona status"),
+            tool("bmad_switch_persona", "Switch to a different persona"),
+        ]
+
         # BMAD Workflow Engine tools
         tools += [
             tool("bmad_workflow_start", "Start specific BMAD workflow"),

@@ -175,6 +175,27 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             return await handler.bmad_epic_get(**kwargs)
         elif tool_name == "bmad_epic_list":
             return await handler.bmad_epic_list(**kwargs)
+        
+        # BMAD Persona Management Tools
+        elif tool_name == "bmad_discover_personas":
+            from ..handlers.bmad_persona_handlers import bmad_persona_handlers
+            return await bmad_persona_handlers.bmad_discover_personas(kwargs or {})
+        elif tool_name == "bmad_activate_persona":
+            from ..handlers.bmad_persona_handlers import bmad_persona_handlers
+            return await bmad_persona_handlers.bmad_activate_persona(kwargs or {})
+        elif tool_name == "bmad_deactivate_persona":
+            from ..handlers.bmad_persona_handlers import bmad_persona_handlers
+            return await bmad_persona_handlers.bmad_deactivate_persona(kwargs or {})
+        elif tool_name == "bmad_execute_persona_command":
+            from ..handlers.bmad_persona_handlers import bmad_persona_handlers
+            return await bmad_persona_handlers.bmad_execute_persona_command(kwargs or {})
+        elif tool_name == "bmad_get_persona_status":
+            from ..handlers.bmad_persona_handlers import bmad_persona_handlers
+            return await bmad_persona_handlers.bmad_get_persona_status(kwargs or {})
+        elif tool_name == "bmad_switch_persona":
+            from ..handlers.bmad_persona_handlers import bmad_persona_handlers
+            return await bmad_persona_handlers.bmad_switch_persona(kwargs or {})
+        
         elif tool_name == "bmad_workflow_start":
             return await handler.bmad_workflow_start(**kwargs)
         elif tool_name == "bmad_workflow_next":

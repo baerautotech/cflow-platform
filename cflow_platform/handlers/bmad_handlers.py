@@ -506,6 +506,10 @@ class BMADHandlers:
             # Fallback to original method
             return self._generate_arch_content_legacy(project_name, tech_stack)
     
+    def _generate_arch_content(self, project_name: str, tech_stack: Optional[List[str]]) -> str:
+        """Generate Architecture content from parameters."""
+        return self._generate_arch_content_legacy(project_name, tech_stack)
+
     def _generate_arch_content_legacy(self, project_name: str, tech_stack: Optional[List[str]]) -> str:
         """Generate Architecture content from template and parameters."""
         tech_list = ", ".join(tech_stack or ["Python", "React", "PostgreSQL"])
@@ -582,6 +586,10 @@ This document outlines the overall project architecture for {project_name}, incl
             # Fallback to original method
             return self._generate_story_content_legacy(project_name, user_stories)
     
+    def _generate_story_content(self, project_name: str, user_stories: Optional[List[str]]) -> str:
+        """Generate Story content from parameters."""
+        return self._generate_story_content_legacy(project_name, user_stories)
+
     def _generate_story_content_legacy(self, project_name: str, user_stories: Optional[List[str]]) -> str:
         """Generate Story content from template and parameters."""
         stories_list = chr(10).join(f"- {story}" for story in (user_stories or ["As a user, I want to..."]))
