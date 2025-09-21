@@ -31,6 +31,12 @@ def cli() -> int:
     parser.add_argument("--initial-backfill", action="store_true", help="Backfill docs/tasks locally and run one-shot sync")
     parser.add_argument("--setup-bmad", action="store_true", help="Setup BMAD integration components")
     parser.add_argument("--verify-bmad", action="store_true", help="Verify BMAD templates and handlers are available")
+    parser.add_argument("--setup-webmcp", action="store_true", help="Setup WebMCP configuration")
+    parser.add_argument("--webmcp-server-url", default="http://localhost:8000", help="WebMCP server URL")
+    parser.add_argument("--webmcp-api-key", help="WebMCP API key")
+    parser.add_argument("--bmad-api-url", default="http://localhost:8001", help="BMAD API service URL")
+    parser.add_argument("--bmad-auth-token", help="BMAD authentication token")
+    parser.add_argument("--overwrite-config", action="store_true", help="Overwrite existing WebMCP configuration")
     args = parser.parse_args()
 
     rc = 0
@@ -70,6 +76,44 @@ def cli() -> int:
             print(f"✗ BMAD handlers not available: {e}")
             rc |= 1
 
+    # Setup WebMCP configuration
+    if args.setup_webmcp and rc == 0:
+        print("Setting up WebMCP configuration...")
+        try:
+            from cflow_platform.core.webmcp_installer import WebMCPInstaller, WebMCPConfig
+            
+            # Create WebMCP configuration
+            config = WebMCPConfig(
+                server_url=args.webmcp_server_url,
+                api_key=args.webmcp_api_key,
+                bmad_api_url=args.bmad_api_url,
+                bmad_auth_token=args.bmad_auth_token
+            )
+            
+            # Create installer and install configuration
+            installer = WebMCPInstaller()
+            result = installer.install_webmcp_configuration(config, overwrite=args.overwrite_config)
+            
+            if result.success:
+                print(f"✓ WebMCP configuration installed successfully")
+                print(f"  Config file: {result.config_file_path}")
+                if result.warnings:
+                    for warning in result.warnings:
+                        print(f"  Warning: {warning}")
+            else:
+                print(f"✗ WebMCP configuration installation failed: {result.message}")
+                if result.errors:
+                    for error in result.errors:
+                        print(f"  Error: {error}")
+                rc |= 1
+                
+        except ImportError as e:
+            print(f"✗ WebMCP installer not available: {e}")
+            rc |= 1
+        except Exception as e:
+            print(f"✗ WebMCP configuration setup failed: {e}")
+            rc |= 1
+
     # Optional: Supabase migrations
     if args.apply_migrations and rc == 0:
         rc |= _run([sys.executable, "-m", "cflow_platform.cli.migrate_supabase", "--apply"])
@@ -92,6 +136,8 @@ def cli() -> int:
         print("One-touch installer completed successfully.")
         if args.setup_bmad or args.verify_bmad:
             print("BMAD integration components verified and ready.")
+        if args.setup_webmcp:
+            print("WebMCP configuration installed and ready.")
     else:
         print("One-touch installer completed with issues. See logs above.")
     return rc

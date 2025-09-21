@@ -441,6 +441,35 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
                 return await bmad_security_test_history(**kwargs)
             elif tool_name == "bmad_security_test_clear_history":
                 return await bmad_security_test_clear_history(**kwargs)
+        # BMAD WebMCP Installer Tools (Sprint 6 - Story 4.1)
+        elif tool_name.startswith("bmad_webmcp_"):
+            from ..handlers.webmcp_installer_handlers import (
+                bmad_webmcp_install_config,
+                bmad_webmcp_validate_installation,
+                bmad_webmcp_test_integration,
+                bmad_webmcp_uninstall_config,
+                bmad_webmcp_get_config,
+                bmad_webmcp_update_config,
+                bmad_webmcp_backup_config,
+                bmad_webmcp_restore_config
+            )
+            
+            if tool_name == "bmad_webmcp_install_config":
+                return await bmad_webmcp_install_config(**kwargs)
+            elif tool_name == "bmad_webmcp_validate_installation":
+                return await bmad_webmcp_validate_installation(**kwargs)
+            elif tool_name == "bmad_webmcp_test_integration":
+                return await bmad_webmcp_test_integration(**kwargs)
+            elif tool_name == "bmad_webmcp_uninstall_config":
+                return await bmad_webmcp_uninstall_config(**kwargs)
+            elif tool_name == "bmad_webmcp_get_config":
+                return await bmad_webmcp_get_config(**kwargs)
+            elif tool_name == "bmad_webmcp_update_config":
+                return await bmad_webmcp_update_config(**kwargs)
+            elif tool_name == "bmad_webmcp_backup_config":
+                return await bmad_webmcp_backup_config(**kwargs)
+            elif tool_name == "bmad_webmcp_restore_config":
+                return await bmad_webmcp_restore_config(**kwargs)
         # BMAD Integration Testing Tools (Phase 4.3)
         elif tool_name.startswith("bmad_integration_"):
             from ..handlers.integration_testing_handlers import (

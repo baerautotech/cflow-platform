@@ -469,6 +469,70 @@ class ToolRegistry:
             })
         ]
 
+        # BMAD WebMCP Installer tools (Sprint 6 - Story 4.1)
+        tools += [
+            tool("bmad_webmcp_install_config", "Install WebMCP configuration", {
+                "type": "object",
+                "properties": {
+                    "server_url": {"type": "string", "description": "WebMCP server URL", "default": "http://localhost:8000"},
+                    "api_key": {"type": "string", "description": "API key for authentication"},
+                    "timeout_seconds": {"type": "integer", "description": "Request timeout in seconds", "default": 30},
+                    "retry_attempts": {"type": "integer", "description": "Number of retry attempts", "default": 3},
+                    "enable_health_check": {"type": "boolean", "description": "Enable health checking", "default": True},
+                    "enable_feature_flags": {"type": "boolean", "description": "Enable feature flags", "default": True},
+                    "enable_performance_monitoring": {"type": "boolean", "description": "Enable performance monitoring", "default": True},
+                    "enable_security_testing": {"type": "boolean", "description": "Enable security testing", "default": True},
+                    "bmad_integration_enabled": {"type": "boolean", "description": "Enable BMAD integration", "default": True},
+                    "bmad_api_url": {"type": "string", "description": "BMAD API service URL", "default": "http://localhost:8001"},
+                    "bmad_auth_token": {"type": "string", "description": "BMAD authentication token"},
+                    "circuit_breaker_enabled": {"type": "boolean", "description": "Enable circuit breaker", "default": True},
+                    "rate_limiting_enabled": {"type": "boolean", "description": "Enable rate limiting", "default": True},
+                    "logging_level": {"type": "string", "description": "Logging level", "default": "INFO"},
+                    "overwrite": {"type": "boolean", "description": "Whether to overwrite existing configuration", "default": False}
+                },
+                "required": []
+            }),
+            tool("bmad_webmcp_validate_installation", "Validate WebMCP installation", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_webmcp_test_integration", "Test WebMCP integration", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_webmcp_uninstall_config", "Uninstall WebMCP configuration", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_webmcp_get_config", "Get current WebMCP configuration", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_webmcp_update_config", "Update WebMCP configuration", {
+                "type": "object",
+                "properties": {
+                    "config_updates": {"type": "string", "description": "JSON string with configuration updates"}
+                },
+                "required": ["config_updates"]
+            }),
+            tool("bmad_webmcp_backup_config", "Backup WebMCP configuration", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_webmcp_restore_config", "Restore WebMCP configuration from backup", {
+                "type": "object",
+                "properties": {
+                    "backup_file_path": {"type": "string", "description": "Path to backup file"}
+                },
+                "required": ["backup_file_path"]
+            })
+        ]
+
         # BMAD Integration Testing tools (Phase 4.3)
         tools += [
             tool("bmad_integration_cross_component_test", "Run cross-component integration testing"),
