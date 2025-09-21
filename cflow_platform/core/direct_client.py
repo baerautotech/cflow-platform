@@ -254,6 +254,57 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             return await handler.bmad_git_push_changes(**kwargs)
         elif tool_name == "bmad_git_validate_changes":
             return await handler.bmad_git_validate_changes(**kwargs)
+        # BMAD Workflow Testing Tools (Phase 4.1.1)
+        elif tool_name.startswith("bmad_workflow_test_"):
+            from ..handlers.workflow_testing_handlers import (
+                bmad_workflow_test_run_complete,
+                bmad_workflow_test_create_suite,
+                bmad_workflow_test_run_suite,
+                bmad_workflow_test_list_suites,
+                bmad_workflow_test_get_history,
+                bmad_workflow_test_get_statistics,
+                bmad_workflow_test_validate_step
+            )
+            
+            if tool_name == "bmad_workflow_test_run_complete":
+                return await bmad_workflow_test_run_complete(**kwargs)
+            elif tool_name == "bmad_workflow_test_create_suite":
+                return await bmad_workflow_test_create_suite(**kwargs)
+            elif tool_name == "bmad_workflow_test_run_suite":
+                return await bmad_workflow_test_run_suite(**kwargs)
+            elif tool_name == "bmad_workflow_test_list_suites":
+                return await bmad_workflow_test_list_suites(**kwargs)
+            elif tool_name == "bmad_workflow_test_get_history":
+                return await bmad_workflow_test_get_history(**kwargs)
+            elif tool_name == "bmad_workflow_test_get_statistics":
+                return await bmad_workflow_test_get_statistics(**kwargs)
+            elif tool_name == "bmad_workflow_test_validate_step":
+                return await bmad_workflow_test_validate_step(**kwargs)
+        # BMAD Scenario-based Testing Tools (Phase 4.1.2)
+        elif tool_name.startswith("bmad_scenario_"):
+            from ..handlers.scenario_testing_handlers import (
+                bmad_scenario_create,
+                bmad_scenario_execute,
+                bmad_scenario_list,
+                bmad_scenario_validate,
+                bmad_scenario_report,
+                bmad_scenario_get_history
+            )
+            
+            if tool_name == "bmad_scenario_create":
+                return await bmad_scenario_create(**kwargs)
+            elif tool_name == "bmad_scenario_execute":
+                return await bmad_scenario_execute(**kwargs)
+            elif tool_name == "bmad_scenario_list":
+                return await bmad_scenario_list(**kwargs)
+            elif tool_name == "bmad_scenario_validate":
+                return await bmad_scenario_validate(**kwargs)
+            elif tool_name == "bmad_scenario_report":
+                return await bmad_scenario_report(**kwargs)
+            elif tool_name == "bmad_scenario_get_history":
+                return await bmad_scenario_get_history(**kwargs)
+        else:
+            return {"status": "error", "message": f"Unknown BMAD tool: {tool_name}"}
     elif tool_name == "bmad_git_get_history":
         return await handler.bmad_git_get_history(**kwargs)
     
@@ -373,8 +424,6 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
         from .basic_workflow_implementations import get_basic_workflows
         workflows = get_basic_workflows()
         return await workflows.get_workflow_status(kwargs.get("project_id", ""))
-    else:
-        return {"status": "error", "message": f"Unknown BMAD tool: {tool_name}"}
     if tool_name in {"internet_search"}:
         mod = load_handler_module("internet_search_handlers")
         handler = mod.InternetSearchHandlers()  # type: ignore[attr-defined]

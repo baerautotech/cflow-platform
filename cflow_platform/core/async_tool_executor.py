@@ -380,3 +380,79 @@ class StreamingResponse:
     def get_chunks(self) -> List[Any]:
         """Get all chunks"""
         return self.chunks.copy()
+
+
+# Module-level functions for backward compatibility and convenience
+_executor_instance: Optional[AsyncToolExecutor] = None
+
+
+async def execute_tool_async(
+    tool_name: str,
+    kwargs: Dict[str, Any],
+    priority: Priority = Priority.NORMAL,
+    timeout_seconds: float = 30.0
+) -> ToolExecutionResult:
+    """
+    Execute a tool asynchronously with enhanced infrastructure.
+    
+    Args:
+        tool_name: Name of the tool to execute
+        kwargs: Tool arguments
+        priority: Execution priority
+        timeout_seconds: Execution timeout
+        
+    Returns:
+        ToolExecutionResult with execution details
+    """
+    executor = await get_executor()
+    
+    # Create execution request
+    request = ToolExecutionRequest(
+        tool_name=tool_name,
+        arguments=kwargs,
+        priority=priority,
+        timeout=timeout_seconds,
+        request_id=f"{tool_name}_{int(time.time() * 1000)}"
+    )
+    
+    # Execute the tool
+    return await executor.execute_tool(
+        tool_name=tool_name,
+        arguments=kwargs,
+        priority=priority,
+        timeout=timeout_seconds
+    )
+
+
+async def get_executor() -> AsyncToolExecutor:
+    """
+    Get the global async tool executor instance.
+    
+    Returns:
+        AsyncToolExecutor instance
+    """
+    global _executor_instance
+    
+    if _executor_instance is None:
+        _executor_instance = AsyncToolExecutor()
+        await _executor_instance.initialize()
+    
+    return _executor_instance
+
+
+# Alias for backward compatibility
+ToolPriority = Priority
+
+
+# Module exports
+__all__ = [
+    "AsyncToolExecutor",
+    "ToolExecutionRequest", 
+    "ToolExecutionResult",
+    "Priority",
+    "ToolPriority",
+    "execute_tool_async",
+    "get_executor",
+    "MemoryMonitor",
+    "StreamingResponse"
+]
