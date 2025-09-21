@@ -412,6 +412,35 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
                 return await bmad_error_recovery_clear_history(**kwargs)
             elif tool_name == "bmad_circuit_breaker_status":
                 return await bmad_circuit_breaker_status(**kwargs)
+        # BMAD Security and Authentication Testing Tools (Sprint 5 - Story 3.5)
+        elif tool_name.startswith("bmad_security_"):
+            from ..handlers.security_authentication_testing_handlers import (
+                bmad_security_authentication_test,
+                bmad_security_authorization_test,
+                bmad_security_input_validation_test,
+                bmad_security_rate_limiting_test,
+                bmad_security_test_suite,
+                bmad_security_vulnerability_scan,
+                bmad_security_test_history,
+                bmad_security_test_clear_history
+            )
+            
+            if tool_name == "bmad_security_authentication_test":
+                return await bmad_security_authentication_test(**kwargs)
+            elif tool_name == "bmad_security_authorization_test":
+                return await bmad_security_authorization_test(**kwargs)
+            elif tool_name == "bmad_security_input_validation_test":
+                return await bmad_security_input_validation_test(**kwargs)
+            elif tool_name == "bmad_security_rate_limiting_test":
+                return await bmad_security_rate_limiting_test(**kwargs)
+            elif tool_name == "bmad_security_test_suite":
+                return await bmad_security_test_suite(**kwargs)
+            elif tool_name == "bmad_security_vulnerability_scan":
+                return await bmad_security_vulnerability_scan(**kwargs)
+            elif tool_name == "bmad_security_test_history":
+                return await bmad_security_test_history(**kwargs)
+            elif tool_name == "bmad_security_test_clear_history":
+                return await bmad_security_test_clear_history(**kwargs)
         # BMAD Integration Testing Tools (Phase 4.3)
         elif tool_name.startswith("bmad_integration_"):
             from ..handlers.integration_testing_handlers import (

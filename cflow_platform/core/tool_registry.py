@@ -402,6 +402,73 @@ class ToolRegistry:
             })
         ]
 
+        # BMAD Security and Authentication Testing tools (Sprint 5 - Story 3.5)
+        tools += [
+            tool("bmad_security_authentication_test", "Test authentication mechanisms for an endpoint", {
+                "type": "object",
+                "properties": {
+                    "endpoint": {"type": "string", "description": "API endpoint to test"},
+                    "auth_method": {"type": "string", "description": "Authentication method (jwt, basic, bearer, etc.)", "default": "jwt"},
+                    "test_credentials": {"type": "object", "description": "Test credentials to use", "default": {}}
+                },
+                "required": ["endpoint"]
+            }),
+            tool("bmad_security_authorization_test", "Test authorization mechanisms for an endpoint", {
+                "type": "object",
+                "properties": {
+                    "endpoint": {"type": "string", "description": "API endpoint to test"},
+                    "user_roles": {"type": "string", "description": "JSON string with list of user roles to test"},
+                    "required_permissions": {"type": "string", "description": "JSON string with list of required permissions"}
+                },
+                "required": ["endpoint", "user_roles", "required_permissions"]
+            }),
+            tool("bmad_security_input_validation_test", "Test input validation and sanitization for an endpoint", {
+                "type": "object",
+                "properties": {
+                    "endpoint": {"type": "string", "description": "API endpoint to test"},
+                    "input_fields": {"type": "string", "description": "JSON string with list of input fields to test"},
+                    "malicious_inputs": {"type": "string", "description": "JSON string with list of malicious inputs to test"}
+                },
+                "required": ["endpoint", "input_fields"]
+            }),
+            tool("bmad_security_rate_limiting_test", "Test rate limiting mechanisms for an endpoint", {
+                "type": "object",
+                "properties": {
+                    "endpoint": {"type": "string", "description": "API endpoint to test"},
+                    "rate_limit": {"type": "integer", "description": "Expected rate limit (requests per time window)", "default": 100},
+                    "time_window": {"type": "integer", "description": "Time window in seconds", "default": 60}
+                },
+                "required": ["endpoint"]
+            }),
+            tool("bmad_security_test_suite", "Run comprehensive security test suite", {
+                "type": "object",
+                "properties": {
+                    "endpoints": {"type": "string", "description": "JSON string with list of endpoints to test"},
+                    "test_types": {"type": "string", "description": "JSON string with list of security test types to perform"},
+                    "user_roles": {"type": "string", "description": "JSON string with list of user roles to test with"}
+                },
+                "required": ["endpoints", "test_types"]
+            }),
+            tool("bmad_security_vulnerability_scan", "Perform comprehensive vulnerability scan on an endpoint", {
+                "type": "object",
+                "properties": {
+                    "endpoint": {"type": "string", "description": "API endpoint to scan"},
+                    "scan_types": {"type": "string", "description": "JSON string with list of vulnerability scan types"}
+                },
+                "required": ["endpoint", "scan_types"]
+            }),
+            tool("bmad_security_test_history", "Get history of all security and authentication tests", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_security_test_clear_history", "Clear all security and authentication test history", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            })
+        ]
+
         # BMAD Integration Testing tools (Phase 4.3)
         tools += [
             tool("bmad_integration_cross_component_test", "Run cross-component integration testing"),
