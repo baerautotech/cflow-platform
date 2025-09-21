@@ -366,6 +366,29 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
                 return await bmad_performance_report_generate(**kwargs)
             elif tool_name == "bmad_performance_history_get":
                 return await bmad_performance_history_get(**kwargs)
+        # BMAD Integration Testing Tools (Phase 4.3)
+        elif tool_name.startswith("bmad_integration_"):
+            from ..handlers.integration_testing_handlers import (
+                bmad_integration_cross_component_test,
+                bmad_integration_api_test,
+                bmad_integration_database_test,
+                bmad_integration_full_suite,
+                bmad_integration_report_generate,
+                bmad_integration_history_get
+            )
+            
+            if tool_name == "bmad_integration_cross_component_test":
+                return await bmad_integration_cross_component_test(**kwargs)
+            elif tool_name == "bmad_integration_api_test":
+                return await bmad_integration_api_test(**kwargs)
+            elif tool_name == "bmad_integration_database_test":
+                return await bmad_integration_database_test(**kwargs)
+            elif tool_name == "bmad_integration_full_suite":
+                return await bmad_integration_full_suite(**kwargs)
+            elif tool_name == "bmad_integration_report_generate":
+                return await bmad_integration_report_generate(**kwargs)
+            elif tool_name == "bmad_integration_history_get":
+                return await bmad_integration_history_get(**kwargs)
         else:
             return {"status": "error", "message": f"Unknown BMAD tool: {tool_name}"}
     elif tool_name == "bmad_git_get_history":

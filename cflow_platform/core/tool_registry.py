@@ -276,6 +276,16 @@ class ToolRegistry:
             tool("bmad_performance_history_get", "Get performance testing execution history"),
         ]
 
+        # BMAD Integration Testing tools (Phase 4.3)
+        tools += [
+            tool("bmad_integration_cross_component_test", "Run cross-component integration testing"),
+            tool("bmad_integration_api_test", "Run API integration testing for all endpoints"),
+            tool("bmad_integration_database_test", "Run database integration testing for all operations"),
+            tool("bmad_integration_full_suite", "Run complete integration test suite"),
+            tool("bmad_integration_report_generate", "Generate comprehensive integration testing report"),
+            tool("bmad_integration_history_get", "Get integration testing execution history"),
+        ]
+
         return tools
 
     @staticmethod
