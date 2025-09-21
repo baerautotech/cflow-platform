@@ -308,6 +308,18 @@ class ToolRegistry:
             tool("bmad_monitoring_report_generate", "Generate comprehensive monitoring reports"),
         ]
 
+        # BMAD Expansion Pack System tools (Phase 5.1)
+        tools += [
+            tool("bmad_expansion_system_status", "Get expansion pack system status"),
+            tool("bmad_expansion_pack_install", "Install expansion packs"),
+            tool("bmad_expansion_pack_uninstall", "Uninstall expansion packs"),
+            tool("bmad_expansion_pack_list", "List available and installed expansion packs"),
+            tool("bmad_expansion_pack_activate", "Activate expansion pack capabilities"),
+            tool("bmad_expansion_pack_deactivate", "Deactivate expansion pack capabilities"),
+            tool("bmad_expansion_pack_update", "Update expansion packs"),
+            tool("bmad_expansion_pack_validate", "Validate expansion pack integrity"),
+        ]
+
         return tools
 
     @staticmethod

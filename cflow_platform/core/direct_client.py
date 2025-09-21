@@ -441,6 +441,35 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
                 return await bmad_logging_centralized(**kwargs)
             elif tool_name == "bmad_monitoring_report_generate":
                 return await bmad_monitoring_report_generate(**kwargs)
+        # BMAD Expansion Pack System Tools (Phase 5.1)
+        elif tool_name.startswith("bmad_expansion_"):
+            from ..handlers.expansion_pack_system_handlers import (
+                bmad_expansion_system_status,
+                bmad_expansion_pack_install,
+                bmad_expansion_pack_uninstall,
+                bmad_expansion_pack_list,
+                bmad_expansion_pack_activate,
+                bmad_expansion_pack_deactivate,
+                bmad_expansion_pack_update,
+                bmad_expansion_pack_validate
+            )
+            
+            if tool_name == "bmad_expansion_system_status":
+                return await bmad_expansion_system_status(**kwargs)
+            elif tool_name == "bmad_expansion_pack_install":
+                return await bmad_expansion_pack_install(**kwargs)
+            elif tool_name == "bmad_expansion_pack_uninstall":
+                return await bmad_expansion_pack_uninstall(**kwargs)
+            elif tool_name == "bmad_expansion_pack_list":
+                return await bmad_expansion_pack_list(**kwargs)
+            elif tool_name == "bmad_expansion_pack_activate":
+                return await bmad_expansion_pack_activate(**kwargs)
+            elif tool_name == "bmad_expansion_pack_deactivate":
+                return await bmad_expansion_pack_deactivate(**kwargs)
+            elif tool_name == "bmad_expansion_pack_update":
+                return await bmad_expansion_pack_update(**kwargs)
+            elif tool_name == "bmad_expansion_pack_validate":
+                return await bmad_expansion_pack_validate(**kwargs)
         else:
             return {"status": "error", "message": f"Unknown BMAD tool: {tool_name}"}
     elif tool_name == "bmad_git_get_history":
