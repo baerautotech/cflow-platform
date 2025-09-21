@@ -32,8 +32,7 @@ on:
       - 'cflow_platform/core/migration_validator.py'
       - 'cflow_platform/core/legacy_tool_removal.py'
       - 'cflow_platform/core/performance_optimizer.py'
-      # Cerebral Backend
-      - 'cflow_platform/core/cerebral_backend.py'
+      # Cerebral Backend (built from baerautotech/cerebral repository)
       # Infrastructure
       - 'infrastructure/docker/Dockerfile.webmcp'
       - 'infrastructure/docker/Dockerfile.cerebral-backend'
@@ -87,14 +86,21 @@ jobs:
         run: |
           ssh cerebral "echo 'SSH connection successful'"
 
+      - name: Clone Cerebral repository
+        run: |
+          git clone https://github.com/baerautotech/cerebral.git ../cerebral
+          cd ../cerebral
+          git checkout main
+          echo "Cerebral repository cloned successfully"
+
       - name: Build Docker images
         run: |
-          # Build WebMCP image
+          # Build WebMCP image (from cflow-platform)
           docker build -f infrastructure/docker/Dockerfile.webmcp -t $REGISTRY/webmcp:$GITHUB_SHA .
           docker tag $REGISTRY/webmcp:$GITHUB_SHA $REGISTRY/webmcp:latest
           
-          # Build Cerebral Backend image
-          docker build -f infrastructure/docker/Dockerfile.cerebral-backend -t $REGISTRY/cerebral-backend:$GITHUB_SHA .
+          # Build Cerebral Backend image (from Cerebral repository)
+          docker build -f infrastructure/docker/Dockerfile.cerebral-backend -t $REGISTRY/cerebral-backend:$GITHUB_SHA ../cerebral/
           docker tag $REGISTRY/cerebral-backend:$GITHUB_SHA $REGISTRY/cerebral-backend:latest
 
       - name: Push Docker images

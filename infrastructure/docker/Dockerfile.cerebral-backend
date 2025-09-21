@@ -13,8 +13,8 @@ RUN pip install uv
 # Set working directory
 WORKDIR /app
 
-# Copy dependency files
-COPY pyproject.toml uv.lock ./
+# Copy dependency files from Cerebral backend-python
+COPY backend-python/pyproject.toml backend-python/uv.lock ./
 
 # Install dependencies
 RUN uv sync --frozen --no-dev
@@ -36,12 +36,11 @@ WORKDIR /app
 # Copy virtual environment from builder
 COPY --from=builder /app/.venv /app/.venv
 
-# Copy application code
-COPY cflow_platform/ ./cflow_platform/
-COPY vendor/ ./vendor/
+# Copy Cerebral backend-python application code
+COPY backend-python/ ./backend-python/
 
 # Set Python path
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app/backend-python
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Create necessary directories
@@ -59,4 +58,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 EXPOSE 8000
 
 # Run the application
-CMD ["python", "-m", "cflow_platform.core.cerebral_backend"]
+CMD ["python", "backend-python/main.py"]
