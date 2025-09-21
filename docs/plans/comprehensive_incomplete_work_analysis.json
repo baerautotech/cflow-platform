@@ -1,0 +1,357 @@
+{
+  "agentic_plan_phases": [
+    {
+      "phase": "Phase 0",
+      "name": "Foundation (CLI + Configuration)",
+      "status": "PENDING"
+    },
+    {
+      "phase": "Phase 1",
+      "name": "Cflow Core Agent Loop",
+      "status": "PENDING"
+    },
+    {
+      "phase": "Phase 2",
+      "name": "Reasoning + Instruction Profiles",
+      "status": "PENDING"
+    },
+    {
+      "phase": "Phase 3",
+      "name": "MCP Servers & Docs/Search",
+      "status": "PENDING"
+    },
+    {
+      "phase": "Phase 4",
+      "name": "Optional packs",
+      "status": "PENDING"
+    },
+    {
+      "phase": "Phase 5",
+      "name": "Platform integration & docs",
+      "status": "PENDING"
+    },
+    {
+      "phase": "Phase 6",
+      "name": "Memory & Supabase Sync",
+      "status": "PENDING"
+    },
+    {
+      "phase": "Phase 7",
+      "name": "Sub-agents & orchestration",
+      "status": "PENDING"
+    },
+    {
+      "phase": "Phase 8",
+      "name": "Post-run updates & auto-commit",
+      "status": "PENDING"
+    },
+    {
+      "phase": "Phase 9",
+      "name": "Budgets & restarts",
+      "status": "PENDING"
+    },
+    {
+      "phase": "Phase 10",
+      "name": "Apple Silicon MPS",
+      "status": "PENDING"
+    }
+  ],
+  "bmad_integration_tasks": [
+    {
+      "task": "Task 2.2: Map artifacts to DB schema",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "task": "Task 2.3: UX scope for PRD/Architecture/Story forms",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "task": "Task 3.1: Scaffold BMAD HTTP API service",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "task": "Task 3.2: Implement BMAD HTTP API facade endpoints",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "task": "Task 3.3: Implement BMAD project type detection system",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "task": "Task 3.4: Implement BMAD brownfield support",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "task": "Task 3.5: Implement BMAD expansion pack endpoints",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "task": "Task 3.6: WebMCP integration for BMAD tools",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "task": "Task 3.7: Provider router integration",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "task": "Task 3.8: Dynamic expansion pack loading system",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "task": "Task 3.9: Workflow routing system",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "task": "Task 10.1: cflow-local bmad CLI",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "task": "Task 10.2: WebMCP tool integration",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "task": "Task 10.3: Sync engine (bidirectional)",
+      "status": "PENDING",
+      "priority": "HIGH"
+    }
+  ],
+  "architecture_tasks": [],
+  "engineering_tasks": [],
+  "expansion_pack_tasks": [
+    {
+      "task": "Game Dev expansion pack integration",
+      "status": "PENDING",
+      "priority": "MEDIUM"
+    },
+    {
+      "task": "Creative Writing expansion pack integration",
+      "status": "PENDING",
+      "priority": "MEDIUM"
+    },
+    {
+      "task": "Infrastructure DevOps expansion pack integration",
+      "status": "PENDING",
+      "priority": "MEDIUM"
+    },
+    {
+      "task": "Technical Research expansion pack integration",
+      "status": "PENDING",
+      "priority": "MEDIUM"
+    },
+    {
+      "task": "Unity Game Dev expansion pack integration",
+      "status": "PENDING",
+      "priority": "MEDIUM"
+    },
+    {
+      "task": "Phaser Game Dev expansion pack integration",
+      "status": "PENDING",
+      "priority": "MEDIUM"
+    },
+    {
+      "task": "Expansion pack management system",
+      "status": "PENDING",
+      "priority": "MEDIUM"
+    },
+    {
+      "task": "Dynamic expansion pack loading",
+      "status": "PENDING",
+      "priority": "MEDIUM"
+    },
+    {
+      "task": "Expansion pack conflict resolution",
+      "status": "PENDING",
+      "priority": "MEDIUM"
+    }
+  ],
+  "code_todos": [],
+  "validation_gates": [
+    {
+      "gate": "Gate B: 1.2 e2e: fix seeded failing test",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "gate": "Gate C: 2.x reasoning: bounded SRP plans",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "gate": "Gate D: 3.x sandbox: no network; limits enforced",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "gate": "Gate E: Docs/search integration: Context7 + internet search",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "gate": "Gate F: Docs complete; pre-commit green; telemetry opt-in",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "gate": "Gate P: Provider configured for Cerebral Server cluster",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "gate": "Gate M: Memory checkpoints created",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "gate": "Gate RAG: Cursor artifacts mirrored into CerebralMemory",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "gate": "Gate VEC: Apple Silicon MPS embedder",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "gate": "Gate RDB: Relational retrieval via Supabase",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "gate": "Gate R: Restart budgets enforced",
+      "status": "PENDING",
+      "priority": "HIGH"
+    },
+    {
+      "gate": "Gate Cmt: Commits only when hooks pass",
+      "status": "PENDING",
+      "priority": "HIGH"
+    }
+  ],
+  "blocked_items": [
+    {
+      "item": "1.6 E2E seeded failing test to green",
+      "status": "BLOCKED",
+      "priority": "HIGH"
+    },
+    {
+      "item": "2.2 code_reasoning.plan",
+      "status": "BLOCKED",
+      "priority": "HIGH"
+    },
+    {
+      "item": "3.1 sandbox.run_python",
+      "status": "BLOCKED",
+      "priority": "HIGH"
+    },
+    {
+      "item": "6.4 Filesystem ingestion (Cursor artifacts)",
+      "status": "BLOCKED",
+      "priority": "HIGH"
+    },
+    {
+      "item": "7.1/7.2/7.3 Sub-agents & orchestration",
+      "status": "BLOCKED",
+      "priority": "HIGH"
+    }
+  ],
+  "partial_items": [
+    {
+      "item": "0.2 Model provider abstraction",
+      "status": "PARTIAL",
+      "priority": "MEDIUM"
+    },
+    {
+      "item": "0.3 Iteration budgets and restart heuristics",
+      "status": "PARTIAL",
+      "priority": "MEDIUM"
+    },
+    {
+      "item": "1.3 Minimal edit applier",
+      "status": "PARTIAL",
+      "priority": "MEDIUM"
+    },
+    {
+      "item": "1.4 Lint/pre-commit integration",
+      "status": "PARTIAL",
+      "priority": "MEDIUM"
+    },
+    {
+      "item": "1.5 Dry-run edits + diff presentation",
+      "status": "PARTIAL",
+      "priority": "MEDIUM"
+    },
+    {
+      "item": "2.1 Instruction profiles loader",
+      "status": "PARTIAL",
+      "priority": "MEDIUM"
+    },
+    {
+      "item": "3.2 Context7 auto-docs",
+      "status": "PARTIAL",
+      "priority": "MEDIUM"
+    },
+    {
+      "item": "3.3 Internet search MCP",
+      "status": "PARTIAL",
+      "priority": "MEDIUM"
+    },
+    {
+      "item": "6.1 cflow-memory-check CLI",
+      "status": "PARTIAL",
+      "priority": "MEDIUM"
+    },
+    {
+      "item": "6.2 Migrations & schemas",
+      "status": "PARTIAL",
+      "priority": "MEDIUM"
+    },
+    {
+      "item": "6.3 Dual-write pipeline",
+      "status": "PARTIAL",
+      "priority": "MEDIUM"
+    },
+    {
+      "item": "6.5 Request routing prefer CerebralMemory",
+      "status": "PARTIAL",
+      "priority": "MEDIUM"
+    },
+    {
+      "item": "9.1/9.2 Budgets & restarts",
+      "status": "PARTIAL",
+      "priority": "MEDIUM"
+    },
+    {
+      "item": "5.x Platform integration & docs",
+      "status": "PARTIAL",
+      "priority": "MEDIUM"
+    },
+    {
+      "item": "8.x Post-run updates & auto-commit",
+      "status": "PARTIAL",
+      "priority": "MEDIUM"
+    },
+    {
+      "item": "10.1 Apple Silicon MPS default/fallback",
+      "status": "PARTIAL",
+      "priority": "MEDIUM"
+    },
+    {
+      "item": "10.2 Record model/dims; SLOs; dims enforcement",
+      "status": "PARTIAL",
+      "priority": "MEDIUM"
+    }
+  ]
+}
