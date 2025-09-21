@@ -386,6 +386,32 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             elif tool_name == "bmad_performance_system_monitor":
                 from ..handlers.performance_load_testing_handlers import bmad_performance_system_monitor
                 return await bmad_performance_system_monitor(**kwargs)
+        # BMAD Error Handling and Recovery Testing Tools (Sprint 5 - Story 3.4)
+        elif tool_name.startswith("bmad_error_") or tool_name.startswith("bmad_recovery_") or tool_name.startswith("bmad_resilience_") or tool_name.startswith("bmad_circuit_breaker_"):
+            from ..handlers.error_handling_recovery_testing_handlers import (
+                bmad_error_injection_test,
+                bmad_recovery_strategy_test,
+                bmad_resilience_test_suite,
+                bmad_circuit_breaker_test,
+                bmad_error_recovery_history,
+                bmad_error_recovery_clear_history,
+                bmad_circuit_breaker_status
+            )
+            
+            if tool_name == "bmad_error_injection_test":
+                return await bmad_error_injection_test(**kwargs)
+            elif tool_name == "bmad_recovery_strategy_test":
+                return await bmad_recovery_strategy_test(**kwargs)
+            elif tool_name == "bmad_resilience_test_suite":
+                return await bmad_resilience_test_suite(**kwargs)
+            elif tool_name == "bmad_circuit_breaker_test":
+                return await bmad_circuit_breaker_test(**kwargs)
+            elif tool_name == "bmad_error_recovery_history":
+                return await bmad_error_recovery_history(**kwargs)
+            elif tool_name == "bmad_error_recovery_clear_history":
+                return await bmad_error_recovery_clear_history(**kwargs)
+            elif tool_name == "bmad_circuit_breaker_status":
+                return await bmad_circuit_breaker_status(**kwargs)
         # BMAD Integration Testing Tools (Phase 4.3)
         elif tool_name.startswith("bmad_integration_"):
             from ..handlers.integration_testing_handlers import (

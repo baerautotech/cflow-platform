@@ -335,6 +335,73 @@ class ToolRegistry:
             })
         ]
 
+        # BMAD Error Handling and Recovery Testing tools (Sprint 5 - Story 3.4)
+        tools += [
+            tool("bmad_error_injection_test", "Inject specific errors into tool execution for testing", {
+                "type": "object",
+                "properties": {
+                    "tool_name": {"type": "string", "description": "Name of the tool to test"},
+                    "error_type": {"type": "string", "description": "Type of error to inject", "enum": ["timeout", "connection_error", "authentication_error", "authorization_error", "validation_error", "rate_limit_error", "internal_server_error", "service_unavailable", "network_error", "memory_error", "cpu_error"]},
+                    "probability": {"type": "number", "description": "Probability of error injection (0.0 to 1.0)", "default": 1.0},
+                    "duration_seconds": {"type": "integer", "description": "Duration of error injection in seconds"},
+                    "error_message": {"type": "string", "description": "Custom error message"},
+                    "error_code": {"type": "integer", "description": "Custom error code"},
+                    "delay_seconds": {"type": "number", "description": "Delay before error injection", "default": 0.0},
+                    "tool_args": {"type": "object", "description": "Arguments to pass to the tool", "default": {}}
+                },
+                "required": ["tool_name", "error_type"]
+            }),
+            tool("bmad_recovery_strategy_test", "Test a specific recovery strategy against an injected error", {
+                "type": "object",
+                "properties": {
+                    "tool_name": {"type": "string", "description": "Name of the tool to test"},
+                    "error_type": {"type": "string", "description": "Type of error to inject"},
+                    "recovery_strategy": {"type": "string", "description": "Recovery strategy to test", "enum": ["retry", "fallback", "circuit_breaker", "timeout", "graceful_degradation"]},
+                    "max_attempts": {"type": "integer", "description": "Maximum number of retry attempts", "default": 3},
+                    "retry_delay": {"type": "number", "description": "Delay between retry attempts", "default": 1.0},
+                    "tool_args": {"type": "object", "description": "Arguments to pass to the tool", "default": {}}
+                },
+                "required": ["tool_name", "error_type", "recovery_strategy"]
+            }),
+            tool("bmad_resilience_test_suite", "Run comprehensive resilience test suite", {
+                "type": "object",
+                "properties": {
+                    "tool_name": {"type": "string", "description": "Name of the tool to test"},
+                    "error_types": {"type": "string", "description": "JSON string with list of error types to test"},
+                    "recovery_strategies": {"type": "string", "description": "JSON string with list of recovery strategies to test"},
+                    "tool_args": {"type": "object", "description": "Arguments to pass to the tool", "default": {}}
+                },
+                "required": ["tool_name", "error_types", "recovery_strategies"]
+            }),
+            tool("bmad_circuit_breaker_test", "Test circuit breaker functionality", {
+                "type": "object",
+                "properties": {
+                    "tool_name": {"type": "string", "description": "Name of the tool to test"},
+                    "failure_threshold": {"type": "integer", "description": "Number of failures before circuit opens", "default": 3},
+                    "recovery_timeout": {"type": "integer", "description": "Timeout in seconds before attempting recovery", "default": 300},
+                    "tool_args": {"type": "object", "description": "Arguments to pass to the tool", "default": {}}
+                },
+                "required": ["tool_name"]
+            }),
+            tool("bmad_error_recovery_history", "Get history of all error handling and recovery tests", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_error_recovery_clear_history", "Clear all error handling and recovery test history", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_circuit_breaker_status", "Get status of a specific circuit breaker", {
+                "type": "object",
+                "properties": {
+                    "circuit_breaker_key": {"type": "string", "description": "Key identifying the circuit breaker"}
+                },
+                "required": ["circuit_breaker_key"]
+            })
+        ]
+
         # BMAD Integration Testing tools (Phase 4.3)
         tools += [
             tool("bmad_integration_cross_component_test", "Run cross-component integration testing"),
