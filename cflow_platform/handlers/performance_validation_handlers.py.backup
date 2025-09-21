@@ -21,6 +21,161 @@ from ..core.git_workflow_manager import get_git_workflow_manager
 logger = logging.getLogger(__name__)
 
 
+async def bmad_performance_load_test(
+    target_users: int = 10,
+    ramp_up_duration: int = 30,
+    test_duration: int = 60,
+    ramp_down_duration: int = 30,
+    concurrent_requests: int = 5,
+    request_timeout: float = 5.0,
+    think_time: float = 1.0
+) -> Dict[str, Any]:
+    """
+    Run load testing for multi-agent system under load.
+    
+    Args:
+        target_users: Number of concurrent users to simulate
+        ramp_up_duration: Time in seconds to ramp up to target users
+        test_duration: Duration of the load test in seconds
+        ramp_down_duration: Time in seconds to ramp down from target users
+        concurrent_requests: Number of concurrent requests per user
+        request_timeout: Timeout for individual requests in seconds
+        think_time: Time between requests in seconds
+        
+    Returns:
+        Dict containing load test results
+    """
+    try:
+        engine = get_performance_engine()
+        
+        # Run load test
+        result = await engine.run_load_test(
+            target_users=target_users,
+            ramp_up_duration=ramp_up_duration,
+            test_duration=test_duration,
+            ramp_down_duration=ramp_down_duration,
+            concurrent_requests=concurrent_requests,
+            request_timeout=request_timeout,
+            think_time=think_time
+        )
+        
+        # Auto-commit and push results
+        git_manager = get_git_workflow_manager()
+        git_result = await git_manager.auto_commit_and_push(
+            test_type="load_testing",
+            test_results={
+                "test_id": result.test_id,
+                "target_users": target_users,
+                "test_duration": test_duration,
+                "success_rate": result.summary.get("success_rate", 0.0),
+                "avg_response_time": result.summary.get("avg_response_time", 0.0),
+                "status": result.status.value
+            }
+        )
+        
+        result.git_workflow_result = git_result
+        
+        return {
+            "success": result.status == PerformanceTestStatus.COMPLETED,
+            "test_id": result.test_id,
+            "test_type": result.test_type.value,
+            "status": result.status.value,
+            "start_time": result.start_time.isoformat(),
+            "end_time": result.end_time.isoformat() if result.end_time else None,
+            "duration_seconds": result.duration_seconds,
+            "summary": result.summary,
+            "slo_results": result.slo_results,
+            "metrics_count": len(result.metrics),
+            "git_workflow_result": result.git_workflow_result,
+            "message": f"Load test {'completed successfully' if result.status == PerformanceTestStatus.COMPLETED else 'failed'}"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to run load test: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": f"Failed to run load test: {e}"
+        }
+
+
+async def bmad_performance_stress_test(
+    start_users: int = 5,
+    max_users: int = 50,
+    increment_users: int = 5,
+    increment_interval: int = 10,
+    test_duration: int = 30,
+    failure_threshold: float = 5.0,
+    resource_threshold: float = 90.0
+) -> Dict[str, Any]:
+    """
+    Run stress testing for system limits.
+    
+    Args:
+        start_users: Initial number of users
+        max_users: Maximum number of users to test
+        increment_users: Number of users to increment each step
+        increment_interval: Time between user increments in seconds
+        test_duration: Duration of test at each user level in seconds
+        failure_threshold: Failure rate threshold percentage
+        resource_threshold: Resource usage threshold percentage
+        
+    Returns:
+        Dict containing stress test results
+    """
+    try:
+        engine = get_performance_engine()
+        
+        # Run stress test
+        result = await engine.run_stress_test(
+            start_users=start_users,
+            max_users=max_users,
+            increment_users=increment_users,
+            increment_interval=increment_interval,
+            test_duration=test_duration,
+            failure_threshold=failure_threshold,
+            resource_threshold=resource_threshold
+        )
+        
+        # Auto-commit and push results
+        git_manager = get_git_workflow_manager()
+        git_result = await git_manager.auto_commit_and_push(
+            test_type="stress_testing",
+            test_results={
+                "test_id": result.test_id,
+                "max_users_tested": result.summary.get("max_users_tested", 0),
+                "success_rate": result.summary.get("success_rate", 0.0),
+                "avg_response_time": result.summary.get("avg_response_time", 0.0),
+                "status": result.status.value
+            }
+        )
+        
+        result.git_workflow_result = git_result
+        
+        return {
+            "success": result.status == PerformanceTestStatus.COMPLETED,
+            "test_id": result.test_id,
+            "test_type": result.test_type.value,
+            "status": result.status.value,
+            "start_time": result.start_time.isoformat(),
+            "end_time": result.end_time.isoformat() if result.end_time else None,
+            "duration_seconds": result.duration_seconds,
+            "summary": result.summary,
+            "slo_results": result.slo_results,
+            "metrics_count": len(result.metrics),
+            "git_workflow_result": result.git_workflow_result,
+            "message": f"Stress test {'completed successfully' if result.status == PerformanceTestStatus.COMPLETED else 'failed'}"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to run stress test: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": f"Failed to run stress test: {e}"
+        }
+
+
 async def bmad_performance_scalability_test(
     min_users: int = 5,
     max_users: int = 25,

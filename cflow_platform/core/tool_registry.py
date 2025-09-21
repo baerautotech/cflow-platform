@@ -267,13 +267,72 @@ class ToolRegistry:
 
         # BMAD Performance Validation tools (Phase 4.2)
         tools += [
-            tool("bmad_performance_load_test", "Run load testing for multi-agent system under load"),
-            tool("bmad_performance_stress_test", "Run stress testing for system limits"),
             tool("bmad_performance_scalability_test", "Run scalability testing for multi-user scenarios"),
             tool("bmad_performance_metrics_collect", "Collect performance metrics for specified duration"),
             tool("bmad_performance_slo_validate", "Validate performance against Service Level Objectives"),
             tool("bmad_performance_report_generate", "Generate comprehensive performance testing report"),
             tool("bmad_performance_history_get", "Get performance testing execution history"),
+        ]
+
+        # BMAD Performance and Load Testing tools (Sprint 5 - Story 3.3)
+        tools += [
+            tool("bmad_performance_load_test", "Run comprehensive load test for BMAD tools", {
+                "type": "object",
+                "properties": {
+                    "tool_name": {"type": "string", "description": "Name of the tool to test"},
+                    "concurrent_users": {"type": "integer", "description": "Number of concurrent users", "default": 10},
+                    "duration_seconds": {"type": "integer", "description": "Test duration in seconds", "default": 60},
+                    "ramp_up_seconds": {"type": "integer", "description": "Ramp-up time in seconds", "default": 10},
+                    "tool_args": {"type": "object", "description": "Arguments to pass to the tool", "default": {}}
+                },
+                "required": ["tool_name"]
+            }),
+            tool("bmad_performance_stress_test", "Run stress test to find breaking point for BMAD tools", {
+                "type": "object",
+                "properties": {
+                    "tool_name": {"type": "string", "description": "Name of the tool to test"},
+                    "max_concurrent_users": {"type": "integer", "description": "Maximum concurrent users to test", "default": 100},
+                    "increment": {"type": "integer", "description": "Increment for concurrent users", "default": 10},
+                    "duration_per_level": {"type": "integer", "description": "Duration for each stress level", "default": 30},
+                    "tool_args": {"type": "object", "description": "Arguments to pass to the tool", "default": {}}
+                },
+                "required": ["tool_name"]
+            }),
+            tool("bmad_performance_benchmark", "Run performance benchmarks for multiple BMAD tools", {
+                "type": "object",
+                "properties": {
+                    "tools_config": {"type": "string", "description": "JSON string with list of tools to benchmark"},
+                    "iterations": {"type": "integer", "description": "Number of iterations per tool", "default": 10}
+                },
+                "required": ["tools_config"]
+            }),
+            tool("bmad_performance_regression_test", "Detect performance regression by comparing to baseline", {
+                "type": "object",
+                "properties": {
+                    "tool_name": {"type": "string", "description": "Name of the tool to test"},
+                    "baseline_metrics": {"type": "string", "description": "JSON string with baseline performance metrics"},
+                    "threshold_percentage": {"type": "number", "description": "Threshold for regression detection", "default": 20.0},
+                    "tool_args": {"type": "object", "description": "Arguments to pass to the tool", "default": {}}
+                },
+                "required": ["tool_name", "baseline_metrics"]
+            }),
+            tool("bmad_performance_test_history", "Get history of all performance and load tests", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_performance_clear_history", "Clear all performance and load test history", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_performance_system_monitor", "Monitor system resources for specified duration", {
+                "type": "object",
+                "properties": {
+                    "duration_seconds": {"type": "integer", "description": "Duration to monitor in seconds", "default": 60}
+                },
+                "required": []
+            })
         ]
 
         # BMAD Integration Testing tools (Phase 4.3)

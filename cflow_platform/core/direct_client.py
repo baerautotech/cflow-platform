@@ -343,19 +343,23 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
         # BMAD Performance Validation Tools (Phase 4.2)
         elif tool_name.startswith("bmad_performance_"):
             from ..handlers.performance_validation_handlers import (
-                bmad_performance_load_test,
-                bmad_performance_stress_test,
                 bmad_performance_scalability_test,
                 bmad_performance_metrics_collect,
                 bmad_performance_slo_validate,
                 bmad_performance_report_generate,
                 bmad_performance_history_get
             )
+            from ..handlers.performance_load_testing_handlers import (
+                bmad_performance_load_test,
+                bmad_performance_stress_test
+            )
             
             if tool_name == "bmad_performance_load_test":
-                return await bmad_performance_load_test(**kwargs)
+                handler_tool_name = kwargs.pop("tool_name", "sys_test")
+                return await bmad_performance_load_test(tool_name=handler_tool_name, **kwargs)
             elif tool_name == "bmad_performance_stress_test":
-                return await bmad_performance_stress_test(**kwargs)
+                handler_tool_name = kwargs.pop("tool_name", "sys_test")
+                return await bmad_performance_stress_test(tool_name=handler_tool_name, **kwargs)
             elif tool_name == "bmad_performance_scalability_test":
                 return await bmad_performance_scalability_test(**kwargs)
             elif tool_name == "bmad_performance_metrics_collect":
@@ -366,6 +370,22 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
                 return await bmad_performance_report_generate(**kwargs)
             elif tool_name == "bmad_performance_history_get":
                 return await bmad_performance_history_get(**kwargs)
+            elif tool_name == "bmad_performance_benchmark":
+                from ..handlers.performance_load_testing_handlers import bmad_performance_benchmark
+                return await bmad_performance_benchmark(**kwargs)
+            elif tool_name == "bmad_performance_regression_test":
+                from ..handlers.performance_load_testing_handlers import bmad_performance_regression_test
+                handler_tool_name = kwargs.pop("tool_name", "sys_test")
+                return await bmad_performance_regression_test(tool_name=handler_tool_name, **kwargs)
+            elif tool_name == "bmad_performance_test_history":
+                from ..handlers.performance_load_testing_handlers import bmad_performance_test_history
+                return await bmad_performance_test_history(**kwargs)
+            elif tool_name == "bmad_performance_clear_history":
+                from ..handlers.performance_load_testing_handlers import bmad_performance_clear_history
+                return await bmad_performance_clear_history(**kwargs)
+            elif tool_name == "bmad_performance_system_monitor":
+                from ..handlers.performance_load_testing_handlers import bmad_performance_system_monitor
+                return await bmad_performance_system_monitor(**kwargs)
         # BMAD Integration Testing Tools (Phase 4.3)
         elif tool_name.startswith("bmad_integration_"):
             from ..handlers.integration_testing_handlers import (
