@@ -286,6 +286,16 @@ class ToolRegistry:
             tool("bmad_integration_history_get", "Get integration testing execution history"),
         ]
 
+        # BMAD User Acceptance Testing tools (Phase 4.4)
+        tools += [
+            tool("bmad_uat_scenario_test", "Run user acceptance scenario testing for real-world scenarios"),
+            tool("bmad_uat_usability_test", "Run usability testing for user interfaces"),
+            tool("bmad_uat_accessibility_test", "Run accessibility testing for compliance"),
+            tool("bmad_uat_full_suite", "Run complete user acceptance test suite"),
+            tool("bmad_uat_report_generate", "Generate comprehensive user acceptance testing report"),
+            tool("bmad_uat_history_get", "Get user acceptance testing execution history"),
+        ]
+
         return tools
 
     @staticmethod

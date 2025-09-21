@@ -389,6 +389,29 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
                 return await bmad_integration_report_generate(**kwargs)
             elif tool_name == "bmad_integration_history_get":
                 return await bmad_integration_history_get(**kwargs)
+        # BMAD User Acceptance Testing Tools (Phase 4.4)
+        elif tool_name.startswith("bmad_uat_"):
+            from ..handlers.user_acceptance_testing_handlers import (
+                bmad_uat_scenario_test,
+                bmad_uat_usability_test,
+                bmad_uat_accessibility_test,
+                bmad_uat_full_suite,
+                bmad_uat_report_generate,
+                bmad_uat_history_get
+            )
+            
+            if tool_name == "bmad_uat_scenario_test":
+                return await bmad_uat_scenario_test(**kwargs)
+            elif tool_name == "bmad_uat_usability_test":
+                return await bmad_uat_usability_test(**kwargs)
+            elif tool_name == "bmad_uat_accessibility_test":
+                return await bmad_uat_accessibility_test(**kwargs)
+            elif tool_name == "bmad_uat_full_suite":
+                return await bmad_uat_full_suite(**kwargs)
+            elif tool_name == "bmad_uat_report_generate":
+                return await bmad_uat_report_generate(**kwargs)
+            elif tool_name == "bmad_uat_history_get":
+                return await bmad_uat_history_get(**kwargs)
         else:
             return {"status": "error", "message": f"Unknown BMAD tool: {tool_name}"}
     elif tool_name == "bmad_git_get_history":
