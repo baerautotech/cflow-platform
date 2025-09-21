@@ -22,6 +22,7 @@ import uvicorn
 
 from .tool_registry import ToolRegistry
 from .direct_client import execute_mcp_tool
+from .bmad_tool_router import BMADToolRouter
 from .tool_group_manager import ToolGroupManager
 from .client_tool_config import ClientToolConfigManager
 from .project_tool_filter import ProjectToolFilterManager
@@ -73,6 +74,9 @@ tool_registry = ToolRegistry.get_tools_for_mcp()
 tool_group_manager = ToolGroupManager()
 client_config_manager = ClientToolConfigManager()
 project_filter_manager = ProjectToolFilterManager()
+
+# BMAD tool routing
+bmad_tool_router = BMADToolRouter()
 
 # Master tool management system
 master_tool_manager = MasterToolManager()
@@ -383,9 +387,16 @@ async def call_tool(request: Request):
         if not tool_exists:
             raise HTTPException(status_code=404, detail=f"Tool '{tool_name}' not found")
         
-        # Execute tool
+        # Execute tool with BMAD routing
         logger.info(f"Executing tool: {tool_name} with args: {arguments}")
-        result = await execute_mcp_tool(tool_name, **arguments)
+        
+        # Check if this is a BMAD tool and route accordingly
+        if bmad_tool_router.is_bmad_tool(tool_name):
+            logger.info(f"Routing BMAD tool: {tool_name}")
+            result = await bmad_tool_router.route_bmad_tool(tool_name, arguments)
+        else:
+            # Execute non-BMAD tools normally
+            result = await execute_mcp_tool(tool_name, **arguments)
         
         return {
             "result": result,
@@ -439,6 +450,7 @@ async def get_tool_info(tool_name: str):
 async def get_stats():
     """Get server statistics"""
     master_tool_stats = master_tool_manager.get_manager_stats()
+    bmad_routing_stats = bmad_tool_router.get_routing_stats()
     
     return {
         "tools_count": len(tool_registry),
@@ -447,8 +459,57 @@ async def get_stats():
         "uptime": "N/A",  # Could implement proper uptime tracking
         "timestamp": datetime.utcnow().isoformat(),
         "service": "cflow-webmcp",
-        "master_tool_stats": master_tool_stats
+        "master_tool_stats": master_tool_stats,
+        "bmad_routing_stats": bmad_routing_stats
     }
+
+# BMAD Tool Routing Endpoints
+
+@app.get("/bmad/routing/info/{tool_name}")
+async def get_bmad_routing_info(tool_name: str):
+    """Get routing information for a BMAD tool"""
+    try:
+        routing_info = await bmad_tool_router.get_routing_info(tool_name)
+        return routing_info
+    except Exception as e:
+        logger.error(f"Error getting BMAD routing info for {tool_name}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/bmad/routing/stats")
+async def get_bmad_routing_stats():
+    """Get BMAD tool routing statistics"""
+    try:
+        stats = bmad_tool_router.get_routing_stats()
+        return {
+            "routing_stats": stats,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error getting BMAD routing stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/bmad/routing/reset-stats")
+async def reset_bmad_routing_stats():
+    """Reset BMAD tool routing statistics"""
+    try:
+        bmad_tool_router.reset_routing_stats()
+        return {
+            "message": "BMAD routing statistics reset successfully",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error resetting BMAD routing stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/bmad/health")
+async def get_bmad_api_health():
+    """Get BMAD API service health status"""
+    try:
+        health_info = await bmad_tool_router.health_checker.get_detailed_health()
+        return health_info
+    except Exception as e:
+        logger.error(f"Error getting BMAD API health: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Master Tool Endpoints
 
