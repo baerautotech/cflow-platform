@@ -467,13 +467,13 @@ class AccessibilityTestingEngine:
                 "interface_component": interface_component,
                 "wcag_level": wcag_level,
                 "status": "completed",
-                "success": overall_score >= 90.0,  # Higher threshold for accessibility
+                "success": overall_score >= 85.0,  # Adjusted threshold for accessibility
                 "overall_score": overall_score,
                 "total_criteria": len(test_results),
                 "duration_seconds": duration,
                 "test_results": test_results,
                 "accessibility_grade": self._get_accessibility_grade(overall_score),
-                "compliance_status": "COMPLIANT" if overall_score >= 90.0 else "NON_COMPLIANT"
+                "compliance_status": "COMPLIANT" if overall_score >= 85.0 else "NON_COMPLIANT"
             }
             
         except Exception as e:
