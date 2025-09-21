@@ -1,0 +1,70 @@
+{
+  "bmad_cluster_execution": {
+    "enabled": true,
+    "rollout_percentage": 100,
+    "enabled_users": [
+      "user123"
+    ],
+    "disabled_users": [
+      "user456"
+    ],
+    "description": "",
+    "last_updated": null
+  },
+  "bmad_api_health_check": {
+    "enabled": true,
+    "rollout_percentage": 100,
+    "enabled_users": [],
+    "disabled_users": [],
+    "description": "",
+    "last_updated": null
+  },
+  "bmad_performance_monitoring": {
+    "enabled": true,
+    "rollout_percentage": 100,
+    "enabled_users": [],
+    "disabled_users": [],
+    "description": "",
+    "last_updated": null
+  },
+  "bmad_fallback_enabled": {
+    "enabled": true,
+    "rollout_percentage": 100,
+    "enabled_users": [],
+    "disabled_users": [],
+    "description": "",
+    "last_updated": null
+  },
+  "bmad_gradual_rollout": {
+    "enabled": true,
+    "rollout_percentage": 50,
+    "enabled_users": [],
+    "disabled_users": [],
+    "description": "",
+    "last_updated": null
+  },
+  "bmad_debug_logging": {
+    "enabled": false,
+    "rollout_percentage": 100,
+    "enabled_users": [],
+    "disabled_users": [],
+    "description": "",
+    "last_updated": null
+  },
+  "bmad_metrics_collection": {
+    "enabled": true,
+    "rollout_percentage": 100,
+    "enabled_users": [],
+    "disabled_users": [],
+    "description": "",
+    "last_updated": null
+  },
+  "bmad_circuit_breaker": {
+    "enabled": true,
+    "rollout_percentage": 100,
+    "enabled_users": [],
+    "disabled_users": [],
+    "description": "",
+    "last_updated": null
+  }
+}
