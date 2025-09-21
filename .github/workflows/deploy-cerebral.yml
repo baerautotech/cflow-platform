@@ -14,6 +14,7 @@ on:
   push:
     branches: [ main ]
     paths:
+      # WebMCP Server
       - 'cflow_platform/core/webmcp_server.py'
       - 'cflow_platform/core/master_tool_base.py'
       - 'cflow_platform/core/bmad_master_tools.py'
@@ -31,9 +32,16 @@ on:
       - 'cflow_platform/core/migration_validator.py'
       - 'cflow_platform/core/legacy_tool_removal.py'
       - 'cflow_platform/core/performance_optimizer.py'
+      # Cerebral Backend
+      - 'cflow_platform/core/cerebral_backend.py'
+      # Infrastructure
       - 'infrastructure/docker/Dockerfile.webmcp'
+      - 'infrastructure/docker/Dockerfile.cerebral-backend'
       - 'infrastructure/kubernetes/webmcp-*.yaml'
+      - 'infrastructure/kubernetes/cerebral-backend-*.yaml'
       - 'scripts/deploy-webmcp*.sh'
+      - 'scripts/deploy-all-services.sh'
+      - 'infrastructure/framework/services.yaml'
 
 jobs:
   deploy:
@@ -79,68 +87,87 @@ jobs:
         run: |
           ssh cerebral "echo 'SSH connection successful'"
 
-      - name: Build Docker image
+      - name: Build Docker images
         run: |
-          docker build -f infrastructure/docker/Dockerfile.webmcp -t $FULL_IMAGE .
-          docker tag $FULL_IMAGE $REGISTRY/$IMAGE_NAME:latest
+          # Build WebMCP image
+          docker build -f infrastructure/docker/Dockerfile.webmcp -t $REGISTRY/webmcp:$GITHUB_SHA .
+          docker tag $REGISTRY/webmcp:$GITHUB_SHA $REGISTRY/webmcp:latest
+          
+          # Build Cerebral Backend image
+          docker build -f infrastructure/docker/Dockerfile.cerebral-backend -t $REGISTRY/cerebral-backend:$GITHUB_SHA .
+          docker tag $REGISTRY/cerebral-backend:$GITHUB_SHA $REGISTRY/cerebral-backend:latest
 
-      - name: Push Docker image
+      - name: Push Docker images
         run: |
           echo "${{ secrets.DOCKER_REGISTRY_PASSWORD }}" | docker login $REGISTRY -u "${{ secrets.DOCKER_REGISTRY_USERNAME }}" --password-stdin
-          docker push $FULL_IMAGE
-          docker push $REGISTRY/$IMAGE_NAME:latest
+          # Push WebMCP images
+          docker push $REGISTRY/webmcp:$GITHUB_SHA
+          docker push $REGISTRY/webmcp:latest
+          # Push Cerebral Backend images
+          docker push $REGISTRY/cerebral-backend:$GITHUB_SHA
+          docker push $REGISTRY/cerebral-backend:latest
 
       - name: Deploy to Cerebral cluster
         run: |
           # Copy deployment files to cerebral cluster
-          scp -r infrastructure/kubernetes/ cerebral:/tmp/webmcp-deployment/
-          scp scripts/deploy-webmcp.sh cerebral:/tmp/webmcp-deployment/
+          scp -r infrastructure/kubernetes/ cerebral:/tmp/cerebral-deployment/
+          scp scripts/deploy-all-services.sh cerebral:/tmp/cerebral-deployment/
           
           # Execute deployment on cerebral cluster
-          ssh cerebral "cd /tmp/webmcp-deployment && \
+          ssh cerebral "cd /tmp/cerebral-deployment && \
             export NAMESPACE=$NAMESPACE && \
-            export IMAGE_NAME=$IMAGE_NAME && \
             export REGISTRY=$REGISTRY && \
             export VERSION=$GITHUB_SHA && \
-            export FULL_IMAGE=$FULL_IMAGE && \
-            chmod +x deploy-webmcp.sh && \
-            ./deploy-webmcp.sh"
+            chmod +x deploy-all-services.sh && \
+            ./deploy-all-services.sh -e ${{ github.event.inputs.environment || 'development' }} -s webmcp,cerebral-backend"
 
       - name: Verify deployment
         run: |
-          # Apply production deployment if it doesn't exist
-          ssh cerebral "kubectl apply -f /tmp/webmcp-deployment/webmcp-production.yaml"
+          # Apply deployments if they don't exist
+          ssh cerebral "kubectl apply -f /tmp/cerebral-deployment/webmcp-${{ github.event.inputs.environment || 'development' }}.yaml"
+          ssh cerebral "kubectl apply -f /tmp/cerebral-deployment/cerebral-backend-${{ github.event.inputs.environment || 'development' }}.yaml"
           
-          # Update deployment with new image
-          ssh cerebral "kubectl set image deployment/webmcp-production webmcp=$FULL_IMAGE -n $NAMESPACE"
+          # Update deployments with new images
+          ssh cerebral "kubectl set image deployment/webmcp webmcp=$REGISTRY/webmcp:$GITHUB_SHA -n $NAMESPACE"
+          ssh cerebral "kubectl set image deployment/cerebral-backend cerebral-backend=$REGISTRY/cerebral-backend:$GITHUB_SHA -n $NAMESPACE"
           
-          # Wait for deployment to be ready
-          ssh cerebral "kubectl rollout status deployment/webmcp-production -n $NAMESPACE --timeout=300s"
+          # Wait for deployments to be ready
+          ssh cerebral "kubectl rollout status deployment/webmcp -n $NAMESPACE --timeout=300s"
+          ssh cerebral "kubectl rollout status deployment/cerebral-backend -n $NAMESPACE --timeout=300s"
           
           # Check pod status
-          ssh cerebral "kubectl get pods -n $NAMESPACE -l app=webmcp-production"
+          ssh cerebral "kubectl get pods -n $NAMESPACE -l app=webmcp"
+          ssh cerebral "kubectl get pods -n $NAMESPACE -l app=cerebral-backend"
           
           # Check service status
-          ssh cerebral "kubectl get svc -n $NAMESPACE -l app=webmcp-production"
+          ssh cerebral "kubectl get svc -n $NAMESPACE -l app=webmcp"
+          ssh cerebral "kubectl get svc -n $NAMESPACE -l app=cerebral-backend"
 
       - name: Health check
         run: |
-          # Get service endpoint
-          SERVICE_IP=$(ssh cerebral "kubectl get svc webmcp-production-service -n $NAMESPACE -o jsonpath='{.spec.clusterIP}'")
-          SERVICE_PORT=$(ssh cerebral "kubectl get svc webmcp-production-service -n $NAMESPACE -o jsonpath='{.spec.ports[0].port}'")
+          # Get WebMCP service endpoint
+          WEBMCP_SERVICE_IP=$(ssh cerebral "kubectl get svc webmcp-service -n $NAMESPACE -o jsonpath='{.spec.clusterIP}'")
+          WEBMCP_SERVICE_PORT=$(ssh cerebral "kubectl get svc webmcp-service -n $NAMESPACE -o jsonpath='{.spec.ports[0].port}'")
           
-          # Test health endpoint
-          ssh cerebral "kubectl run test-pod --image=curlimages/curl --rm -i --restart=Never -- curl -f http://$SERVICE_IP:$SERVICE_PORT/health"
+          # Get Cerebral Backend service endpoint
+          BACKEND_SERVICE_IP=$(ssh cerebral "kubectl get svc cerebral-backend-service -n $NAMESPACE -o jsonpath='{.spec.clusterIP}'")
+          BACKEND_SERVICE_PORT=$(ssh cerebral "kubectl get svc cerebral-backend-service -n $NAMESPACE -o jsonpath='{.spec.ports[0].port}'")
           
-          # Test help endpoint
-          ssh cerebral "kubectl run test-pod --image=curlimages/curl --rm -i --restart=Never -- curl -f http://$SERVICE_IP:$SERVICE_PORT/help"
+          # Test WebMCP health endpoint
+          ssh cerebral "kubectl run test-webmcp --image=curlimages/curl --rm -i --restart=Never -- curl -f http://$WEBMCP_SERVICE_IP:$WEBMCP_SERVICE_PORT/health"
           
-          # Test master tools endpoint
-          ssh cerebral "kubectl run test-pod --image=curlimages/curl --rm -i --restart=Never -- curl -f http://$SERVICE_IP:$SERVICE_PORT/mcp/master-tools"
+          # Test WebMCP help endpoint
+          ssh cerebral "kubectl run test-webmcp-help --image=curlimages/curl --rm -i --restart=Never -- curl -f http://$WEBMCP_SERVICE_IP:$WEBMCP_SERVICE_PORT/help"
+          
+          # Test Cerebral Backend health endpoint
+          ssh cerebral "kubectl run test-backend --image=curlimages/curl --rm -i --restart=Never -- curl -f http://$BACKEND_SERVICE_IP:$BACKEND_SERVICE_PORT/health"
+          
+          # Test Cerebral Backend API status
+          ssh cerebral "kubectl run test-backend-api --image=curlimages/curl --rm -i --restart=Never -- curl -f http://$BACKEND_SERVICE_IP:$BACKEND_SERVICE_PORT/api/status"
 
       - name: Cleanup
         run: |
-          ssh cerebral "rm -rf /tmp/webmcp-deployment"
+          ssh cerebral "rm -rf /tmp/cerebral-deployment"
           rm -f $SSH_KEY_PATH
 
       - name: Deployment summary
@@ -148,12 +175,17 @@ jobs:
           echo "🎉 Deployment completed successfully!"
           echo "📊 Deployment Summary:"
           echo "  SHA: $GITHUB_SHA"
-          echo "  Image: $FULL_IMAGE"
           echo "  Namespace: $NAMESPACE"
           echo "  Environment: ${{ github.event.inputs.environment || 'development' }}"
           echo ""
-          echo "🌐 Access URLs:"
-          echo "  Health: http://webmcp-production-service.$NAMESPACE.svc.cluster.local:8000/health"
-          echo "  Help: http://webmcp-production-service.$NAMESPACE.svc.cluster.local:8000/help"
-          echo "  Master Tools: http://webmcp-production-service.$NAMESPACE.svc.cluster.local:8000/mcp/master-tools"
-          echo "  API Docs: http://webmcp-production-service.$NAMESPACE.svc.cluster.local:8000/docs"
+          echo "🌐 WebMCP Access URLs:"
+          echo "  Health: http://webmcp-service.$NAMESPACE.svc.cluster.local:8000/health"
+          echo "  Help: http://webmcp-service.$NAMESPACE.svc.cluster.local:8000/help"
+          echo "  Master Tools: http://webmcp-service.$NAMESPACE.svc.cluster.local:8000/mcp/master-tools"
+          echo "  API Docs: http://webmcp-service.$NAMESPACE.svc.cluster.local:8000/docs"
+          echo ""
+          echo "🌐 Cerebral Backend Access URLs:"
+          echo "  Health: http://cerebral-backend-service.$NAMESPACE.svc.cluster.local:8000/health"
+          echo "  API Status: http://cerebral-backend-service.$NAMESPACE.svc.cluster.local:8000/api/status"
+          echo "  API Config: http://cerebral-backend-service.$NAMESPACE.svc.cluster.local:8000/api/config"
+          echo "  Services: http://cerebral-backend-service.$NAMESPACE.svc.cluster.local:8000/api/services"

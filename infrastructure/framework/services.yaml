@@ -358,3 +358,41 @@ services:
         mountPath: "/app/metrics"
       - name: "logs-storage"
         mountPath: "/app/logs"
+
+  cerebral-backend:
+    component: "api"
+    tier: "backend"
+    port: 8000
+    image: "cerebral-backend"
+    description: "Cerebral Backend API Service"
+    health_path: "/health"
+    env:
+      BACKEND_HOST: "0.0.0.0"
+      BACKEND_PORT: "8000"
+      BACKEND_LOG_LEVEL: "info"
+      BACKEND_WORKERS: "1"
+      BACKEND_TIMEOUT: "30"
+    config:
+      BACKEND_HOST: "0.0.0.0"
+      BACKEND_PORT: "8000"
+      BACKEND_LOG_LEVEL: "info"
+      BACKEND_WORKERS: "1"
+      BACKEND_TIMEOUT: "30"
+    secrets:
+      SUPABASE_URL: "supabase-url"
+      SUPABASE_ANON_KEY: "supabase-anon-key"
+      VAULT_URL: "vault-url"
+      VAULT_TOKEN: "vault-token"
+      JWT_SECRET_KEY: "jwt-secret"
+    volumes:
+      - name: "backend-storage"
+        emptyDir:
+          sizeLimit: "2Gi"
+      - name: "logs-storage"
+        emptyDir:
+          sizeLimit: "100Mi"
+    volumeMounts:
+      - name: "backend-storage"
+        mountPath: "/app/storage"
+      - name: "logs-storage"
+        mountPath: "/app/logs"

@@ -1,0 +1,200 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    cerebral.baerautotech.com/created-by: pod-framework
+    cerebral.baerautotech.com/framework-version: 1.0.0
+    cerebral.baerautotech.com/last-updated: '2025-09-20T23:25:18.625246'
+  labels:
+    app: cerebral-backend
+    app.kubernetes.io/managed-by: cerebral-platform
+    app.kubernetes.io/part-of: cerebral-cluster
+    component: api
+    environment: development
+    tier: backend
+    version: 1.0.0
+  name: cerebral-backend
+  namespace: cerebral-development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cerebral-backend
+  template:
+    metadata:
+      labels:
+        app: cerebral-backend
+        component: api
+        environment: development
+        tier: backend
+        version: 1.0.0
+    spec:
+      containers:
+      - env:
+        - name: BACKEND_HOST
+          value: 0.0.0.0
+        - name: BACKEND_PORT
+          value: '8000'
+        - name: BACKEND_LOG_LEVEL
+          value: info
+        - name: BACKEND_WORKERS
+          value: '1'
+        - name: BACKEND_TIMEOUT
+          value: '30'
+        - name: SERVICE_NAME
+          value: cerebral-backend
+        - name: ENVIRONMENT
+          value: development
+        - name: PORT
+          value: '8000'
+        - name: LOG_LEVEL
+          value: info
+        - name: SUPABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: supabase-url
+              name: cerebral-backend-secrets
+        - name: SUPABASE_ANON_KEY
+          valueFrom:
+            secretKeyRef:
+              key: supabase-anon-key
+              name: cerebral-backend-secrets
+        - name: VAULT_URL
+          valueFrom:
+            secretKeyRef:
+              key: vault-url
+              name: cerebral-backend-secrets
+        - name: VAULT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: vault-token
+              name: cerebral-backend-secrets
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: jwt-secret
+              name: cerebral-backend-secrets
+        image: registry.baerautotech.com/cerebral-backend:latest
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        name: cerebral-backend
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+        resources:
+          limits:
+            cpu: 250m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: true
+          readOnlyRootFilesystem: false
+          runAsNonRoot: false
+        volumeMounts:
+        - mountPath: /app/storage
+          name: backend-storage
+        - mountPath: /app/logs
+          name: logs-storage
+        - mountPath: /tmp
+          name: tmp-storage
+      restartPolicy: Always
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: false
+      serviceAccountName: cerebral-backend-sa
+      volumes:
+      - emptyDir:
+          sizeLimit: 2Gi
+        name: backend-storage
+      - emptyDir:
+          sizeLimit: 100Mi
+        name: logs-storage
+      - emptyDir:
+          sizeLimit: 1Gi
+        name: tmp-storage
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: cerebral-backend
+    component: api
+    environment: development
+    tier: backend
+  name: cerebral-backend-service
+  namespace: cerebral-development
+spec:
+  ports:
+  - name: http
+    port: 8000
+    protocol: TCP
+    targetPort: 8000
+  selector:
+    app: cerebral-backend
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: cerebral-backend
+    component: api
+    environment: development
+    tier: backend
+  name: cerebral-backend-sa
+  namespace: cerebral-development
+---
+apiVersion: v1
+data:
+  BACKEND_HOST: 0.0.0.0
+  BACKEND_LOG_LEVEL: info
+  BACKEND_PORT: '8000'
+  BACKEND_TIMEOUT: '30'
+  BACKEND_WORKERS: '1'
+kind: ConfigMap
+metadata:
+  labels:
+    app: cerebral-backend
+    component: api
+    environment: development
+    tier: backend
+  name: cerebral-backend-config
+  namespace: cerebral-development
+---
+apiVersion: v1
+data:
+  JWT_SECRET_KEY: ''
+  SUPABASE_ANON_KEY: ''
+  SUPABASE_URL: ''
+  VAULT_TOKEN: ''
+  VAULT_URL: ''
+kind: Secret
+metadata:
+  labels:
+    app: cerebral-backend
+    component: api
+    environment: development
+    tier: backend
+  name: cerebral-backend-secrets
+  namespace: cerebral-development
+type: Opaque

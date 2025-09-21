@@ -1,0 +1,186 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    cerebral.baerautotech.com/created-by: pod-framework
+    cerebral.baerautotech.com/framework-version: 1.0.0
+    cerebral.baerautotech.com/last-updated: '2025-09-20T23:25:18.579485'
+  labels:
+    app: webmcp
+    app.kubernetes.io/managed-by: cerebral-platform
+    app.kubernetes.io/part-of: cerebral-cluster
+    component: mcp-server
+    environment: development
+    tier: core
+    version: 1.0.0
+  name: webmcp
+  namespace: cerebral-development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webmcp
+  template:
+    metadata:
+      labels:
+        app: webmcp
+        component: mcp-server
+        environment: development
+        tier: core
+        version: 1.0.0
+    spec:
+      containers:
+      - env:
+        - name: WEBMCP_HOST
+          value: 0.0.0.0
+        - name: WEBMCP_PORT
+          value: '8000'
+        - name: WEBMCP_WORKERS
+          value: '1'
+        - name: WEBMCP_LOG_LEVEL
+          value: info
+        - name: SERVICE_NAME
+          value: webmcp
+        - name: ENVIRONMENT
+          value: development
+        - name: PORT
+          value: '8000'
+        - name: LOG_LEVEL
+          value: info
+        - name: SUPABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: supabase-url
+              name: webmcp-secrets
+        - name: SUPABASE_ANON_KEY
+          valueFrom:
+            secretKeyRef:
+              key: supabase-anon-key
+              name: webmcp-secrets
+        - name: VAULT_URL
+          valueFrom:
+            secretKeyRef:
+              key: vault-url
+              name: webmcp-secrets
+        - name: VAULT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: vault-token
+              name: webmcp-secrets
+        image: registry.baerautotech.com/webmcp:latest
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        name: webmcp
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+        resources:
+          limits:
+            cpu: 250m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: true
+          readOnlyRootFilesystem: false
+          runAsNonRoot: false
+        volumeMounts:
+        - mountPath: /app/logs
+          name: logs-storage
+        - mountPath: /tmp
+          name: tmp-storage
+      restartPolicy: Always
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: false
+      serviceAccountName: webmcp-sa
+      volumes:
+      - emptyDir:
+          sizeLimit: 100Mi
+        name: logs-storage
+      - emptyDir:
+          sizeLimit: 1Gi
+        name: tmp-storage
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: webmcp
+    component: mcp-server
+    environment: development
+    tier: core
+  name: webmcp-service
+  namespace: cerebral-development
+spec:
+  ports:
+  - name: http
+    port: 8000
+    protocol: TCP
+    targetPort: 8000
+  selector:
+    app: webmcp
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: webmcp
+    component: mcp-server
+    environment: development
+    tier: core
+  name: webmcp-sa
+  namespace: cerebral-development
+---
+apiVersion: v1
+data:
+  WEBMCP_HOST: 0.0.0.0
+  WEBMCP_LOG_LEVEL: info
+  WEBMCP_PORT: '8000'
+  WEBMCP_WORKERS: '1'
+kind: ConfigMap
+metadata:
+  labels:
+    app: webmcp
+    component: mcp-server
+    environment: development
+    tier: core
+  name: webmcp-config
+  namespace: cerebral-development
+---
+apiVersion: v1
+data:
+  SUPABASE_ANON_KEY: ''
+  SUPABASE_URL: ''
+  VAULT_TOKEN: ''
+  VAULT_URL: ''
+kind: Secret
+metadata:
+  labels:
+    app: webmcp
+    component: mcp-server
+    environment: development
+    tier: core
+  name: webmcp-secrets
+  namespace: cerebral-development
+type: Opaque
