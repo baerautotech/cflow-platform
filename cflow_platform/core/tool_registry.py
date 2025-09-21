@@ -137,9 +137,9 @@ class ToolRegistry:
                         "suspect_files": {"type": "array", "items": {"type": "string"}},
                         "max_steps": {"type": "integer"},
                         "profile_name": {"type": "string"},
-                    ),
+                    },
                     "required": [],
-                ),
+                }
             )
         ]
 
@@ -217,9 +217,9 @@ class ToolRegistry:
                         "limit": {"type": "integer"},
                         "region": {"type": "string"},
                         "safe": {"type": "boolean"},
-                    ),
+                    },
                     "required": ["query"]
-                ),
+                }
             ),
         ]
 
