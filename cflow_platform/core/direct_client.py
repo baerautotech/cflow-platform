@@ -273,6 +273,66 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
     elif tool_name == "bmad_vault_get_config":
         return await handler.bmad_vault_get_config(**kwargs)
     
+    # BMAD Expansion Pack Management Tools (Phase 2.2)
+    elif tool_name.startswith("bmad_expansion_"):
+        from .expansion_pack_handlers import get_expansion_pack_handlers
+        expansion_handler = get_expansion_pack_handlers()
+        
+        if tool_name == "bmad_expansion_list_packs":
+            return await expansion_handler.bmad_expansion_list_packs(**kwargs)
+        elif tool_name == "bmad_expansion_get_pack":
+            return await expansion_handler.bmad_expansion_get_pack(**kwargs)
+        elif tool_name == "bmad_expansion_search_packs":
+            return await expansion_handler.bmad_expansion_search_packs(**kwargs)
+        elif tool_name == "bmad_expansion_download_pack":
+            return await expansion_handler.bmad_expansion_download_pack(**kwargs)
+        elif tool_name == "bmad_expansion_get_file":
+            return await expansion_handler.bmad_expansion_get_file(**kwargs)
+        elif tool_name == "bmad_expansion_upload_pack":
+            return await expansion_handler.bmad_expansion_upload_pack(**kwargs)
+        elif tool_name == "bmad_expansion_delete_pack":
+            return await expansion_handler.bmad_expansion_delete_pack(**kwargs)
+        elif tool_name == "bmad_expansion_migrate_local":
+            return await expansion_handler.bmad_expansion_migrate_local(**kwargs)
+    
+    # BMAD Update Management Tools (Phase 2.3)
+    elif tool_name.startswith("bmad_update_") or tool_name.startswith("bmad_customizations_") or tool_name == "bmad_integration_test":
+        from .bmad_update_handlers import get_bmad_update_handlers
+        update_handler = get_bmad_update_handlers()
+        
+        if tool_name == "bmad_update_check":
+            return await update_handler.bmad_update_check(**kwargs)
+        elif tool_name == "bmad_update_validate":
+            return await update_handler.bmad_update_validate(**kwargs)
+        elif tool_name == "bmad_update_apply":
+            return await update_handler.bmad_update_apply(**kwargs)
+        elif tool_name == "bmad_update_report":
+            return await update_handler.bmad_update_report(**kwargs)
+        elif tool_name == "bmad_customizations_discover":
+            return await update_handler.bmad_customizations_discover(**kwargs)
+        elif tool_name == "bmad_customizations_backup":
+            return await update_handler.bmad_customizations_backup(**kwargs)
+        elif tool_name == "bmad_customizations_restore":
+            return await update_handler.bmad_customizations_restore(**kwargs)
+        elif tool_name == "bmad_integration_test":
+            return await update_handler.bmad_integration_test(**kwargs)
+    
+    # BMAD Template Management Tools (Phase 2.2.4)
+    elif tool_name.startswith("bmad_template_"):
+        from .bmad_template_handlers import get_bmad_template_handlers
+        template_handler = get_bmad_template_handlers()
+        
+        if tool_name == "bmad_template_load":
+            return await template_handler.bmad_template_load(**kwargs)
+        elif tool_name == "bmad_template_list":
+            return await template_handler.bmad_template_list(**kwargs)
+        elif tool_name == "bmad_template_search":
+            return await template_handler.bmad_template_search(**kwargs)
+        elif tool_name == "bmad_template_validate":
+            return await template_handler.bmad_template_validate(**kwargs)
+        elif tool_name == "bmad_template_preload":
+            return await template_handler.bmad_template_preload(**kwargs)
+    
     # Basic Workflow Tools (Story 1.5)
     elif tool_name == "bmad_basic_prd_workflow":
         from .basic_workflow_implementations import get_basic_workflows

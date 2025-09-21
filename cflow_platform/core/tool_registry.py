@@ -121,7 +121,7 @@ class ToolRegistry:
                         "fs_allowlist": {"type": "array", "items": {"type": "string"}},
                     },
                     "required": ["code"],
-                },
+                }
             )
         ]
 
@@ -137,9 +137,9 @@ class ToolRegistry:
                         "suspect_files": {"type": "array", "items": {"type": "string"}},
                         "max_steps": {"type": "integer"},
                         "profile_name": {"type": "string"},
-                    },
+                    ),
                     "required": [],
-                },
+                ),
             )
         ]
 
@@ -217,9 +217,9 @@ class ToolRegistry:
                         "limit": {"type": "integer"},
                         "region": {"type": "string"},
                         "safe": {"type": "boolean"},
-                    },
+                    ),
                     "required": ["query"]
-                },
+                ),
             ),
         ]
 
@@ -234,9 +234,9 @@ class ToolRegistry:
                         "title": {"type": "string"},
                         "subtitle": {"type": "string"},
                         "message": {"type": "string"},
-                    },
+                    ),
                     "required": ["message"],
-                },
+                ),
             )
         ]
         # LLM provider
@@ -249,9 +249,9 @@ class ToolRegistry:
                     "properties": {
                         "model": {"type": "string"},
                         "prompt": {"type": "string"},
-                    },
+                    ),
                     "required": [],
-                },
+                ),
             )
         ]
 
@@ -267,11 +267,11 @@ class ToolRegistry:
                         "context_files": {"type": "array", "items": {"type": "string"}},
                         "apis": {"type": "array", "items": {"type": "object"}},
                         "tests": {"type": "array", "items": {"type": "string"}},
-                        "constraints": {"type": "object"},
+                        "constraints": {"type": "object"),
                         "success_criteria": {"type": "array", "items": {"type": "object"}},
-                    },
+                    ),
                     "required": ["task"],
-                },
+                ),
             )
         ]
 
@@ -285,9 +285,9 @@ class ToolRegistry:
                     "properties": {
                         "description": {"type": "string"},
                         "topK": {"type": "integer"},
-                    },
+                    ),
                     "required": ["description"],
-                },
+                ),
             ),
             tool(
                 "code.index_functions",
@@ -296,9 +296,9 @@ class ToolRegistry:
                     "type": "object",
                     "properties": {
                         "files": {"type": "array", "items": {"type": "string"}},
-                    },
+                    ),
                     "required": [],
-                },
+                ),
             ),
             tool(
                 "code.call_paths",
@@ -308,9 +308,9 @@ class ToolRegistry:
                     "properties": {
                         "to": {"type": "string"},
                         "maxDepth": {"type": "integer"},
-                    },
+                    ),
                     "required": ["to"],
-                },
+                ),
             ),
         ]
 
@@ -331,16 +331,49 @@ class ToolRegistry:
             tool("bmad_git_get_history", "Get BMAD commit history for a project", {"type": "object", "properties": {"project_id": {"type": "string"}, "limit": {"type": "integer"}}, "required": ["project_id"]}),
         ]
 
-        # BMAD Vault Integration Tools (Phase 2.1)
-        tools += [
-            tool("bmad_vault_store_secret", "Store secret in HashiCorp Vault", {"type": "object", "properties": {"path": {"type": "string"}, "secret_data": {"type": "object"}, "metadata": {"type": "object"}}, "required": ["path", "secret_data"]}),
-            tool("bmad_vault_retrieve_secret", "Retrieve secret from HashiCorp Vault", {"type": "object", "properties": {"path": {"type": "string"}, "version": {"type": "string"}}, "required": ["path"]}),
-            tool("bmad_vault_list_secrets", "List secrets in HashiCorp Vault", {"type": "object", "properties": {"path": {"type": "string"}}, "required": []}),
-            tool("bmad_vault_delete_secret", "Delete secret from HashiCorp Vault", {"type": "object", "properties": {"path": {"type": "string"}, "versions": {"type": "array", "items": {"type": "string"}}}, "required": ["path"]}),
-            tool("bmad_vault_migrate_secrets", "Migrate all local secrets to HashiCorp Vault", {"type": "object", "properties": {}}, "required": []}),
-            tool("bmad_vault_health_check", "Check HashiCorp Vault health status", {"type": "object", "properties": {}}, "required": []}),
-            tool("bmad_vault_get_config", "Get configuration from HashiCorp Vault", {"type": "object", "properties": {"category": {"type": "string"}}, "required": ["category"]}),
-        ]
+    # BMAD Vault Integration Tools (Phase 2.1)
+    tools += [
+        tool("bmad_vault_store_secret", "Store secret in HashiCorp Vault", {"type": "object", "properties": {"path": {"type": "string"}, "secret_data": {"type": "object"}, "metadata": {"type": "object"}}, "required": ["path", "secret_data"]}),
+        tool("bmad_vault_retrieve_secret", "Retrieve secret from HashiCorp Vault", {"type": "object", "properties": {"path": {"type": "string"}, "version": {"type": "string"}}, "required": ["path"]}),
+        tool("bmad_vault_list_secrets", "List secrets in HashiCorp Vault", {"type": "object", "properties": {"path": {"type": "string"}}, "required": []}),
+        tool("bmad_vault_delete_secret", "Delete secret from HashiCorp Vault", {"type": "object", "properties": {"path": {"type": "string"}, "versions": {"type": "array", "items": {"type": "string"}}}, "required": ["path"]}),
+        tool("bmad_vault_migrate_secrets", "Migrate all local secrets to HashiCorp Vault", {"type": "object", "properties": {}}, "required": []}),
+        tool("bmad_vault_health_check", "Check HashiCorp Vault health status", {"type": "object", "properties": {}}, "required": []}),
+        tool("bmad_vault_get_config", "Get configuration from HashiCorp Vault", {"type": "object", "properties": {"category": {"type": "string"}}, "required": ["category"]}),
+    ]
+    
+    # BMAD Expansion Pack Management Tools (Phase 2.2)
+    tools += [
+        tool("bmad_expansion_list_packs", "List all available expansion packs", {"type": "object", "properties": {}}, "required": []),
+        tool("bmad_expansion_get_pack", "Get metadata for a specific expansion pack", {"type": "object", "properties": {"pack_name": {"type": "string"}}, "required": ["pack_name"]}),
+        tool("bmad_expansion_search_packs", "Search expansion packs by query and category", {"type": "object", "properties": {"query": {"type": "string"}, "category": {"type": "string"}}, "required": ["query"]}),
+        tool("bmad_expansion_download_pack", "Download an expansion pack from S3", {"type": "object", "properties": {"pack_name": {"type": "string"}, "destination": {"type": "string"}}, "required": ["pack_name"]}),
+        tool("bmad_expansion_get_file", "Get a specific file from an expansion pack", {"type": "object", "properties": {"pack_name": {"type": "string"}, "file_path": {"type": "string"}}, "required": ["pack_name", "file_path"]}),
+        tool("bmad_expansion_upload_pack", "Upload a local expansion pack to S3", {"type": "object", "properties": {"pack_path": {"type": "string"}}, "required": ["pack_path"]}),
+        tool("bmad_expansion_delete_pack", "Delete an expansion pack from S3", {"type": "object", "properties": {"pack_name": {"type": "string"}}, "required": ["pack_name"]}),
+        tool("bmad_expansion_migrate_local", "Migrate all local expansion packs to S3", {"type": "object", "properties": {"expansion_packs_dir": {"type": "string"}}, "required": []}),
+    ]
+    
+    # BMAD Update Management Tools (Phase 2.3)
+    tools += [
+        tool("bmad_update_check", "Check for available BMAD updates", {"type": "object", "properties": {}}, "required": []),
+        tool("bmad_update_validate", "Validate a BMAD update before applying", {"type": "object", "properties": {"target_version": {"type": "string"}}, "required": ["target_version"]}),
+        tool("bmad_update_apply", "Apply a BMAD update with customization preservation", {"type": "object", "properties": {"target_version": {"type": "string"}, "preserve_customizations": {"type": "boolean"}}, "required": ["target_version"]}),
+        tool("bmad_update_report", "Generate comprehensive update report", {"type": "object", "properties": {"target_version": {"type": "string"}}, "required": ["target_version"]}),
+        tool("bmad_customizations_discover", "Discover and catalog BMAD customizations", {"type": "object", "properties": {}}, "required": []),
+        tool("bmad_customizations_backup", "Backup current BMAD customizations", {"type": "object", "properties": {"backup_name": {"type": "string"}}, "required": []}),
+        tool("bmad_customizations_restore", "Restore BMAD customizations from backup", {"type": "object", "properties": {"backup_name": {"type": "string"}}, "required": ["backup_name"]}),
+        tool("bmad_integration_test", "Run integration tests to validate BMAD compatibility", {"type": "object", "properties": {"test_suite": {"type": "string"}}, "required": []}),
+    ]
+    
+    # BMAD Template Management Tools (Phase 2.2.4)
+    tools += [
+        tool("bmad_template_load", "Load a BMAD template from S3 storage", {"type": "object", "properties": {"template_name": {"type": "string"}, "template_type": {"type": "string"}, "pack_name": {"type": "string"}, "use_cache": {"type": "boolean"}}, "required": ["template_name"]}),
+        tool("bmad_template_list", "List all available BMAD templates", {"type": "object", "properties": {"template_type": {"type": "string"}, "pack_name": {"type": "string"}}, "required": []}),
+        tool("bmad_template_search", "Search for BMAD templates by query", {"type": "object", "properties": {"query": {"type": "string"}, "template_type": {"type": "string"}, "pack_category": {"type": "string"}}, "required": ["query"]}),
+        tool("bmad_template_validate", "Validate a BMAD template for correctness", {"type": "object", "properties": {"template_name": {"type": "string"}, "template_type": {"type": "string"}, "pack_name": {"type": "string"}}, "required": ["template_name"]}),
+        tool("bmad_template_preload", "Preload core BMAD templates for better performance", {"type": "object", "properties": {}}, "required": []}),
+    ]
 
         return tools
 
@@ -403,14 +436,14 @@ class ToolRegistry:
                 "coverage_percentage": grouping_validation["coverage_percentage"],
                 "missing_from_groups": grouping_validation["missing_from_groups"],
                 "extra_in_groups": grouping_validation["extra_in_groups"]
-            },
+            ),
             "version_metadata": {
                 "semantic_versioning": True,
                 "backward_compatibility": True,
                 "migration_support": True,
                 "enterprise_grade": True,
                 "tool_management": True
-            },
+            ),
         }
 
 

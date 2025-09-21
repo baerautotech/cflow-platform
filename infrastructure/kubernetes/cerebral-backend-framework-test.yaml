@@ -1,0 +1,196 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cerebral-backend-framework-test
+  namespace: cerebral-development
+  labels:
+    app: cerebral-backend-framework-test
+    component: api
+    tier: backend
+    environment: development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cerebral-backend-framework-test
+  template:
+    metadata:
+      labels:
+        app: cerebral-backend-framework-test
+        component: api
+        tier: backend
+        environment: development
+    spec:
+      containers:
+      - name: cerebral-backend
+        image: python:3.11-slim
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/bash"]
+        args:
+          - "-c"
+          - |
+            apt-get update && apt-get install -y curl
+            pip install --user fastapi uvicorn
+            python -c "
+            import os
+            from fastapi import FastAPI, Request, HTTPException
+            from fastapi.middleware.cors import CORSMiddleware
+            from fastapi.responses import JSONResponse
+            import uvicorn
+            from datetime import datetime
+            import logging
+
+            logging.basicConfig(level=logging.INFO)
+            logger = logging.getLogger(__name__)
+
+            app = FastAPI(title='Cerebral Backend API', version='1.0.0', description='Main backend service for the Cerebral Platform')
+            app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_credentials=True, allow_methods=['*'], allow_headers=['*'])
+
+            @app.get('/health')
+            async def health():
+                return {
+                    'status': 'healthy',
+                    'service': 'cerebral-backend',
+                    'version': '1.0.0',
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'environment': os.getenv('ENVIRONMENT', 'development')
+                }
+
+            @app.get('/')
+            async def root():
+                return {
+                    'service': 'Cerebral Backend API',
+                    'version': '1.0.0',
+                    'status': 'running',
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+
+            @app.get('/api/status')
+            async def api_status():
+                return {
+                    'api': 'cerebral-backend',
+                    'version': '1.0.0',
+                    'status': 'operational',
+                    'endpoints': ['/health', '/api/status', '/api/config', '/api/services']
+                }
+
+            @app.get('/api/config')
+            async def api_config():
+                return {
+                    'backend_host': os.getenv('BACKEND_HOST', '0.0.0.0'),
+                    'backend_port': os.getenv('BACKEND_PORT', '8000'),
+                    'log_level': os.getenv('BACKEND_LOG_LEVEL', 'info'),
+                    'workers': os.getenv('BACKEND_WORKERS', '1'),
+                    'timeout': os.getenv('BACKEND_TIMEOUT', '30'),
+                    'environment': os.getenv('ENVIRONMENT', 'development')
+                }
+
+            @app.get('/api/services')
+            async def api_services():
+                return {
+                    'services': [
+                        {'name': 'cerebral-backend', 'type': 'api', 'status': 'running', 'port': 8000},
+                        {'name': 'webmcp', 'type': 'mcp-server', 'status': 'external', 'port': 8000}
+                    ],
+                    'total_services': 2
+                }
+
+            @app.exception_handler(404)
+            async def not_found_handler(request: Request, exc: HTTPException):
+                return JSONResponse(
+                    status_code=404,
+                    content={
+                        'error': 'Not Found',
+                        'message': f'The requested endpoint {request.url.path} was not found',
+                        'timestamp': datetime.utcnow().isoformat()
+                    }
+                )
+
+            @app.exception_handler(500)
+            async def internal_error_handler(request: Request, exc: Exception):
+                logger.error(f'Internal server error: {exc}')
+                return JSONResponse(
+                    status_code=500,
+                    content={
+                        'error': 'Internal Server Error',
+                        'message': 'An unexpected error occurred',
+                        'timestamp': datetime.utcnow().isoformat()
+                    }
+                )
+
+            host = os.getenv('BACKEND_HOST', '0.0.0.0')
+            port = int(os.getenv('BACKEND_PORT', '8000'))
+            workers = int(os.getenv('BACKEND_WORKERS', '1'))
+            log_level = os.getenv('BACKEND_LOG_LEVEL', 'info')
+            
+            logger.info(f'Starting Cerebral Backend API on {host}:{port}')
+            logger.info(f'Workers: {workers}, Log Level: {log_level}')
+            
+            uvicorn.run(app, host=host, port=port, workers=workers, log_level=log_level.lower(), access_log=True)
+            "
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        env:
+        - name: SERVICE_NAME
+          value: cerebral-backend
+        - name: ENVIRONMENT
+          value: development
+        - name: PORT
+          value: "8000"
+        - name: LOG_LEVEL
+          value: info
+        - name: BACKEND_HOST
+          value: "0.0.0.0"
+        - name: BACKEND_PORT
+          value: "8000"
+        - name: BACKEND_LOG_LEVEL
+          value: "info"
+        - name: BACKEND_WORKERS
+          value: "1"
+        - name: BACKEND_TIMEOUT
+          value: "30"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cerebral-backend-framework-test-service
+  namespace: cerebral-development
+  labels:
+    app: cerebral-backend-framework-test
+    component: api
+    tier: backend
+    environment: development
+spec:
+  selector:
+    app: cerebral-backend-framework-test
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  type: ClusterIP

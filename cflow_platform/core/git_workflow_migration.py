@@ -1,7 +1,7 @@
 """
 BMAD Git Workflow Database Migration
 
-⚠️  DEPRECATED: This module is deprecated. Use cflow_platform.core.unified_database_schema instead.
+DEPRECATED: This module is deprecated. Use cflow_platform.core.unified_database_schema instead.
 
 This module creates the necessary database tables for BMAD git workflow tracking.
 """

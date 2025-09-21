@@ -1,7 +1,7 @@
 """
 BMAD Memory Migration
 
-⚠️  DEPRECATED: This module is deprecated. Use cflow_platform.core.unified_database_schema instead.
+DEPRECATED: This module is deprecated. Use cflow_platform.core.unified_database_schema instead.
 
 YOLO MODE: Fast migration from local JSONL to Supabase memory_items table.
 """

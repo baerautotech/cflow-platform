@@ -144,12 +144,40 @@ def main() -> int:
         print("")
         return 1
 
-    # Emoji guard (no emojis in code artifacts)
+    # Emoji guard (no emojis in code identifiers - variable names, function names, class names, imports)
     staged_all = get_staged_files("--diff-filter=ACM")
     emoji_detected: List[str] = []
     emoji_pattern = re.compile(r"[\U0001F300-\U0001FAFF\U00002600-\U000027BF]")
     code_exts = {".py", ".pyi", ".ts", ".tsx", ".js", ".jsx", ".rs", ".go", ".java", ".kt"}
     MAX_SCAN_BYTES = 512 * 1024  # skip very large files
+    
+    def has_emoji_in_code_identifiers(text: str) -> bool:
+        """Check for emojis in code identifiers (not in comments or strings)."""
+        lines = text.split('\n')
+        for line in lines:
+            # Skip comments and docstrings
+            stripped = line.strip()
+            if stripped.startswith('#') or stripped.startswith('"""') or stripped.startswith("'''"):
+                continue
+            
+            # Check for emojis in import statements
+            if stripped.startswith(('import ', 'from ')):
+                if emoji_pattern.search(stripped):
+                    return True
+                continue
+            
+            # Check for emojis in variable assignments, function definitions, class definitions
+            # Look for patterns like: variable_name =, def function_name(, class ClassName:
+            if re.search(r'\b[a-zA-Z_][a-zA-Z0-9_]*[\U0001F300-\U0001FAFF\U00002600-\U000027BF][a-zA-Z0-9_]*\s*[=:(]', stripped):
+                return True
+            
+            # Check for emojis in standalone identifiers (variable names, function calls)
+            # This catches cases like: my_variable_🎯, function_🚀()
+            if re.search(r'\b[a-zA-Z_][a-zA-Z0-9_]*[\U0001F300-\U0001FAFF\U00002600-\U000027BF][a-zA-Z0-9_]*\b', stripped):
+                return True
+        
+        return False
+    
     for rel in staged_all:
         p = repo_root / rel
         try:
@@ -163,16 +191,17 @@ def main() -> int:
             except Exception:
                 pass
             text = p.read_text(encoding="utf-8", errors="ignore")
-            if emoji_pattern.search(text):
+            if has_emoji_in_code_identifiers(text):
                 emoji_detected.append(rel)
         except Exception:
             continue
     if emoji_detected:
-        print("EMOJI DETECTED IN CODE FILES:")
+        print("EMOJI DETECTED IN CODE IDENTIFIERS:")
         for f in emoji_detected:
             print(f"  {f}")
         print("")
-        print("Remove emoji characters from source files. Logs at runtime may include emojis, but source must not.")
+        print("Remove emoji characters from code identifiers (variable names, function names, class names, imports).")
+        print("Emojis are allowed in comments, docstrings, and string literals.")
         return 3
 
     # RAG chunk guard

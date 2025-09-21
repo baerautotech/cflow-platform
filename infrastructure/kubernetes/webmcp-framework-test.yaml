@@ -1,0 +1,167 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webmcp-framework-test
+  namespace: cerebral-development
+  labels:
+    app: webmcp-framework-test
+    component: mcp-server
+    tier: core
+    environment: development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webmcp-framework-test
+  template:
+    metadata:
+      labels:
+        app: webmcp-framework-test
+        component: mcp-server
+        tier: core
+        environment: development
+    spec:
+      containers:
+      - name: webmcp
+        image: python:3.11-slim
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/bash"]
+        args:
+          - "-c"
+          - |
+            apt-get update && apt-get install -y curl
+            pip install --user fastapi uvicorn httpx
+            python -c "
+            import sys
+            sys.path.append('/root/.local/lib/python3.11/site-packages')
+            from fastapi import FastAPI, Request
+            from fastapi.middleware.cors import CORSMiddleware
+            import uvicorn
+            import json
+            from datetime import datetime
+
+            app = FastAPI(title='CFlow WebMCP Server', version='3.0.0')
+            app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_credentials=True, allow_methods=['*'], allow_headers=['*'])
+
+            master_tools = {
+                'bmad_task': {'name': 'bmad_task', 'description': 'BMAD Task Management Master Tool', 'operations': ['create', 'get', 'update', 'delete', 'list', 'search']},
+                'bmad_plan': {'name': 'bmad_plan', 'description': 'BMAD Planning Master Tool', 'operations': ['create', 'get', 'update', 'execute', 'list']},
+                'bmad_doc': {'name': 'bmad_doc', 'description': 'BMAD Documentation Master Tool', 'operations': ['create', 'get', 'update', 'approve', 'list']},
+                'bmad_workflow': {'name': 'bmad_workflow', 'description': 'BMAD Workflow Master Tool', 'operations': ['create', 'execute', 'status', 'list']},
+                'bmad_hil': {'name': 'bmad_hil', 'description': 'BMAD Human-in-the-Loop Master Tool', 'operations': ['request', 'status', 'approve', 'list']},
+                'bmad_git': {'name': 'bmad_git', 'description': 'BMAD Git Operations Master Tool', 'operations': ['commit', 'push', 'pull', 'create_branch', 'merge', 'status']},
+                'bmad_orchestrator': {'name': 'bmad_orchestrator', 'description': 'BMAD Orchestrator Master Tool', 'operations': ['coordinate', 'monitor', 'optimize', 'scale']},
+                'bmad_expansion': {'name': 'bmad_expansion', 'description': 'BMAD Expansion Pack Master Tool', 'operations': ['load', 'unload', 'list', 'configure']},
+                'bmad_gamedev': {'name': 'bmad_gamedev', 'description': 'BMAD Game Development Master Tool', 'operations': ['create_asset', 'optimize', 'test', 'deploy']},
+                'bmad_devops': {'name': 'bmad_devops', 'description': 'BMAD DevOps Master Tool', 'operations': ['deploy', 'monitor', 'scale', 'rollback']},
+                'bmad_creative': {'name': 'bmad_creative', 'description': 'BMAD Creative Writing Master Tool', 'operations': ['generate', 'edit', 'review', 'publish']}
+            }
+
+            @app.get('/')
+            def root():
+                return {'status': 'healthy', 'service': 'cflow-webmcp', 'version': '3.0.0', 'master_tools_count': len(master_tools)}
+
+            @app.get('/health')
+            def health():
+                return {'status': 'healthy', 'service': 'cflow-webmcp', 'version': '3.0.0', 'master_tools_count': len(master_tools)}
+
+            @app.get('/help')
+            def help():
+                return {
+                    'service': 'CFlow WebMCP Server',
+                    'version': '3.0.0',
+                    'description': 'HTTP-based MCP server for Cerebral Platform with Master Tool Pattern',
+                    'documentation': {
+                        'overview': 'This server provides access to BMAD master tools through a unified API. Each master tool consolidates multiple related operations into a single, efficient interface.',
+                        'master_tools': master_tools,
+                        'total_master_tools': len(master_tools),
+                        'total_operations': sum(len(tool['operations']) for tool in master_tools.values())
+                    },
+                    'endpoints': {
+                        'health': {'path': '/health', 'method': 'GET', 'description': 'Service health check with tool counts'},
+                        'help': {'path': '/help', 'method': 'GET', 'description': 'This comprehensive help documentation'},
+                        'master_tools': {'path': '/mcp/master-tools', 'method': 'GET', 'description': 'List all available master tools'},
+                        'api_docs': {'path': '/docs', 'method': 'GET', 'description': 'Interactive API documentation (Swagger UI)'}
+                    },
+                    'master_tool_categories': {
+                        'core': ['bmad_task', 'bmad_plan', 'bmad_doc', 'bmad_workflow'],
+                        'advanced': ['bmad_hil', 'bmad_git', 'bmad_orchestrator', 'bmad_expansion'],
+                        'expansion_packs': ['bmad_gamedev', 'bmad_devops', 'bmad_creative']
+                    },
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+
+            @app.get('/mcp/master-tools')
+            def list_master_tools():
+                return {'master_tools': list(master_tools.values()), 'count': len(master_tools)}
+
+            @app.get('/mcp/master-tools/{tool_name}')
+            def get_master_tool_info(tool_name: str):
+                if tool_name in master_tools:
+                    return master_tools[tool_name]
+                return {'error': 'Master tool not found'}
+
+            @app.get('/mcp/master-tools/{tool_name}/operations')
+            def get_master_tool_operations(tool_name: str):
+                if tool_name in master_tools:
+                    return {'tool_name': tool_name, 'operations': master_tools[tool_name]['operations'], 'operation_count': len(master_tools[tool_name]['operations'])}
+                return {'error': 'Master tool not found'}
+
+            uvicorn.run(app, host='0.0.0.0', port=8000)
+            "
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        env:
+        - name: SERVICE_NAME
+          value: webmcp
+        - name: ENVIRONMENT
+          value: development
+        - name: PORT
+          value: "8000"
+        - name: LOG_LEVEL
+          value: info
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webmcp-framework-test-service
+  namespace: cerebral-development
+  labels:
+    app: webmcp-framework-test
+    component: mcp-server
+    tier: core
+    environment: development
+spec:
+  selector:
+    app: webmcp-framework-test
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  type: ClusterIP

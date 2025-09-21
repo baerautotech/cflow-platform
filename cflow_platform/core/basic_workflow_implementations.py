@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from .bmad_workflow_engine import BMADWorkflowEngine, BMADWorkflow, BMADWorkflowStep
 from .bmad_hil_integration import BMADHILIntegration
 from .public_api import get_direct_client_executor
+from .bmad_template_loader import get_bmad_template_loader
 
 
 class BasicWorkflowImplementations:
@@ -38,6 +39,7 @@ class BasicWorkflowImplementations:
         self.workflow_engine = BMADWorkflowEngine()
         self.hil_integration = BMADHILIntegration()
         self.executor = get_direct_client_executor()
+        self.template_loader = get_bmad_template_loader()
         self.bmad_root = Path(__file__).parent.parent.parent / "vendor" / "bmad"
     
     # ============================================================================

@@ -4,90 +4,95 @@ metadata:
   annotations:
     cerebral.baerautotech.com/created-by: pod-framework
     cerebral.baerautotech.com/framework-version: 1.0.0
-    cerebral.baerautotech.com/last-updated: '2025-09-20T23:44:35.349604'
+    cerebral.baerautotech.com/last-updated: '2025-09-20T14:54:47.581837'
   labels:
-    app: webmcp
+    app: bmad-api
     app.kubernetes.io/managed-by: cerebral-platform
     app.kubernetes.io/part-of: cerebral-cluster
-    component: mcp-server
+    component: api
     environment: development
-    tier: core
+    tier: backend
     version: 1.0.0
-  name: webmcp
+  name: bmad-api
   namespace: cerebral-development
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: webmcp
+      app: bmad-api
   template:
     metadata:
       labels:
-        app: webmcp
-        component: mcp-server
+        app: bmad-api
+        component: api
         environment: development
-        tier: core
+        tier: backend
         version: 1.0.0
     spec:
       containers:
       - env:
-        - name: WEBMCP_HOST
+        - name: BMAD_API_HOST
           value: 0.0.0.0
-        - name: WEBMCP_PORT
-          value: '8000'
-        - name: WEBMCP_WORKERS
-          value: '1'
-        - name: WEBMCP_LOG_LEVEL
+        - name: BMAD_API_PORT
+          value: '8001'
+        - name: BMAD_LOG_LEVEL
           value: info
+        - name: BMAD_WORKFLOW_TIMEOUT
+          value: '300'
         - name: SERVICE_NAME
-          value: webmcp
+          value: bmad-api
         - name: ENVIRONMENT
           value: development
         - name: PORT
-          value: '8000'
+          value: '8001'
         - name: LOG_LEVEL
           value: info
         - name: SUPABASE_URL
           valueFrom:
             secretKeyRef:
               key: supabase-url
-              name: webmcp-secrets
+              name: bmad-api-secrets
         - name: SUPABASE_ANON_KEY
           valueFrom:
             secretKeyRef:
               key: supabase-anon-key
-              name: webmcp-secrets
+              name: bmad-api-secrets
         - name: VAULT_URL
           valueFrom:
             secretKeyRef:
               key: vault-url
-              name: webmcp-secrets
+              name: bmad-api-secrets
         - name: VAULT_TOKEN
           valueFrom:
             secretKeyRef:
               key: vault-token
-              name: webmcp-secrets
-        image: registry.baerautotech.com/webmcp:latest
+              name: bmad-api-secrets
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: jwt-secret
+              name: bmad-api-secrets
+        image: registry.baerautotech.com/bmad-api:latest
         imagePullPolicy: Always
         livenessProbe:
           failureThreshold: 3
           httpGet:
             path: /health
-            port: 8000
+            port: 8001
             scheme: HTTP
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
-        name: webmcp
+        name: bmad-api
         ports:
-        - containerPort: 8000
+        - containerPort: 8001
           name: http
           protocol: TCP
         readinessProbe:
           failureThreshold: 3
           httpGet:
             path: /health
-            port: 8000
+            port: 8001
             scheme: HTTP
           initialDelaySeconds: 10
           periodSeconds: 5
@@ -104,6 +109,8 @@ spec:
           readOnlyRootFilesystem: false
           runAsNonRoot: false
         volumeMounts:
+        - mountPath: /app/workflows
+          name: workflow-storage
         - mountPath: /app/logs
           name: logs-storage
         - mountPath: /tmp
@@ -112,8 +119,11 @@ spec:
       securityContext:
         fsGroup: 1000
         runAsNonRoot: false
-      serviceAccountName: webmcp-sa
+      serviceAccountName: bmad-api-sa
       volumes:
+      - emptyDir:
+          sizeLimit: 2Gi
+        name: workflow-storage
       - emptyDir:
           sizeLimit: 100Mi
         name: logs-storage
@@ -125,51 +135,52 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: webmcp
-    component: mcp-server
+    app: bmad-api
+    component: api
     environment: development
-    tier: core
-  name: webmcp-service
+    tier: backend
+  name: bmad-api-service
   namespace: cerebral-development
 spec:
   ports:
   - name: http
-    port: 8000
+    port: 8001
     protocol: TCP
-    targetPort: 8000
+    targetPort: 8001
   selector:
-    app: webmcp
+    app: bmad-api
   type: ClusterIP
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
-    app: webmcp
-    component: mcp-server
+    app: bmad-api
+    component: api
     environment: development
-    tier: core
-  name: webmcp-sa
+    tier: backend
+  name: bmad-api-sa
   namespace: cerebral-development
 ---
 apiVersion: v1
 data:
-  WEBMCP_HOST: 0.0.0.0
-  WEBMCP_LOG_LEVEL: info
-  WEBMCP_PORT: '8000'
-  WEBMCP_WORKERS: '1'
+  BMAD_API_HOST: 0.0.0.0
+  BMAD_API_PORT: '8001'
+  BMAD_LOG_LEVEL: info
+  BMAD_WORKFLOW_TIMEOUT: '300'
 kind: ConfigMap
 metadata:
   labels:
-    app: webmcp
-    component: mcp-server
+    app: bmad-api
+    component: api
     environment: development
-    tier: core
-  name: webmcp-config
+    tier: backend
+  name: bmad-api-config
   namespace: cerebral-development
 ---
 apiVersion: v1
 data:
+  JWT_SECRET_KEY: ''
   SUPABASE_ANON_KEY: ''
   SUPABASE_URL: ''
   VAULT_TOKEN: ''
@@ -177,10 +188,10 @@ data:
 kind: Secret
 metadata:
   labels:
-    app: webmcp
-    component: mcp-server
+    app: bmad-api
+    component: api
     environment: development
-    tier: core
-  name: webmcp-secrets
+    tier: backend
+  name: bmad-api-secrets
   namespace: cerebral-development
 type: Opaque

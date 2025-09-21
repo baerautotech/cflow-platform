@@ -18,6 +18,7 @@ from cflow_platform.core.config.supabase_config import get_api_key, get_rest_url
 from cflow_platform.core.bmad_hil_integration import BMADHILIntegration
 from cflow_platform.core.bmad_git_workflow import BMADGitWorkflow
 from cflow_platform.core.vault_integration import get_vault_integration
+from cflow_platform.core.bmad_template_loader import get_bmad_template_loader
 from supabase import create_client
 
 # Load environment variables from project root
@@ -32,6 +33,7 @@ class BMADHandlers:
         self.bmad_hil = BMADHILIntegration()
         self.bmad_git = BMADGitWorkflow()
         self.vault = get_vault_integration()
+        self.template_loader = get_bmad_template_loader()
         self._ensure_supabase()
 
     def _ensure_supabase(self) -> None:
@@ -50,15 +52,15 @@ class BMADHandlers:
                 self.supabase_client = None
 
     async def bmad_prd_create(self, project_name: str, goals: Optional[List[str]] = None, background: Optional[str] = None) -> Dict[str, Any]:
-        """Create a new PRD document using BMAD templates."""
+        """Create a new PRD document using BMAD templates from S3 storage."""
         try:
-            # Load BMAD PRD template
-            template_path = Path(__file__).parent.parent.parent / "vendor" / "bmad" / "bmad-core" / "templates" / "prd-tmpl.yaml"
+            # Load BMAD PRD template from S3 (with local fallback)
+            template = await self.template_loader.load_template("prd", "core")
             
-            if not template_path.exists():
+            if not template:
                 return {
                     "success": False,
-                    "error": "BMAD PRD template not found",
+                    "error": "BMAD PRD template not found in S3 or local fallback",
                     "doc_id": None
                 }
 
@@ -71,7 +73,7 @@ class BMADHandlers:
                 "kind": "PRD",  # Document type
                 "version": 1,  # Document version
                 "status": "draft",  # Document status
-                "content": self._generate_prd_content(project_name, goals, background),
+                "content": self._generate_prd_content_from_template(project_name, goals, background, template.content),
                 "created_at": datetime.utcnow().isoformat(),
                 "updated_at": datetime.utcnow().isoformat()
             }
@@ -85,9 +87,15 @@ class BMADHandlers:
                         kg_result = await self._index_to_knowledge_graph(
                             doc_id=doc_id,
                             title=f"{project_name} Product Requirements Document",
-                            content=self._generate_prd_content(project_name, goals, background),
+                            content=self._generate_prd_content_from_template(project_name, goals, background, template.content),
                             content_type="PRD",
-                            metadata={"project_name": project_name, "goals": goals or [], "background": background or ""}
+                            metadata={
+                                "project_name": project_name, 
+                                "goals": goals or [], 
+                                "background": background or "",
+                                "template_source": template.loaded_from,
+                                "template_pack": template.pack_name or "core"
+                            }
                         )
                         
                         kg_status = " and indexed to Knowledge Graph" if kg_result.get("success") else " (KG indexing failed)"
@@ -122,15 +130,15 @@ class BMADHandlers:
             }
 
     async def bmad_arch_create(self, project_name: str, prd_id: str, tech_stack: Optional[List[str]] = None) -> Dict[str, Any]:
-        """Create a new Architecture document using BMAD templates."""
+        """Create a new Architecture document using BMAD templates from S3 storage."""
         try:
-            # Load BMAD Architecture template
-            template_path = Path(__file__).parent.parent.parent / "vendor" / "bmad" / "bmad-core" / "templates" / "architecture-tmpl.yaml"
+            # Load BMAD Architecture template from S3 (with local fallback)
+            template = await self.template_loader.load_template("architecture", "core")
             
-            if not template_path.exists():
+            if not template:
                 return {
                     "success": False,
-                    "error": "BMAD Architecture template not found",
+                    "error": "BMAD Architecture template not found in S3 or local fallback",
                     "doc_id": None
                 }
 
@@ -143,7 +151,7 @@ class BMADHandlers:
                 "kind": "ARCHITECTURE",  # Document type
                 "version": 1,  # Document version
                 "status": "draft",  # Document status
-                "content": self._generate_arch_content(project_name, tech_stack),
+                "content": self._generate_arch_content_from_template(project_name, tech_stack, template.content),
                 "created_at": datetime.utcnow().isoformat(),
                 "updated_at": datetime.utcnow().isoformat()
             }
@@ -194,15 +202,15 @@ class BMADHandlers:
             }
 
     async def bmad_story_create(self, project_name: str, prd_id: str, arch_id: str, user_stories: Optional[List[str]] = None) -> Dict[str, Any]:
-        """Create a new User Story document using BMAD templates."""
+        """Create a new User Story document using BMAD templates from S3 storage."""
         try:
-            # Load BMAD Story template
-            template_path = Path(__file__).parent.parent.parent / "vendor" / "bmad" / "bmad-core" / "templates" / "story-tmpl.yaml"
+            # Load BMAD Story template from S3 (with local fallback)
+            template = await self.template_loader.load_template("story", "core")
             
-            if not template_path.exists():
+            if not template:
                 return {
                     "success": False,
-                    "error": "BMAD Story template not found",
+                    "error": "BMAD Story template not found in S3 or local fallback",
                     "doc_id": None
                 }
 
@@ -215,7 +223,7 @@ class BMADHandlers:
                 "kind": "STORY",  # Document type
                 "version": 1,  # Document version
                 "status": "draft",  # Document status
-                "content": self._generate_story_content(project_name, user_stories),
+                "content": self._generate_story_content_from_template(project_name, user_stories, template.content),
                 "created_at": datetime.utcnow().isoformat(),
                 "updated_at": datetime.utcnow().isoformat()
             }
@@ -347,7 +355,44 @@ class BMADHandlers:
                 "error": f"Failed to approve document: {str(e)}"
             }
 
-    def _generate_prd_content(self, project_name: str, goals: Optional[List[str]], background: Optional[str]) -> str:
+    def _generate_prd_content_from_template(self, project_name: str, goals: Optional[List[str]], background: Optional[str], template_content: str) -> str:
+        """Generate PRD content from S3-loaded template and parameters."""
+        try:
+            # Parse template content (assuming it's YAML with placeholders)
+            import yaml
+            template_data = yaml.safe_load(template_content)
+            
+            if isinstance(template_data, dict):
+                # Replace placeholders with actual values
+                content = template_content
+                
+                # Replace common placeholders
+                replacements = {
+                    "{{project_name}}": project_name,
+                    "{{goals}}": "\n".join(f"- {goal}" for goal in (goals or ["Define product requirements"])),
+                    "{{background}}": background or f"This document outlines the product requirements for {project_name}.",
+                    "{{date}}": datetime.now().strftime("%Y-%m-%d"),
+                    "{{goals_list}}": ", ".join(goals or ["Define product requirements"]),
+                }
+                
+                for placeholder, value in replacements.items():
+                    content = content.replace(placeholder, str(value))
+                
+                return content
+            else:
+                # Fallback to simple template processing
+                return self._process_simple_template(template_content, {
+                    "project_name": project_name,
+                    "goals": goals or ["Define product requirements"],
+                    "background": background or f"This document outlines the product requirements for {project_name}."
+                })
+                
+        except Exception as e:
+            print(f"[WARN] BMAD Handlers: Failed to process PRD template: {e}")
+            # Fallback to original method
+            return self._generate_prd_content_legacy(project_name, goals, background)
+    
+    def _generate_prd_content_legacy(self, project_name: str, goals: Optional[List[str]], background: Optional[str]) -> str:
         """Generate PRD content from template and parameters."""
         content = f"""# {project_name} Product Requirements Document (PRD)
 
@@ -426,7 +471,42 @@ class BMADHandlers:
         except Exception as e:
             return {"success": False, "error": f"Knowledge Graph indexing failed: {str(e)}"}
 
-    def _generate_arch_content(self, project_name: str, tech_stack: Optional[List[str]]) -> str:
+    def _generate_arch_content_from_template(self, project_name: str, tech_stack: Optional[List[str]], template_content: str) -> str:
+        """Generate Architecture content from S3-loaded template and parameters."""
+        try:
+            # Parse template content (assuming it's YAML with placeholders)
+            import yaml
+            template_data = yaml.safe_load(template_content)
+            
+            if isinstance(template_data, dict):
+                # Replace placeholders with actual values
+                content = template_content
+                
+                # Replace common placeholders
+                replacements = {
+                    "{{project_name}}": project_name,
+                    "{{tech_stack}}": "\n".join(f"- {tech}" for tech in (tech_stack or ["Technology stack to be defined"])),
+                    "{{tech_stack_list}}": ", ".join(tech_stack or ["Technology stack to be defined"]),
+                    "{{date}}": datetime.now().strftime("%Y-%m-%d"),
+                }
+                
+                for placeholder, value in replacements.items():
+                    content = content.replace(placeholder, str(value))
+                
+                return content
+            else:
+                # Fallback to simple template processing
+                return self._process_simple_template(template_content, {
+                    "project_name": project_name,
+                    "tech_stack": tech_stack or ["Technology stack to be defined"]
+                })
+                
+        except Exception as e:
+            print(f"[WARN] BMAD Handlers: Failed to process Architecture template: {e}")
+            # Fallback to original method
+            return self._generate_arch_content_legacy(project_name, tech_stack)
+    
+    def _generate_arch_content_legacy(self, project_name: str, tech_stack: Optional[List[str]]) -> str:
         """Generate Architecture content from template and parameters."""
         tech_list = ", ".join(tech_stack or ["Python", "React", "PostgreSQL"])
         
@@ -467,7 +547,42 @@ This document outlines the overall project architecture for {project_name}, incl
 """
         return content
 
-    def _generate_story_content(self, project_name: str, user_stories: Optional[List[str]]) -> str:
+    def _generate_story_content_from_template(self, project_name: str, user_stories: Optional[List[str]], template_content: str) -> str:
+        """Generate Story content from S3-loaded template and parameters."""
+        try:
+            # Parse template content (assuming it's YAML with placeholders)
+            import yaml
+            template_data = yaml.safe_load(template_content)
+            
+            if isinstance(template_data, dict):
+                # Replace placeholders with actual values
+                content = template_content
+                
+                # Replace common placeholders
+                replacements = {
+                    "{{project_name}}": project_name,
+                    "{{user_stories}}": "\n".join(f"- {story}" for story in (user_stories or ["User stories to be defined"])),
+                    "{{user_stories_list}}": ", ".join(user_stories or ["User stories to be defined"]),
+                    "{{date}}": datetime.now().strftime("%Y-%m-%d"),
+                }
+                
+                for placeholder, value in replacements.items():
+                    content = content.replace(placeholder, str(value))
+                
+                return content
+            else:
+                # Fallback to simple template processing
+                return self._process_simple_template(template_content, {
+                    "project_name": project_name,
+                    "user_stories": user_stories or ["User stories to be defined"]
+                })
+                
+        except Exception as e:
+            print(f"[WARN] BMAD Handlers: Failed to process Story template: {e}")
+            # Fallback to original method
+            return self._generate_story_content_legacy(project_name, user_stories)
+    
+    def _generate_story_content_legacy(self, project_name: str, user_stories: Optional[List[str]]) -> str:
         """Generate Story content from template and parameters."""
         stories_list = chr(10).join(f"- {story}" for story in (user_stories or ["As a user, I want to..."]))
         
@@ -497,6 +612,22 @@ This document outlines the user stories and implementation approach for {project
 
 *[To be filled during interactive elicitation]*
 """
+        return content
+    
+    def _process_simple_template(self, template_content: str, variables: Dict[str, Any]) -> str:
+        """Process a simple template with variable substitution."""
+        content = template_content
+        
+        # Replace common placeholders
+        for key, value in variables.items():
+            if isinstance(value, list):
+                # Handle list values
+                list_content = "\n".join(f"- {item}" for item in value)
+                content = content.replace(f"{{{{{key}}}}}", list_content)
+                content = content.replace(f"{{{{{key}_list}}}}", ", ".join(str(item) for item in value))
+            else:
+                content = content.replace(f"{{{{{key}}}}}", str(value))
+        
         return content
 
     # BMAD Orchestration & Workflow Gates
