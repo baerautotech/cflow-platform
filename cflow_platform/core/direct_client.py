@@ -499,6 +499,38 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
                 return await bmad_installation_test_prerequisites(**kwargs)
             elif tool_name == "bmad_installation_generate_report":
                 return await bmad_installation_generate_report(**kwargs)
+        # BMAD Uninstall and Rollback Tools (Sprint 6 - Story 4.3)
+        elif tool_name.startswith("bmad_uninstall_") or tool_name.startswith("bmad_rollback_"):
+            from ..handlers.uninstall_rollback_handlers import (
+                bmad_uninstall_complete,
+                bmad_uninstall_step,
+                bmad_rollback_create_point,
+                bmad_rollback_to_point,
+                bmad_rollback_list_points,
+                bmad_rollback_delete_point,
+                bmad_uninstall_validate,
+                bmad_uninstall_simulate,
+                bmad_rollback_get_point_info
+            )
+            
+            if tool_name == "bmad_uninstall_complete":
+                return await bmad_uninstall_complete(**kwargs)
+            elif tool_name == "bmad_uninstall_step":
+                return await bmad_uninstall_step(**kwargs)
+            elif tool_name == "bmad_rollback_create_point":
+                return await bmad_rollback_create_point(**kwargs)
+            elif tool_name == "bmad_rollback_to_point":
+                return await bmad_rollback_to_point(**kwargs)
+            elif tool_name == "bmad_rollback_list_points":
+                return await bmad_rollback_list_points(**kwargs)
+            elif tool_name == "bmad_rollback_delete_point":
+                return await bmad_rollback_delete_point(**kwargs)
+            elif tool_name == "bmad_uninstall_validate":
+                return await bmad_uninstall_validate(**kwargs)
+            elif tool_name == "bmad_uninstall_simulate":
+                return await bmad_uninstall_simulate(**kwargs)
+            elif tool_name == "bmad_rollback_get_point_info":
+                return await bmad_rollback_get_point_info(**kwargs)
         # BMAD Integration Testing Tools (Phase 4.3)
         elif tool_name.startswith("bmad_integration_"):
             from ..handlers.integration_testing_handlers import (

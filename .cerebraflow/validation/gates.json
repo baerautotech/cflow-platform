@@ -1,8 +1,0 @@
-{
-  "gates": {
-    "GateP": true,
-    "GateRDB": true,
-    "GateRAG": true,
-    "GateVEC": true
-  }
-}

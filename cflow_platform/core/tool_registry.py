@@ -583,6 +583,72 @@ class ToolRegistry:
             })
         ]
 
+        # BMAD Uninstall and Rollback tools (Sprint 6 - Story 4.3)
+        tools += [
+            tool("bmad_uninstall_complete", "Uninstall BMAD integration completely", {
+                "type": "object",
+                "properties": {
+                    "create_backup": {"type": "boolean", "description": "Whether to create backup before uninstall", "default": True},
+                    "remove_vendor_bmad": {"type": "boolean", "description": "Whether to remove vendor BMAD directory", "default": False},
+                    "force": {"type": "boolean", "description": "Whether to force uninstall even if some steps fail", "default": False}
+                },
+                "required": []
+            }),
+            tool("bmad_uninstall_step", "Execute a specific uninstall step", {
+                "type": "object",
+                "properties": {
+                    "step_name": {"type": "string", "description": "Name of the uninstall step to execute"},
+                    "force": {"type": "boolean", "description": "Whether to force execution even if step fails", "default": False}
+                },
+                "required": ["step_name"]
+            }),
+            tool("bmad_rollback_create_point", "Create a rollback point for future restoration", {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "Name of the rollback point"},
+                    "description": {"type": "string", "description": "Description of the rollback point", "default": ""}
+                },
+                "required": ["name"]
+            }),
+            tool("bmad_rollback_to_point", "Rollback to a specific rollback point", {
+                "type": "object",
+                "properties": {
+                    "rollback_point_name": {"type": "string", "description": "Name of the rollback point to restore"},
+                    "force": {"type": "boolean", "description": "Whether to force rollback even if some steps fail", "default": False}
+                },
+                "required": ["rollback_point_name"]
+            }),
+            tool("bmad_rollback_list_points", "List all available rollback points", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_rollback_delete_point", "Delete a specific rollback point", {
+                "type": "object",
+                "properties": {
+                    "rollback_point_name": {"type": "string", "description": "Name of the rollback point to delete"}
+                },
+                "required": ["rollback_point_name"]
+            }),
+            tool("bmad_uninstall_validate", "Validate uninstall prerequisites and current state", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_uninstall_simulate", "Simulate uninstall process without actually performing it", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_rollback_get_point_info", "Get detailed information about a specific rollback point", {
+                "type": "object",
+                "properties": {
+                    "rollback_point_name": {"type": "string", "description": "Name of the rollback point"}
+                },
+                "required": ["rollback_point_name"]
+            })
+        ]
+
         # BMAD Integration Testing tools (Phase 4.3)
         tools += [
             tool("bmad_integration_cross_component_test", "Run cross-component integration testing"),
