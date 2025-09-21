@@ -531,6 +531,35 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
                 return await bmad_uninstall_simulate(**kwargs)
             elif tool_name == "bmad_rollback_get_point_info":
                 return await bmad_rollback_get_point_info(**kwargs)
+        # BMAD Documentation Management Tools (Sprint 6 - Story 4.4)
+        elif tool_name.startswith("bmad_documentation_") or tool_name.startswith("bmad_runbook_"):
+            from ..handlers.documentation_handlers import (
+                bmad_documentation_generate,
+                bmad_documentation_update,
+                bmad_runbook_generate,
+                bmad_documentation_validate,
+                bmad_documentation_list,
+                bmad_documentation_get_content,
+                bmad_documentation_create_section,
+                bmad_documentation_update_runbook
+            )
+            
+            if tool_name == "bmad_documentation_generate":
+                return await bmad_documentation_generate(**kwargs)
+            elif tool_name == "bmad_documentation_update":
+                return await bmad_documentation_update(**kwargs)
+            elif tool_name == "bmad_runbook_generate":
+                return await bmad_runbook_generate(**kwargs)
+            elif tool_name == "bmad_documentation_validate":
+                return await bmad_documentation_validate(**kwargs)
+            elif tool_name == "bmad_documentation_list":
+                return await bmad_documentation_list(**kwargs)
+            elif tool_name == "bmad_documentation_get_content":
+                return await bmad_documentation_get_content(**kwargs)
+            elif tool_name == "bmad_documentation_create_section":
+                return await bmad_documentation_create_section(**kwargs)
+            elif tool_name == "bmad_documentation_update_runbook":
+                return await bmad_documentation_update_runbook(**kwargs)
         # BMAD Integration Testing Tools (Phase 4.3)
         elif tool_name.startswith("bmad_integration_"):
             from ..handlers.integration_testing_handlers import (

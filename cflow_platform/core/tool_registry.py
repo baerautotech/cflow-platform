@@ -649,6 +649,66 @@ class ToolRegistry:
             })
         ]
 
+        # BMAD Documentation Management tools (Sprint 6 - Story 4.4)
+        tools += [
+            tool("bmad_documentation_generate", "Generate comprehensive BMAD documentation", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_documentation_update", "Update specific documentation section", {
+                "type": "object",
+                "properties": {
+                    "section": {"type": "string", "description": "Documentation section to update (integration, installation, troubleshooting, api, configuration)"},
+                    "content": {"type": "string", "description": "New content for the section"}
+                },
+                "required": ["section", "content"]
+            }),
+            tool("bmad_runbook_generate", "Generate a specific runbook", {
+                "type": "object",
+                "properties": {
+                    "runbook_type": {"type": "string", "description": "Type of runbook to generate"},
+                    "steps": {"type": "string", "description": "JSON string with runbook steps"}
+                },
+                "required": ["runbook_type", "steps"]
+            }),
+            tool("bmad_documentation_validate", "Validate existing documentation", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_documentation_list", "List all documentation files", {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+            tool("bmad_documentation_get_content", "Get content of a specific documentation file", {
+                "type": "object",
+                "properties": {
+                    "file_path": {"type": "string", "description": "Path to the documentation file"}
+                },
+                "required": ["file_path"]
+            }),
+            tool("bmad_documentation_create_section", "Create a new documentation section", {
+                "type": "object",
+                "properties": {
+                    "section_name": {"type": "string", "description": "Name of the section"},
+                    "title": {"type": "string", "description": "Title of the section"},
+                    "content": {"type": "string", "description": "Content of the section"},
+                    "parent_section": {"type": "string", "description": "Parent section (optional)"}
+                },
+                "required": ["section_name", "title", "content"]
+            }),
+            tool("bmad_documentation_update_runbook", "Update a specific runbook", {
+                "type": "object",
+                "properties": {
+                    "runbook_name": {"type": "string", "description": "Name of the runbook to update"},
+                    "content": {"type": "string", "description": "New content for the runbook"}
+                },
+                "required": ["runbook_name", "content"]
+            })
+        ]
+
         # BMAD Integration Testing tools (Phase 4.3)
         tools += [
             tool("bmad_integration_cross_component_test", "Run cross-component integration testing"),
