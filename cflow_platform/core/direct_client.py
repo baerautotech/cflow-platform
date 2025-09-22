@@ -774,6 +774,36 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
                 return await bmad_expansion_pack_update(**kwargs)
             elif tool_name == "bmad_expansion_pack_validate":
                 return await bmad_expansion_pack_validate(**kwargs)
+        
+        # BMAD Orchestration Tools (Background Agents & Master Orchestration)
+        # Background Agent Orchestration Tools
+        elif tool_name == "bmad_activate_background_agents":
+            from ..handlers.bmad_orchestration_handlers import bmad_activate_background_agents
+            return await bmad_activate_background_agents(kwargs or {})
+        elif tool_name == "bmad_get_background_agent_status":
+            from ..handlers.bmad_orchestration_handlers import bmad_get_background_agent_status
+            return await bmad_get_background_agent_status(kwargs or {})
+        elif tool_name == "bmad_distribute_task":
+            from ..handlers.bmad_orchestration_handlers import bmad_distribute_task
+            return await bmad_distribute_task(kwargs or {})
+        elif tool_name == "bmad_deactivate_background_agents":
+            from ..handlers.bmad_orchestration_handlers import bmad_deactivate_background_agents
+            return await bmad_deactivate_background_agents(kwargs or {})
+        
+        # BMAD Master Orchestration Tools
+        elif tool_name == "bmad_activate_master_orchestration":
+            from ..handlers.bmad_orchestration_handlers import bmad_activate_master_orchestration
+            return await bmad_activate_master_orchestration(kwargs or {})
+        elif tool_name == "bmad_begin_story_implementation":
+            from ..handlers.bmad_orchestration_handlers import bmad_begin_story_implementation
+            return await bmad_begin_story_implementation(kwargs or {})
+        elif tool_name == "bmad_get_master_orchestration_status":
+            from ..handlers.bmad_orchestration_handlers import bmad_get_master_orchestration_status
+            return await bmad_get_master_orchestration_status(kwargs or {})
+        elif tool_name == "bmad_deactivate_master_orchestration":
+            from ..handlers.bmad_orchestration_handlers import bmad_deactivate_master_orchestration
+            return await bmad_deactivate_master_orchestration(kwargs or {})
+        
         else:
             return {"status": "error", "message": f"Unknown BMAD tool: {tool_name}"}
     elif tool_name == "bmad_git_get_history":

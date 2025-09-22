@@ -29,6 +29,10 @@ spec:
         tier: core
         version: 1.0.0
     spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - env:
         - name: WEBMCP_HOST
@@ -67,7 +71,7 @@ spec:
             secretKeyRef:
               key: vault-token
               name: webmcp-secrets
-        image: registry.baerautotech.com/webmcp:latest
+        image: python@sha256:a0939570b38cddeb861b8e75d20b1c8218b21562b18f301171904b544e8cf228
         imagePullPolicy: Always
         livenessProbe:
           failureThreshold: 3
@@ -100,9 +104,12 @@ spec:
             cpu: 100m
             memory: 256Mi
         securityContext:
-          allowPrivilegeEscalation: true
-          readOnlyRootFilesystem: false
-          runAsNonRoot: false
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
         volumeMounts:
         - mountPath: /app/logs
           name: logs-storage

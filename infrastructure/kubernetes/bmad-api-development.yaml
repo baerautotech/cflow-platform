@@ -29,6 +29,10 @@ spec:
         tier: backend
         version: 1.0.0
     spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - env:
         - name: BMAD_API_HOST
@@ -72,7 +76,7 @@ spec:
             secretKeyRef:
               key: jwt-secret
               name: bmad-api-secrets
-        image: registry.baerautotech.com/bmad-api:latest
+        image: python@sha256:a0939570b38cddeb861b8e75d20b1c8218b21562b18f301171904b544e8cf228
         imagePullPolicy: Always
         livenessProbe:
           failureThreshold: 3
@@ -105,9 +109,12 @@ spec:
             cpu: 100m
             memory: 256Mi
         securityContext:
-          allowPrivilegeEscalation: true
-          readOnlyRootFilesystem: false
-          runAsNonRoot: false
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
         volumeMounts:
         - mountPath: /app/workflows
           name: workflow-storage

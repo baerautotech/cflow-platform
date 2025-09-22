@@ -804,6 +804,21 @@ class ToolRegistry:
             tool("bmad_expansion_pack_validate", "Validate expansion pack integrity"),
         ]
 
+        # BMAD Orchestration Tools (Background Agents & Master Orchestration)
+        tools += [
+            # Background Agent Orchestration Tools
+            tool("bmad_activate_background_agents", "Activate background agents for parallel processing"),
+            tool("bmad_get_background_agent_status", "Get background agent orchestration status"),
+            tool("bmad_distribute_task", "Distribute a task to background agents"),
+            tool("bmad_deactivate_background_agents", "Deactivate background agents"),
+            
+            # BMAD Master Orchestration Tools
+            tool("bmad_activate_master_orchestration", "Activate BMAD Master orchestration"),
+            tool("bmad_begin_story_implementation", "Begin implementation of a specific story"),
+            tool("bmad_get_master_orchestration_status", "Get BMAD Master orchestration status"),
+            tool("bmad_deactivate_master_orchestration", "Deactivate BMAD Master orchestration"),
+        ]
+
         return tools
 
     @staticmethod

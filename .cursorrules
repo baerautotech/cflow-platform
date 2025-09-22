@@ -1,0 +1,192 @@
+# CFlow Platform Development Rules
+
+## 🎯 **MISSION CRITICAL COMPLIANCE**
+
+### **Kyverno Policy Compliance (MANDATORY)**
+All Kubernetes deployments MUST comply with these Kyverno policies:
+
+#### **Image Security Policies:**
+- ✅ **require-image-digest**: Use SHA256 digests (`image@sha256:...`) - NO tags like `:latest`, `:dev`, `:main`
+- ✅ **disallow-latest-tag**: Never use `:latest` tags
+- ✅ **disallow-dev-tag**: Never use `:dev` tags
+
+#### **Container Security Policies:**
+- ✅ **require-run-as-nonroot**: Set `runAsNonRoot: true` in securityContext
+- ✅ **disallow-privilege-escalation**: Set `allowPrivilegeEscalation: false`
+- ✅ **disallow-capabilities-strict**: Drop ALL capabilities: `capabilities: { drop: ["ALL"] }`
+- ✅ **restrict-seccomp-strict**: Use `seccompProfile: { type: RuntimeDefault }`
+
+### **Security Context Template (COPY-PASTE READY):**
+```yaml
+# Pod-level security context
+spec:
+  template:
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+
+# Container-level security context
+containers:
+- name: your-container
+  image: python@sha256:a0939570b38cddeb861b8e75d20b1c8218b21562b18f301171904b544e8cf228
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+```
+
+---
+
+## 🚀 **GitHub Actions Deployment Standards**
+
+### **Image Registry Standards:**
+- **Primary Registry**: `ghcr.io/baerautotech/` (GitHub Container Registry)
+- **Fallback Registry**: `python@sha256:a0939570b38cddeb861b8e75d20b1c8218b21562b18f301171904b544e8cf228`
+- **NEVER USE**: `registry.baerautotech.com` (deprecated)
+
+### **SHA256 Digest Requirements:**
+- **MANDATORY**: All production images MUST use SHA256 digests
+- **Format**: `registry.io/namespace/image@sha256:digest`
+- **Validation**: Run `docker inspect <image>` to get SHA256 digest
+
+### **GitHub Actions Workflow Standards:**
+```yaml
+# Example workflow for image building
+- name: Build and push image
+  uses: docker/build-push-action@v5
+  with:
+    context: .
+    push: true
+    tags: |
+      ghcr.io/baerautotech/${{ github.event.repository.name }}:${{ github.sha }}
+      ghcr.io/baerautotech/${{ github.event.repository.name }}:latest
+    cache-from: type=gha
+    cache-to: type=gha,mode=max
+```
+
+---
+
+## 🔧 **Development Workflow Rules**
+
+### **Pre-Commit Validation:**
+1. **Run Kyverno validation**: `kubectl apply -f <file> --dry-run=client`
+2. **Check image digests**: Ensure no `:latest` or `:dev` tags
+3. **Validate security contexts**: Use the template above
+4. **Test deployment**: `kubectl apply -f <file>` in development namespace
+
+### **Repository Structure:**
+- **cflow-platform**: Contains Kubernetes manifests for webmcp, bmad-api, knowledge-rag
+- **Path Convention**: `infrastructure/kubernetes/`
+
+### **File Naming Conventions:**
+- **Deployments**: `{service-name}-development.yaml`
+- **Services**: Include `-service` suffix
+- **ConfigMaps**: Include `-config` suffix
+- **Secrets**: Include `-secrets` suffix
+
+---
+
+## 🚨 **CRITICAL FAILURE PATTERNS TO AVOID**
+
+### **Image Pull Failures:**
+- ❌ `ImagePullBackOff` - Usually caused by invalid registry or missing SHA256 digest
+- ❌ `ErrImagePull` - Usually caused by authentication issues or non-existent images
+- ✅ **Fix**: Use `python@sha256:a0939570b38cddeb861b8e75d20b1c8218b21562b18f301171904b544e8cf228`
+
+### **Kyverno Policy Violations:**
+- ❌ `CreateContainerConfigError` - Usually caused by missing security contexts
+- ❌ `PolicyViolation` - Usually caused by `:latest` tags or missing `runAsNonRoot`
+- ✅ **Fix**: Apply security context template above
+
+### **ArgoCD Sync Issues:**
+- ❌ `Unknown` status - Usually caused by repository authentication issues
+- ❌ `OutOfSync` status - Usually caused by configuration changes not committed
+- ✅ **Fix**: Ensure GitHub App token is valid and changes are committed
+
+---
+
+## 📋 **Validation Checklist**
+
+Before committing ANY Kubernetes changes:
+
+- [ ] **Image Security**: SHA256 digest used, no `:latest` or `:dev` tags
+- [ ] **Container Security**: `runAsNonRoot: true`, `allowPrivilegeEscalation: false`
+- [ ] **Capabilities**: `capabilities: { drop: ["ALL"] }`
+- [ ] **Seccomp**: `seccompProfile: { type: RuntimeDefault }`
+- [ ] **Pod Security**: Pod-level security context applied
+- [ ] **Registry**: Using `ghcr.io/baerautotech/` or fallback Python image
+- [ ] **Testing**: `kubectl apply -f <file> --dry-run=client` passes
+- [ ] **Documentation**: Changes documented in commit message
+
+---
+
+## 🔍 **Troubleshooting Commands**
+
+### **Check Pod Status:**
+```bash
+kubectl get pods -n cerebral-development
+kubectl describe pod <pod-name> -n cerebral-development
+```
+
+### **Check Kyverno Violations:**
+```bash
+kubectl get policyviolations --all-namespaces
+kubectl get clusterpolicies
+```
+
+### **Check ArgoCD Status:**
+```bash
+kubectl get applications -n argocd
+kubectl describe application <app-name> -n argocd
+```
+
+### **Validate Image:**
+```bash
+kubectl run test --image=<image> --rm -it --restart=Never -- sleep 1
+```
+
+---
+
+## 🎯 **Success Criteria**
+
+A deployment is considered compliant when:
+- ✅ All pods are in `Running` status
+- ✅ No `ImagePullBackOff` or `ErrImagePull` errors
+- ✅ No `CreateContainerConfigError` errors
+- ✅ No Kyverno policy violations
+- ✅ ArgoCD applications are `Synced` and `Healthy`
+- ✅ All security contexts are properly configured
+
+---
+
+## 📞 **Emergency Procedures**
+
+### **If Production is Down:**
+1. **Immediate**: Use fallback Python image with SHA256 digest
+2. **Quick Fix**: Apply security context template
+3. **Validate**: Check pod status and Kyverno violations
+4. **Document**: Record the issue and resolution
+
+### **If ArgoCD is Broken:**
+1. **Check**: GitHub App token validity
+2. **Restart**: ArgoCD components if needed
+3. **Re-sync**: Force application sync
+4. **Monitor**: Watch for resolution
+
+---
+
+## 🔄 **Continuous Improvement**
+
+- **Weekly**: Review Kyverno policy violations
+- **Monthly**: Update security context templates
+- **Quarterly**: Review and update image registry standards
+- **Annually**: Comprehensive security audit
+
+---
+
+**Remember: These rules are MISSION CRITICAL for production stability. Non-compliance will result in deployment failures and security vulnerabilities.**
