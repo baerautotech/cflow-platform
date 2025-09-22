@@ -6,11 +6,19 @@ on:
     branches: [ main ]
     tags: [ 'v*' ]
     paths:
-      - '**'
+      - 'cflow_platform/**'
+      - 'pyproject.toml'
+      - 'requirements.txt'
+      - 'setup.py'
+      - 'setup.cfg'
   pull_request:
     branches: [ main ]
     paths:
-      - '**'
+      - 'cflow_platform/**'
+      - 'pyproject.toml'
+      - 'requirements.txt'
+      - 'setup.py'
+      - 'setup.cfg'
 
 jobs:
   build:

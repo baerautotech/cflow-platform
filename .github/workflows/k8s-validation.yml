@@ -1,0 +1,80 @@
+name: Kubernetes Manifest Validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'infrastructure/kubernetes/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'infrastructure/kubernetes/**'
+
+jobs:
+  validate-manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+      
+      - name: Install kustomize
+        uses: imranismail/setup-kustomize@v2
+        with:
+          kustomize-version: '5.0.0'
+      
+      - name: Validate Kubernetes manifests
+        run: |
+          echo "🔍 Validating Kubernetes manifests..."
+          
+          # Validate individual YAML files
+          find infrastructure/kubernetes -name "*.yaml" -o -name "*.yml" | while read file; do
+            echo "Validating $file..."
+            kubectl apply --dry-run=client -f "$file" || {
+              echo "❌ Validation failed for $file"
+              exit 1
+            }
+          done
+          
+          echo "✅ All Kubernetes manifests are valid!"
+      
+      - name: Check Kyverno compliance
+        run: |
+          echo "🔍 Checking Kyverno policy compliance..."
+          
+          # Check for common Kyverno violations
+          find infrastructure/kubernetes -name "*.yaml" -o -name "*.yml" | while read file; do
+            echo "Checking Kyverno compliance for $file..."
+            
+            # Check for :latest tags
+            if grep -q ":latest" "$file"; then
+              echo "❌ Found :latest tag in $file (violates disallow-latest-tag policy)"
+              exit 1
+            fi
+            
+            # Check for :dev tags
+            if grep -q ":dev" "$file"; then
+              echo "❌ Found :dev tag in $file (violates disallow-dev-tag policy)"
+              exit 1
+            fi
+            
+            # Check for missing security contexts
+            if grep -q "kind: Deployment" "$file" && ! grep -q "runAsNonRoot: true" "$file"; then
+              echo "⚠️  Deployment in $file may be missing runAsNonRoot security context"
+            fi
+          done
+          
+          echo "✅ Kyverno compliance check passed!"
+      
+      - name: Generate validation summary
+        run: |
+          echo "## Kubernetes Manifest Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ PASSED" >> $GITHUB_STEP_SUMMARY
+          echo "- **Manifests Validated**: $(find infrastructure/kubernetes -name "*.yaml" -o -name "*.yml" | wc -l)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Kyverno Compliance**: ✅ PASSED" >> $GITHUB_STEP_SUMMARY
+          echo "- **Validation Date**: $(date -u)" >> $GITHUB_STEP_SUMMARY
