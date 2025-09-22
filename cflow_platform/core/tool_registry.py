@@ -153,6 +153,16 @@ class ToolRegistry:
             tool("bmad_switch_persona", "Switch to a different persona"),
         ]
 
+        # BMAD Tool Consolidation Tools (Phase 3)
+        tools += [
+            tool("bmad_discover_tools", "Discover all BMAD-Method tools from vendor/bmad"),
+            tool("bmad_get_tool", "Get a specific BMAD tool by ID"),
+            tool("bmad_get_tools_by_category", "Get all tools in a specific category"),
+            tool("bmad_execute_tool", "Execute a BMAD-Method tool"),
+            tool("bmad_get_tool_status", "Get BMAD tool wrapper status"),
+            tool("bmad_list_categories", "List all available tool categories"),
+        ]
+
         # BMAD Workflow Engine tools
         tools += [
             tool("bmad_workflow_start", "Start specific BMAD workflow"),

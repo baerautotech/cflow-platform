@@ -196,6 +196,26 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             from ..handlers.bmad_persona_handlers import bmad_persona_handlers
             return await bmad_persona_handlers.bmad_switch_persona(kwargs or {})
         
+        # BMAD Tool Consolidation Tools (Phase 3)
+        elif tool_name == "bmad_discover_tools":
+            from ..handlers.bmad_tool_handlers import bmad_tool_handlers
+            return await bmad_tool_handlers.bmad_discover_tools(kwargs or {})
+        elif tool_name == "bmad_get_tool":
+            from ..handlers.bmad_tool_handlers import bmad_tool_handlers
+            return await bmad_tool_handlers.bmad_get_tool(kwargs or {})
+        elif tool_name == "bmad_get_tools_by_category":
+            from ..handlers.bmad_tool_handlers import bmad_tool_handlers
+            return await bmad_tool_handlers.bmad_get_tools_by_category(kwargs or {})
+        elif tool_name == "bmad_execute_tool":
+            from ..handlers.bmad_tool_handlers import bmad_tool_handlers
+            return await bmad_tool_handlers.bmad_execute_tool(kwargs or {})
+        elif tool_name == "bmad_get_tool_status":
+            from ..handlers.bmad_tool_handlers import bmad_tool_handlers
+            return await bmad_tool_handlers.bmad_get_tool_status(kwargs or {})
+        elif tool_name == "bmad_list_categories":
+            from ..handlers.bmad_tool_handlers import bmad_tool_handlers
+            return await bmad_tool_handlers.bmad_list_categories(kwargs or {})
+        
         elif tool_name == "bmad_workflow_start":
             return await handler.bmad_workflow_start(**kwargs)
         elif tool_name == "bmad_workflow_next":
