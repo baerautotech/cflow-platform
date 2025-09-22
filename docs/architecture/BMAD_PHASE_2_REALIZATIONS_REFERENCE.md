@@ -77,7 +77,7 @@ For each phase implementation, ensure:
 
 ## Anti-Patterns to Avoid
 
-❌ **Don't recreate BMAD functionality**
+❌ **Don't duplicate BMAD functionality**
 ❌ **Don't create standalone BMAD implementations**
 ❌ **Don't modify vendor/bmad directly**
 ❌ **Don't ignore BMAD-Method command formats**
