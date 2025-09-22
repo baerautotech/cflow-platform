@@ -31,6 +31,8 @@ class BMADToolWrapper:
         self.discovered_tools: Dict[str, BMADTool] = {}
         self.tool_categories: Dict[str, List[str]] = {}
         self.cerebral_extensions: Dict[str, Any] = {}
+        self.last_discovery: Optional[datetime] = None
+        self.tools: List[BMADTool] = []
         
         # Tool discovery paths
         self.tool_paths = {
@@ -70,6 +72,8 @@ class BMADToolWrapper:
                 print(f'   ✅ Found {len(discovered)} {tool_type}')
         
         self.discovered_tools = tools
+        self.tools = list(tools.values())
+        self.last_discovery = datetime.now()
         self._categorize_tools()
         
         print(f'🎯 BMAD Master: Discovered {len(tools)} total BMAD-Method tools')

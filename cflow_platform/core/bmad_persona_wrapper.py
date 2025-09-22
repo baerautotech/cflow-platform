@@ -27,6 +27,13 @@ class BMADPersona:
     dependencies: Dict[str, List[str]] = None
     activation_instructions: List[str] = None
     agent_file_path: Optional[str] = None
+    status: str = "inactive"
+    activation_count: int = 0
+    persona_id: str = None
+    
+    def __post_init__(self):
+        if self.persona_id is None:
+            self.persona_id = self.id
 
 class BMADPersonaWrapper:
     """Wrapper for BMAD-Method personas with Cerebral extensions"""
@@ -38,6 +45,8 @@ class BMADPersonaWrapper:
         self.active_persona: Optional[BMADPersona] = None
         self.persona_contexts: Dict[str, Dict[str, Any]] = {}
         self.session_context: Dict[str, Any] = {}
+        self.last_discovery: Optional[datetime] = None
+        self.personas: List[BMADPersona] = []
         
         # Context persistence
         self.context_dir = Path('.cerebraflow/persona_contexts')
@@ -61,6 +70,8 @@ class BMADPersonaWrapper:
                 print(f'Error loading persona from {agent_file}: {e}')
         
         self.discovered_personas = personas
+        self.personas = list(personas.values())
+        self.last_discovery = datetime.now()
         return personas
     
     async def _load_bmad_persona(self, agent_file: Path) -> Optional[BMADPersona]:
@@ -356,7 +367,7 @@ class BMADPersonaWrapper:
         """Get persona wrapper status for health monitoring"""
         return {
             'total_personas': len(self.discovered_personas),
-            'active_personas': len([p for p in self.discovered_personas.values() if p.status == PersonaStatus.ACTIVE]),
+            'active_personas': len([p for p in self.discovered_personas.values() if p.status == "active"]),
             'discovered_personas': len(self.discovered_personas),
             'context_dir': str(self.context_dir),
             'context_dir_exists': self.context_dir.exists(),
@@ -365,7 +376,7 @@ class BMADPersonaWrapper:
                 {
                     'persona_id': p.persona_id,
                     'name': p.name,
-                    'status': p.status.value,
+                    'status': p.status,
                     'activation_count': p.activation_count
                 }
                 for p in self.discovered_personas.values()
