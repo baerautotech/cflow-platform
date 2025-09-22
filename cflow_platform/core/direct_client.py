@@ -216,6 +216,75 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             from ..handlers.bmad_tool_handlers import bmad_tool_handlers
             return await bmad_tool_handlers.bmad_list_categories(kwargs or {})
         
+        # BMAD Advanced Features Tools (Phase 5)
+        # Expansion Pack Tools
+        elif tool_name == "bmad_expansion_discover_packs":
+            from ..handlers.advanced_features_handlers import bmad_expansion_discover_packs
+            return await bmad_expansion_discover_packs(kwargs or {})
+        elif tool_name == "bmad_expansion_install_pack":
+            from ..handlers.advanced_features_handlers import bmad_expansion_install_pack
+            return await bmad_expansion_install_pack(kwargs or {})
+        elif tool_name == "bmad_expansion_activate_pack":
+            from ..handlers.advanced_features_handlers import bmad_expansion_activate_pack
+            return await bmad_expansion_activate_pack(kwargs or {})
+        elif tool_name == "bmad_expansion_deactivate_pack":
+            from ..handlers.advanced_features_handlers import bmad_expansion_deactivate_pack
+            return await bmad_expansion_deactivate_pack(kwargs or {})
+        elif tool_name == "bmad_expansion_remove_pack":
+            from ..handlers.advanced_features_handlers import bmad_expansion_remove_pack
+            return await bmad_expansion_remove_pack(kwargs or {})
+        elif tool_name == "bmad_expansion_get_pack_status":
+            from ..handlers.advanced_features_handlers import bmad_expansion_get_pack_status
+            return await bmad_expansion_get_pack_status(kwargs or {})
+        
+        # HIL Integration Tools
+        elif tool_name == "bmad_hil_create_session":
+            from ..handlers.advanced_features_handlers import bmad_hil_create_session
+            return await bmad_hil_create_session(kwargs or {})
+        elif tool_name == "bmad_hil_update_session":
+            from ..handlers.advanced_features_handlers import bmad_hil_update_session
+            return await bmad_hil_update_session(kwargs or {})
+        elif tool_name == "bmad_hil_complete_session":
+            from ..handlers.advanced_features_handlers import bmad_hil_complete_session
+            return await bmad_hil_complete_session(kwargs or {})
+        elif tool_name == "bmad_hil_cancel_session":
+            from ..handlers.advanced_features_handlers import bmad_hil_cancel_session
+            return await bmad_hil_cancel_session(kwargs or {})
+        elif tool_name == "bmad_hil_get_status":
+            from ..handlers.advanced_features_handlers import bmad_hil_get_status
+            return await bmad_hil_get_status(kwargs or {})
+        
+        # Workflow Engine Tools
+        elif tool_name == "bmad_workflow_discover":
+            from ..handlers.advanced_features_handlers import bmad_workflow_discover
+            return await bmad_workflow_discover(kwargs or {})
+        elif tool_name == "bmad_workflow_start":
+            from ..handlers.advanced_features_handlers import bmad_workflow_start
+            return await bmad_workflow_start(kwargs or {})
+        elif tool_name == "bmad_workflow_execute_step":
+            from ..handlers.advanced_features_handlers import bmad_workflow_execute_step
+            return await bmad_workflow_execute_step(kwargs or {})
+        elif tool_name == "bmad_workflow_complete":
+            from ..handlers.advanced_features_handlers import bmad_workflow_complete
+            return await bmad_workflow_complete(kwargs or {})
+        elif tool_name == "bmad_workflow_get_status":
+            from ..handlers.advanced_features_handlers import bmad_workflow_get_status
+            return await bmad_workflow_get_status(kwargs or {})
+        
+        # Monitoring & Analytics Tools
+        elif tool_name == "bmad_monitoring_collect_metric":
+            from ..handlers.advanced_features_handlers import bmad_monitoring_collect_metric
+            return await bmad_monitoring_collect_metric(kwargs or {})
+        elif tool_name == "bmad_monitoring_generate_report":
+            from ..handlers.advanced_features_handlers import bmad_monitoring_generate_report
+            return await bmad_monitoring_generate_report(kwargs or {})
+        elif tool_name == "bmad_monitoring_get_alerts":
+            from ..handlers.advanced_features_handlers import bmad_monitoring_get_alerts
+            return await bmad_monitoring_get_alerts(kwargs or {})
+        elif tool_name == "bmad_monitoring_get_status":
+            from ..handlers.advanced_features_handlers import bmad_monitoring_get_status
+            return await bmad_monitoring_get_status(kwargs or {})
+        
         elif tool_name == "bmad_workflow_start":
             return await handler.bmad_workflow_start(**kwargs)
         elif tool_name == "bmad_workflow_next":

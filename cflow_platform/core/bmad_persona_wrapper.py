@@ -351,6 +351,26 @@ class BMADPersonaWrapper:
         except Exception as e:
             print(f'Error loading session context for {session_id}: {e}')
             return None
+    
+    async def get_status(self) -> Dict[str, Any]:
+        """Get persona wrapper status for health monitoring"""
+        return {
+            'total_personas': len(self.personas),
+            'active_personas': len([p for p in self.personas.values() if p.status == PersonaStatus.ACTIVE]),
+            'discovered_personas': len(self.personas),
+            'context_dir': str(self.context_dir),
+            'context_dir_exists': self.context_dir.exists(),
+            'last_discovery': self.last_discovery.isoformat() if self.last_discovery else None,
+            'personas': [
+                {
+                    'persona_id': p.persona_id,
+                    'name': p.name,
+                    'status': p.status.value,
+                    'activation_count': p.activation_count
+                }
+                for p in self.personas.values()
+            ]
+        }
 
 # Global BMAD persona wrapper instance
 bmad_persona_wrapper = BMADPersonaWrapper()

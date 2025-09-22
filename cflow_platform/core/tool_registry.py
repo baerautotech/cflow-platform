@@ -163,6 +163,37 @@ class ToolRegistry:
             tool("bmad_list_categories", "List all available tool categories"),
         ]
 
+        # BMAD Advanced Features Tools (Phase 5)
+        tools += [
+            # Expansion Pack Tools
+            tool("bmad_expansion_discover_packs", "Discover all BMAD-Method expansion packs"),
+            tool("bmad_expansion_install_pack", "Install a BMAD-Method expansion pack"),
+            tool("bmad_expansion_activate_pack", "Activate a BMAD-Method expansion pack"),
+            tool("bmad_expansion_deactivate_pack", "Deactivate a BMAD-Method expansion pack"),
+            tool("bmad_expansion_remove_pack", "Remove a BMAD-Method expansion pack"),
+            tool("bmad_expansion_get_pack_status", "Get expansion pack manager status"),
+            
+            # HIL Integration Tools
+            tool("bmad_hil_create_session", "Create a new HIL session"),
+            tool("bmad_hil_update_session", "Update a HIL session"),
+            tool("bmad_hil_complete_session", "Complete a HIL session"),
+            tool("bmad_hil_cancel_session", "Cancel a HIL session"),
+            tool("bmad_hil_get_status", "Get HIL integration system status"),
+            
+            # Workflow Engine Tools
+            tool("bmad_workflow_discover", "Discover all BMAD-Method workflows"),
+            tool("bmad_workflow_start", "Start a BMAD-Method workflow"),
+            tool("bmad_workflow_execute_step", "Execute a workflow step"),
+            tool("bmad_workflow_complete", "Complete a BMAD-Method workflow"),
+            tool("bmad_workflow_get_status", "Get workflow engine status"),
+            
+            # Monitoring & Analytics Tools
+            tool("bmad_monitoring_collect_metric", "Collect a monitoring metric"),
+            tool("bmad_monitoring_generate_report", "Generate an analytics report"),
+            tool("bmad_monitoring_get_alerts", "Get monitoring alerts"),
+            tool("bmad_monitoring_get_status", "Get monitoring system status"),
+        ]
+
         # BMAD Workflow Engine tools
         tools += [
             tool("bmad_workflow_start", "Start specific BMAD workflow"),

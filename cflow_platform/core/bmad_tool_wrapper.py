@@ -455,6 +455,29 @@ class BMADToolWrapper:
             'wrapper_version': '1.0',
             'last_discovery': datetime.now().isoformat()
         }
+    
+    async def get_status(self) -> Dict[str, Any]:
+        """Get tool wrapper status for health monitoring"""
+        return {
+            'total_tools': len(self.tools),
+            'tools_by_category': {
+                category: len([t for t in self.tools.values() if t.category == category])
+                for category in ['task', 'template', 'workflow', 'checklist', 'agent', 'common_task']
+            },
+            'discovered_tools': len(self.tools),
+            'vendor_path': str(self.vendor_path),
+            'vendor_path_exists': self.vendor_path.exists(),
+            'last_discovery': self.last_discovery.isoformat() if self.last_discovery else None,
+            'tools': [
+                {
+                    'tool_id': t.id,
+                    'name': t.name,
+                    'category': t.category,
+                    'tool_type': t.tool_type
+                }
+                for t in self.tools.values()
+            ]
+        }
 
 # Global BMAD tool wrapper instance
 bmad_tool_wrapper = BMADToolWrapper()

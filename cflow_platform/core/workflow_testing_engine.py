@@ -641,7 +641,7 @@ class WorkflowTestingEngine:
         self.test_executor = WorkflowTestExecutor()
         self.test_history: List[WorkflowTestExecution] = []
     
-    async def run_complete_workflow_test(self) -> WorkflowTestExecution:
+    async def run_complete_workflow_test(self, suite_id: str = None, parameters: Dict[str, Any] = None) -> WorkflowTestExecution:
         """Run a complete workflow test from PRD to deployment"""
         logger.info("Starting complete workflow test")
         
@@ -692,6 +692,45 @@ class WorkflowTestingEngine:
             "pass_rate": pass_rate,
             "average_score": average_score
         }
+    
+    async def run_workflow_test(self, workflow_type: str, parameters: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Run a workflow test (alias for run_complete_workflow_test)"""
+        try:
+            parameters = parameters or {}
+            
+            # Map workflow types to test suites
+            suite_mapping = {
+                'complete_bmad_workflow': 'complete_bmad_workflow',
+                'persona_workflow': 'persona_workflow',
+                'tool_workflow': 'tool_workflow',
+                'testing_workflow': 'testing_workflow',
+                'expansion_workflow': 'expansion_workflow',
+                'monitoring_workflow': 'monitoring_workflow'
+            }
+            
+            suite_id = suite_mapping.get(workflow_type, 'complete_bmad_workflow')
+            
+            # Run the test
+            execution = await self.run_complete_workflow_test(suite_id, parameters)
+            
+            return {
+                'success': execution.status == TestStatus.PASSED,
+                'workflow_type': workflow_type,
+                'suite_id': suite_id,
+                'status': execution.status.value,
+                'score': execution.score,
+                'duration': execution.duration,
+                'results': execution.results,
+                'message': f'Workflow test {workflow_type} completed with status: {execution.status.value}'
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'workflow_type': workflow_type,
+                'error': str(e),
+                'message': f'Workflow test {workflow_type} failed: {e}'
+            }
 
 # Global instance for easy access
 workflow_testing_engine = WorkflowTestingEngine()
