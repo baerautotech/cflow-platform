@@ -1,0 +1,49 @@
+# BMAD API Service Dockerfile
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install Python dependencies
+COPY infrastructure/docker/requirements.txt requirements.txt
+COPY infrastructure/docker/requirements-bmad.txt requirements-bmad.txt
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements-bmad.txt
+
+# Copy BMAD API service code
+COPY bmad_api_service/ ./bmad_api_service/
+
+# Copy vendor BMAD directory
+COPY vendor/bmad/ ./vendor/bmad/
+
+# Create necessary directories
+RUN mkdir -p /app/workflows /app/logs /app/tmp
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV VENDOR_BMAD_PATH=/app/vendor/bmad
+ENV BMAD_API_HOST=0.0.0.0
+ENV BMAD_API_PORT=8001
+ENV BMAD_LOG_LEVEL=info
+ENV BMAD_WORKFLOW_TIMEOUT=300
+
+# Create non-root user
+RUN groupadd -r bmad && useradd -r -g bmad bmad
+RUN chown -R bmad:bmad /app
+USER bmad
+
+# Expose port
+EXPOSE 8001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8001/health || exit 1
+
+# Run the application
+CMD ["python", "-m", "bmad_api_service.main"]

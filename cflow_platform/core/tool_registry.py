@@ -834,6 +834,25 @@ class ToolRegistry:
             tool("bmad_deactivate_master_orchestration", "Deactivate BMAD Master orchestration"),
         ]
 
+        # BMAD Brownfield Support Tools
+        tools += [
+            tool("bmad_project_type_detect", "Detect if project is greenfield or brownfield"),
+            tool("bmad_brownfield_document_project", "Document existing project for brownfield development"),
+            tool("bmad_brownfield_prd_create", "Create PRD for brownfield project enhancement"),
+            tool("bmad_brownfield_arch_create", "Create architecture for brownfield project enhancement"),
+            tool("bmad_brownfield_story_create", "Create user stories for brownfield project enhancement"),
+        ]
+
+        # BMAD Expansion Pack Management Tools
+        tools += [
+            tool("bmad_expansion_packs_list_available", "List all available BMAD expansion packs"),
+            tool("bmad_expansion_packs_get_details", "Get details about a specific expansion pack"),
+            tool("bmad_expansion_packs_install", "Install a BMAD expansion pack"),
+            tool("bmad_expansion_packs_enable", "Enable an installed expansion pack for a project"),
+            tool("bmad_expansion_packs_uninstall", "Uninstall a BMAD expansion pack"),
+            tool("bmad_expansion_packs_list_installed", "List all installed expansion packs"),
+        ]
+
         return tools
 
     @staticmethod

@@ -150,6 +150,21 @@ BMAD_TOOLS = {
     "bmad_hil_continue_session": "vendor/bmad/bmad-core/workflows/hil-integration.yaml",
     "bmad_hil_end_session": "vendor/bmad/bmad-core/workflows/hil-integration.yaml",
     "bmad_hil_session_status": "vendor/bmad/bmad-core/workflows/hil-integration.yaml",
+    
+    # Brownfield Support Tools
+    "bmad_project_type_detect": "vendor/bmad/bmad-core/workflows/project-type-detection.yaml",
+    "bmad_brownfield_document_project": "vendor/bmad/bmad-core/tasks/document-project.md",
+    "bmad_brownfield_prd_create": "vendor/bmad/bmad-core/workflows/brownfield-service.yaml",
+    "bmad_brownfield_arch_create": "vendor/bmad/bmad-core/workflows/brownfield-service.yaml",
+    "bmad_brownfield_story_create": "vendor/bmad/bmad-core/workflows/brownfield-service.yaml",
+    
+    # Expansion Pack Management Tools
+    "bmad_expansion_packs_list_available": "vendor/bmad/tools/installer/lib/resource-locator.js",
+    "bmad_expansion_packs_get_details": "vendor/bmad/tools/installer/lib/resource-locator.js",
+    "bmad_expansion_packs_install": "vendor/bmad/tools/installer/lib/installer.js",
+    "bmad_expansion_packs_enable": "vendor/bmad/tools/installer/lib/installer.js",
+    "bmad_expansion_packs_uninstall": "vendor/bmad/tools/installer/lib/installer.js",
+    "bmad_expansion_packs_list_installed": "vendor/bmad/tools/installer/lib/installer.js",
 }
 
 
@@ -306,6 +321,344 @@ async def get_metrics():
         return metrics
     except Exception as e:
         logger.error(f"Error getting metrics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# BMAD BROWFIELD SUPPORT ENDPOINTS
+# ============================================================================
+
+@app.post("/bmad/project-type/detect")
+async def detect_project_type(
+    request: Request,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Detect if project is greenfield or brownfield"""
+    try:
+        body = await request.json()
+        project_info = body.get("project_info", {})
+        
+        # Analyze project characteristics to determine type
+        is_brownfield = await vendor_bmad.detect_project_type(project_info)
+        project_type = "brownfield" if is_brownfield else "greenfield"
+        
+        return {
+            "project_type": project_type,
+            "confidence": 0.85,  # Confidence score
+            "analysis": {
+                "has_existing_code": project_info.get("has_existing_code", False),
+                "has_documentation": project_info.get("has_documentation", False),
+                "has_tests": project_info.get("has_tests", False),
+                "project_size": project_info.get("project_size", "unknown")
+            },
+            "recommended_workflow": f"bmad_{project_type}_workflow",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Project type detection failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/bmad/brownfield/document-project")
+async def document_existing_project(
+    request: Request,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Document an existing project for brownfield development"""
+    try:
+        body = await request.json()
+        project_path = body.get("project_path")
+        focus_areas = body.get("focus_areas", [])
+        output_format = body.get("output_format", "single_document")
+        
+        if not project_path:
+            raise HTTPException(status_code=400, detail="project_path is required")
+        
+        # Execute document-project workflow
+        result = await vendor_bmad.execute_workflow(
+            "vendor/bmad/bmad-core/tasks/document-project.md",
+            {
+                "project_path": project_path,
+                "focus_areas": focus_areas,
+                "output_format": output_format,
+                "user_id": current_user.get("user_id")
+            },
+            current_user
+        )
+        
+        return {
+            "success": True,
+            "documentation": result,
+            "project_path": project_path,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Project documentation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/bmad/brownfield/prd-create")
+async def create_brownfield_prd(
+    request: Request,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Create PRD for brownfield project enhancement"""
+    try:
+        body = await request.json()
+        project_name = body.get("project_name")
+        enhancement_scope = body.get("enhancement_scope", {})
+        existing_analysis = body.get("existing_analysis", {})
+        
+        if not project_name:
+            raise HTTPException(status_code=400, detail="project_name is required")
+        
+        # Execute brownfield PRD workflow
+        result = await vendor_bmad.execute_workflow(
+            "vendor/bmad/bmad-core/workflows/brownfield-service.yaml",
+            {
+                "project_name": project_name,
+                "enhancement_scope": enhancement_scope,
+                "existing_analysis": existing_analysis,
+                "template": "brownfield-prd-tmpl",
+                "user_id": current_user.get("user_id")
+            },
+            current_user
+        )
+        
+        return {
+            "success": True,
+            "prd": result,
+            "project_name": project_name,
+            "type": "brownfield",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Brownfield PRD creation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/bmad/brownfield/arch-create")
+async def create_brownfield_architecture(
+    request: Request,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Create architecture for brownfield project enhancement"""
+    try:
+        body = await request.json()
+        project_name = body.get("project_name")
+        prd_reference = body.get("prd_reference")
+        integration_strategy = body.get("integration_strategy", {})
+        
+        if not project_name:
+            raise HTTPException(status_code=400, detail="project_name is required")
+        
+        # Execute brownfield architecture workflow
+        result = await vendor_bmad.execute_workflow(
+            "vendor/bmad/bmad-core/workflows/brownfield-service.yaml",
+            {
+                "project_name": project_name,
+                "prd_reference": prd_reference,
+                "integration_strategy": integration_strategy,
+                "template": "brownfield-architecture-tmpl",
+                "user_id": current_user.get("user_id")
+            },
+            current_user
+        )
+        
+        return {
+            "success": True,
+            "architecture": result,
+            "project_name": project_name,
+            "type": "brownfield",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Brownfield architecture creation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/bmad/brownfield/story-create")
+async def create_brownfield_story(
+    request: Request,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Create user stories for brownfield project enhancement"""
+    try:
+        body = await request.json()
+        project_name = body.get("project_name")
+        architecture_reference = body.get("architecture_reference")
+        enhancement_focus = body.get("enhancement_focus", {})
+        
+        if not project_name:
+            raise HTTPException(status_code=400, detail="project_name is required")
+        
+        # Execute brownfield story workflow
+        result = await vendor_bmad.execute_workflow(
+            "vendor/bmad/bmad-core/workflows/brownfield-service.yaml",
+            {
+                "project_name": project_name,
+                "architecture_reference": architecture_reference,
+                "enhancement_focus": enhancement_focus,
+                "user_id": current_user.get("user_id")
+            },
+            current_user
+        )
+        
+        return {
+            "success": True,
+            "stories": result,
+            "project_name": project_name,
+            "type": "brownfield",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Brownfield story creation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# BMAD EXPANSION PACK ENDPOINTS
+# ============================================================================
+
+@app.get("/bmad/expansion-packs/list")
+async def list_expansion_packs():
+    """List all available BMAD expansion packs"""
+    try:
+        expansion_packs = await vendor_bmad.list_expansion_packs()
+        
+        return {
+            "expansion_packs": expansion_packs,
+            "count": len(expansion_packs),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to list expansion packs: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/bmad/expansion-packs/{pack_id}")
+async def get_expansion_pack(pack_id: str):
+    """Get details about a specific expansion pack"""
+    try:
+        pack_details = await vendor_bmad.get_expansion_pack(pack_id)
+        
+        if not pack_details:
+            raise HTTPException(status_code=404, detail=f"Expansion pack '{pack_id}' not found")
+        
+        return {
+            "expansion_pack": pack_details,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get expansion pack {pack_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/bmad/expansion-packs/install")
+async def install_expansion_pack(
+    request: Request,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Install a BMAD expansion pack"""
+    try:
+        body = await request.json()
+        pack_id = body.get("pack_id")
+        version = body.get("version", "latest")
+        
+        if not pack_id:
+            raise HTTPException(status_code=400, detail="pack_id is required")
+        
+        # Install expansion pack
+        result = await vendor_bmad.install_expansion_pack(pack_id, version, current_user)
+        
+        return {
+            "success": True,
+            "pack_id": pack_id,
+            "version": version,
+            "installation": result,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Expansion pack installation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/bmad/expansion-packs/enable")
+async def enable_expansion_pack(
+    request: Request,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Enable an installed expansion pack for a project"""
+    try:
+        body = await request.json()
+        pack_id = body.get("pack_id")
+        project_id = body.get("project_id")
+        
+        if not pack_id:
+            raise HTTPException(status_code=400, detail="pack_id is required")
+        
+        # Enable expansion pack
+        result = await vendor_bmad.enable_expansion_pack(pack_id, project_id, current_user)
+        
+        return {
+            "success": True,
+            "pack_id": pack_id,
+            "project_id": project_id,
+            "activation": result,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Expansion pack enablement failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/bmad/expansion-packs/{pack_id}")
+async def uninstall_expansion_pack(
+    pack_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Uninstall a BMAD expansion pack"""
+    try:
+        # Uninstall expansion pack
+        result = await vendor_bmad.uninstall_expansion_pack(pack_id, current_user)
+        
+        return {
+            "success": True,
+            "pack_id": pack_id,
+            "uninstallation": result,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Expansion pack uninstallation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/bmad/expansion-packs/installed")
+async def list_installed_expansion_packs():
+    """List all installed expansion packs"""
+    try:
+        installed_packs = await vendor_bmad.list_installed_expansion_packs()
+        
+        return {
+            "installed_packs": installed_packs,
+            "count": len(installed_packs),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to list installed expansion packs: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

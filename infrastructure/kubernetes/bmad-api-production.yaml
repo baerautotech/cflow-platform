@@ -4,28 +4,28 @@ metadata:
   annotations:
     cerebral.baerautotech.com/created-by: pod-framework
     cerebral.baerautotech.com/framework-version: 1.0.0
-    cerebral.baerautotech.com/last-updated: '2025-09-20T14:54:47.581837'
+    cerebral.baerautotech.com/last-updated: '2025-01-17T00:00:00.000000'
   labels:
     app: bmad-api
     app.kubernetes.io/managed-by: cerebral-platform
     app.kubernetes.io/part-of: cerebral-cluster
     component: api
-    environment: development
+    environment: production
     tier: backend
     version: 1.0.0
-  name: bmad-api
-  namespace: cerebral-development
+  name: bmad-api-production
+  namespace: cerebral-production
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
-      app: bmad-api
+      app: bmad-api-production
   template:
     metadata:
       labels:
-        app: bmad-api
+        app: bmad-api-production
         component: api
-        environment: development
+        environment: production
         tier: backend
         version: 1.0.0
     spec:
@@ -42,11 +42,11 @@ spec:
         - name: BMAD_LOG_LEVEL
           value: info
         - name: BMAD_WORKFLOW_TIMEOUT
-          value: '300'
+          value: '600'
         - name: SERVICE_NAME
-          value: bmad-api
+          value: bmad-api-production
         - name: ENVIRONMENT
-          value: development
+          value: production
         - name: PORT
           value: '8001'
         - name: LOG_LEVEL
@@ -58,20 +58,10 @@ spec:
             secretKeyRef:
               key: supabase-url
               name: bmad-api-secrets
-        - name: SUPABASE_ANON_KEY
+        - name: SUPABASE_SERVICE_ROLE_KEY
           valueFrom:
             secretKeyRef:
-              key: supabase-anon-key
-              name: bmad-api-secrets
-        - name: VAULT_URL
-          valueFrom:
-            secretKeyRef:
-              key: vault-url
-              name: bmad-api-secrets
-        - name: VAULT_TOKEN
-          valueFrom:
-            secretKeyRef:
-              key: vault-token
+              key: supabase-service-role-key
               name: bmad-api-secrets
         - name: JWT_SECRET_KEY
           valueFrom:
@@ -86,9 +76,9 @@ spec:
             path: /bmad/health
             port: 8001
             scheme: HTTP
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
         name: bmad-api
         ports:
         - containerPort: 8001
@@ -100,16 +90,16 @@ spec:
             path: /bmad/health
             port: 8001
             scheme: HTTP
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          timeoutSeconds: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
         resources:
           limits:
-            cpu: 250m
-            memory: 512Mi
+            cpu: 1000m
+            memory: 2Gi
           requests:
-            cpu: 100m
-            memory: 256Mi
+            cpu: 500m
+            memory: 1Gi
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -131,25 +121,25 @@ spec:
       serviceAccountName: bmad-api-sa
       volumes:
       - emptyDir:
-          sizeLimit: 2Gi
+          sizeLimit: 5Gi
         name: workflow-storage
       - emptyDir:
-          sizeLimit: 100Mi
+          sizeLimit: 500Mi
         name: logs-storage
       - emptyDir:
-          sizeLimit: 1Gi
+          sizeLimit: 2Gi
         name: tmp-storage
 ---
 apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: bmad-api
+    app: bmad-api-production
     component: api
-    environment: development
+    environment: production
     tier: backend
   name: bmad-api-service
-  namespace: cerebral-development
+  namespace: cerebral-production
 spec:
   ports:
   - name: http
@@ -157,50 +147,83 @@ spec:
     protocol: TCP
     targetPort: 8001
   selector:
-    app: bmad-api
+    app: bmad-api-production
   type: ClusterIP
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
-    app: bmad-api
+    app: bmad-api-production
     component: api
-    environment: development
+    environment: production
     tier: backend
   name: bmad-api-sa
-  namespace: cerebral-development
+  namespace: cerebral-production
 ---
 apiVersion: v1
 data:
   BMAD_API_HOST: 0.0.0.0
   BMAD_API_PORT: '8001'
   BMAD_LOG_LEVEL: info
-  BMAD_WORKFLOW_TIMEOUT: '300'
+  BMAD_WORKFLOW_TIMEOUT: '600'
 kind: ConfigMap
 metadata:
   labels:
-    app: bmad-api
+    app: bmad-api-production
     component: api
-    environment: development
+    environment: production
     tier: backend
   name: bmad-api-config
-  namespace: cerebral-development
+  namespace: cerebral-production
 ---
 apiVersion: v1
 data:
   JWT_SECRET_KEY: ''
-  SUPABASE_ANON_KEY: ''
+  SUPABASE_SERVICE_ROLE_KEY: ''
   SUPABASE_URL: ''
-  VAULT_TOKEN: ''
-  VAULT_URL: ''
 kind: Secret
 metadata:
   labels:
-    app: bmad-api
+    app: bmad-api-production
     component: api
-    environment: development
+    environment: production
     tier: backend
   name: bmad-api-secrets
-  namespace: cerebral-development
+  namespace: cerebral-production
 type: Opaque
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+  labels:
+    app: bmad-api-production
+    component: api
+    environment: production
+    tier: backend
+  name: bmad-api-ingress
+  namespace: cerebral-production
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: bmad-api.cerebral.baerautotech.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: bmad-api-service
+            port:
+              number: 8001
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - bmad-api.cerebral.baerautotech.com
+    secretName: bmad-api-tls
