@@ -355,9 +355,9 @@ class BMADPersonaWrapper:
     async def get_status(self) -> Dict[str, Any]:
         """Get persona wrapper status for health monitoring"""
         return {
-            'total_personas': len(self.personas),
-            'active_personas': len([p for p in self.personas.values() if p.status == PersonaStatus.ACTIVE]),
-            'discovered_personas': len(self.personas),
+            'total_personas': len(self.discovered_personas),
+            'active_personas': len([p for p in self.discovered_personas.values() if p.status == PersonaStatus.ACTIVE]),
+            'discovered_personas': len(self.discovered_personas),
             'context_dir': str(self.context_dir),
             'context_dir_exists': self.context_dir.exists(),
             'last_discovery': self.last_discovery.isoformat() if self.last_discovery else None,
@@ -368,7 +368,7 @@ class BMADPersonaWrapper:
                     'status': p.status.value,
                     'activation_count': p.activation_count
                 }
-                for p in self.personas.values()
+                for p in self.discovered_personas.values()
             ]
         }
 

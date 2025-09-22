@@ -93,6 +93,11 @@ class BMADMasterOrchestrator:
             
             # Activate BMAD Master persona
             from cflow_platform.core.bmad_persona_wrapper import bmad_persona_wrapper
+            
+            # Ensure personas are discovered first
+            if not bmad_persona_wrapper.discovered_personas:
+                await bmad_persona_wrapper.discover_bmad_personas()
+            
             activation_result = await bmad_persona_wrapper.activate_persona('bmad-master', session_id)
             
             if activation_result.get('success', False):

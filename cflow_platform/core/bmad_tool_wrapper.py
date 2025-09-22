@@ -459,14 +459,14 @@ class BMADToolWrapper:
     async def get_status(self) -> Dict[str, Any]:
         """Get tool wrapper status for health monitoring"""
         return {
-            'total_tools': len(self.tools),
+            'total_tools': len(self.discovered_tools),
             'tools_by_category': {
-                category: len([t for t in self.tools.values() if t.category == category])
+                category: len([t for t in self.discovered_tools.values() if t.category == category])
                 for category in ['task', 'template', 'workflow', 'checklist', 'agent', 'common_task']
             },
-            'discovered_tools': len(self.tools),
-            'vendor_path': str(self.vendor_path),
-            'vendor_path_exists': self.vendor_path.exists(),
+            'discovered_tools': len(self.discovered_tools),
+            'vendor_path': str(self.bmad_root),
+            'vendor_path_exists': self.bmad_root.exists(),
             'last_discovery': self.last_discovery.isoformat() if self.last_discovery else None,
             'tools': [
                 {
@@ -475,7 +475,7 @@ class BMADToolWrapper:
                     'category': t.category,
                     'tool_type': t.tool_type
                 }
-                for t in self.tools.values()
+                for t in self.discovered_tools.values()
             ]
         }
 
