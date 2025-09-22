@@ -1,33 +1,57 @@
 # BMAD Remaining Phases Architecture Design
 
+## Phase 2 Critical Realizations
+
+### Wrapper Pattern Architecture
+- **All BMAD functionality must wrap vendor/bmad components**
+- **No rebuilding of existing BMAD-Method functionality**
+- **Extend with Cerebral-specific features and MCP integration**
+- **Maintain compatibility with BMAD-Method updates**
+
+### Key Implementation Principles
+1. **Dynamic Discovery**: Automatically find and wrap BMAD-Method components
+2. **Cerebral Extensions**: Add MCP integration, context preservation, session management
+3. **Command Parsing**: Handle BMAD-Method command formats (strings/dicts)
+4. **Context Persistence**: File-based storage for persona contexts
+5. **MCP Integration**: Full tool registry and direct client routing
+
+### Architecture Compliance
+- Follow established wrapper pattern (like bmad_handlers.py, enhanced_research_handlers.py)
+- Integrate with vendor/bmad functionality
+- Provide MCP tool interfaces
+- Maintain extensibility for future BMAD-Method updates
+
 ## Executive Summary
 
 This document provides comprehensive architectural design for the remaining BMAD phases (4-6), prioritized by implementation urgency. The architecture builds upon the proven multi-agent foundation from Phases 1-3 and extends it with testing frameworks, advanced features, and production readiness.
+
+**CRITICAL**: All phases must follow the wrapper pattern established in Phase 2, wrapping vendor/bmad components rather than rebuilding BMAD functionality.
 
 ## Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    BMAD Multi-Agent Platform                     │
+│                    (Wrapper Pattern Architecture)                │
 ├─────────────────────────────────────────────────────────────────┤
-│  Phase 4: Testing & Validation Framework                        │
-│  ├── End-to-End Testing Engine                                  │
-│  ├── Performance Validation Suite                              │
-│  ├── Integration Testing Framework                             │
-│  ├── User Acceptance Testing System                            │
+│  Phase 4: Testing & Validation Framework (Wrapper-based)        │
+│  ├── Wrap vendor/bmad Testing Components                        │
+│  ├── Extend with Cerebral Testing Features                      │
+│  ├── MCP Integration for Testing Tools                          │
+│  ├── Context Preservation for Test Sessions                     │
 │  └── Monitoring & Observability Platform                       │
 ├─────────────────────────────────────────────────────────────────┤
-│  Phase 5: Advanced Features & Expansion Packs                  │
-│  ├── BMAD Expansion Pack System                                │
-│  ├── HIL (Human-in-the-Loop) Integration                       │
-│  ├── Brownfield/Greenfield Workflow Engine                     │
-│  ├── Advanced Monitoring & Analytics                           │
+│  Phase 5: Advanced Features & Expansion Packs (Wrapper-based)   │
+│  ├── Wrap vendor/bmad Expansion Pack System                    │
+│  ├── Extend with Cerebral HIL Integration                      │
+│  ├── Wrap BMAD-Method Workflow Engine                          │
+│  ├── Advanced Monitoring & Analytics                            │
 │  └── Production Deployment System                              │
 ├─────────────────────────────────────────────────────────────────┤
-│  Phase 6: Final Cleanup & 100% Completion Validation           │
-│  ├── Code Cleanup Engine                                        │
-│  ├── Comprehensive Validation Suite                            │
-│  ├── Performance Validation Framework                          │
+│  Phase 6: Final Cleanup & 100% Completion Validation            │
+│  ├── Validate All Wrapper Implementations                       │
+│  ├── Ensure BMAD-Method Compatibility                          │
+│  ├── Complete Cerebral Integration                             │
 │  └── Security Validation & Audit System                        │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -858,6 +882,12 @@ class SecurityValidationSystem:
 
 ### Phase 4: Testing & Validation Framework (Weeks 13-16)
 
+#### Wrapper Pattern Implementation
+- **Wrap vendor/bmad testing components** (don't rebuild)
+- **Extend with Cerebral-specific testing features**
+- **Maintain compatibility with BMAD-Method updates**
+- **Follow established wrapper pattern from Phase 2**
+
 **Week 13-14: Core Testing Infrastructure**
 - Implement UAT Orchestrator and Test Scenario Manager
 - Build Usability Testing Framework
@@ -874,6 +904,12 @@ class SecurityValidationSystem:
 - End-to-end testing validation
 
 ### Phase 5: Advanced Features & Expansion Packs (Weeks 17-20)
+
+#### Wrapper Pattern Implementation
+- **Wrap vendor/bmad expansion pack system** (don't rebuild)
+- **Extend with Cerebral-specific features**
+- **Maintain compatibility with BMAD-Method updates**
+- **Follow established wrapper pattern from Phase 2**
 
 **Week 17: HIL Integration**
 - Implement HIL Session Manager
@@ -896,6 +932,12 @@ class SecurityValidationSystem:
 - Create Rollback System
 
 ### Phase 6: Final Cleanup & Validation (Weeks 21-22)
+
+#### Wrapper Pattern Implementation
+- **Validate all wrapper implementations** (ensure compliance)
+- **Ensure BMAD-Method compatibility** (test all integrations)
+- **Complete Cerebral integration** (verify all extensions)
+- **Follow established wrapper pattern from Phase 2**
 
 **Week 21: Code Cleanup**
 - Implement Code Cleanup Orchestrator
