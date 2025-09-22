@@ -39,6 +39,7 @@ class ToolRegistry:
             tool("sys_stats", "Get system statistics"),
             tool("sys_debug", "Debug environment"),
             tool("sys_version", "Get version information"),
+            tool("sys_health", "Get system health status"),
         ]
 
         # Task management tools
@@ -49,6 +50,10 @@ class ToolRegistry:
             tool("task_add", "Add new task"),
             tool("task_update", "Update task"),
             tool("task_status", "Update task status"),
+            tool("task_sub_add", "Add subtask"),
+            tool("task_sub_upd", "Update subtask"),
+            tool("task_multi", "Multi-task operations"),
+            tool("task_remove", "Remove task"),
         ]
 
         # Research tools
@@ -63,12 +68,19 @@ class ToolRegistry:
             tool("lint_bg", "Run lint in background"),
             tool("lint_status", "Lint status"),
             tool("enh_full_lint", "Run enhanced lint"),
+            tool("enh_pattern", "Enhanced pattern learning"),
             tool("enh_autofix", "Enhanced autofix"),
+            tool("enh_perf", "Enhanced performance protection"),
+            tool("enh_rag", "Enhanced RAG integration"),
+            tool("enh_mon_start", "Start enhanced monitoring"),
+            tool("enh_mon_stop", "Stop enhanced monitoring"),
+            tool("enh_status", "Enhanced status check"),
         ]
 
         # Testing tools
         tools += [
             tool("test_analyze", "Analyze test suite"),
+            tool("test_delete_flaky", "Delete flaky tests"),
             tool("test_confidence", "Test confidence report"),
         ]
 
@@ -81,6 +93,9 @@ class ToolRegistry:
         tools += [
             tool("memory_add", "Add memory"),
             tool("memory_search", "Search memories"),
+            tool("memory_store_procedure", "Store procedure in memory"),
+            tool("memory_store_episode", "Store episode in memory"),
+            tool("memory_stats", "Get memory statistics"),
         ]
 
         # Plan tools
@@ -112,7 +127,7 @@ class ToolRegistry:
 
         # Code generation tools
         tools += [
-            tool("codegen.generate", "Generate code"),
+            tool("codegen.generate_edits", "Generate code edits"),
         ]
 
         # Code intelligence tools
