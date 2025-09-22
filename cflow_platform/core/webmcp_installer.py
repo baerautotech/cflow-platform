@@ -1,470 +1,277 @@
-"""
-WebMCP Configuration Installer
-
-This module provides WebMCP configuration capabilities for the one-touch installer,
-including BMAD integration setup, configuration management, and validation.
-"""
+from __future__ import annotations
 
 import json
 import os
-import sys
-import subprocess
-import logging
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass, field
-from datetime import datetime
-import shutil
+from typing import Any, Dict, List, Optional
 
-logger = logging.getLogger(__name__)
+import httpx
 
 
 @dataclass
 class WebMCPConfig:
-    """WebMCP configuration settings."""
-    server_url: str = "http://localhost:8000"
+    """Configuration for WebMCP server connection."""
+    server_url: str
     api_key: Optional[str] = None
-    timeout_seconds: int = 30
-    retry_attempts: int = 3
-    enable_health_check: bool = True
-    enable_feature_flags: bool = True
-    enable_performance_monitoring: bool = True
-    enable_security_testing: bool = True
-    bmad_integration_enabled: bool = True
-    bmad_api_url: str = "http://localhost:8001"
+    bmad_api_url: Optional[str] = None
     bmad_auth_token: Optional[str] = None
-    circuit_breaker_enabled: bool = True
-    rate_limiting_enabled: bool = True
-    logging_level: str = "INFO"
-    config_version: str = "1.0.0"
+    timeout: int = 30
 
 
 @dataclass
-class InstallationResult:
-    """Result of installation operation."""
+class WebMCPInstallResult:
+    """Result of WebMCP configuration installation."""
     success: bool
     message: str
     config_file_path: Optional[str] = None
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    warnings: List[str] = None
+    errors: List[str] = None
+
+    def __post_init__(self):
+        if self.warnings is None:
+            self.warnings = []
+        if self.errors is None:
+            self.errors = []
 
 
 class WebMCPInstaller:
-    """
-    WebMCP Configuration Installer for BMAD Integration.
+    """Installer for WebMCP configuration and cluster deployment."""
     
-    This class handles the installation and configuration of WebMCP
-    components for BMAD integration, including:
-    - Configuration file generation
-    - Environment setup
-    - Service validation
-    - Integration testing
-    """
+    def __init__(self, config_dir: Optional[Path] = None):
+        self.config_dir = config_dir or Path.home() / ".cerebraflow" / "webmcp"
+        self.config_file = self.config_dir / "config.json"
+        self.cluster_endpoints = {
+            "webmcp": "https://webmcp-bmad.dev.cerebral.baerautotech.com",
+            "bmad_api": "https://bmad-api.dev.cerebral.baerautotech.com",
+            "bmad_method": "https://bmad-method.dev.cerebral.baerautotech.com"
+        }
     
-    def __init__(self, project_root: Optional[Path] = None):
-        """Initialize the WebMCP installer."""
-        self.project_root = project_root or Path.cwd()
-        self.config_dir = self.project_root / ".cerebraflow"
-        self.config_file = self.config_dir / "webmcp_config.json"
-        self.env_file = self.config_dir / ".env"
-        
-    def install_webmcp_configuration(
-        self,
-        config: Optional[WebMCPConfig] = None,
-        overwrite: bool = False
-    ) -> InstallationResult:
-        """
-        Install WebMCP configuration.
-        
-        Args:
-            config: WebMCP configuration to install
-            overwrite: Whether to overwrite existing configuration
-            
-        Returns:
-            InstallationResult with installation details
-        """
-        logger.info("Installing WebMCP configuration...")
-        
+    def install_webmcp_configuration(self, config: WebMCPConfig, overwrite: bool = False) -> WebMCPInstallResult:
+        """Install WebMCP configuration for cluster deployment."""
         try:
-            # Create configuration directory if it doesn't exist
-            self.config_dir.mkdir(exist_ok=True)
-            
-            # Use default config if none provided
-            if config is None:
-                config = WebMCPConfig()
+            # Create config directory if it doesn't exist
+            self.config_dir.mkdir(parents=True, exist_ok=True)
             
             # Check if config already exists
             if self.config_file.exists() and not overwrite:
-                return InstallationResult(
+                return WebMCPInstallResult(
                     success=False,
-                    message="WebMCP configuration already exists. Use --overwrite to replace.",
+                    message="Configuration already exists. Use --overwrite-config to replace it.",
                     errors=["Configuration file already exists"]
                 )
             
-            # Generate configuration file
-            config_data = self._generate_config_data(config)
+            # Detect cluster vs local deployment
+            is_cluster_deployment = self._detect_cluster_deployment(config.server_url)
+            
+            if is_cluster_deployment:
+                # Use cluster endpoints
+                cluster_config = self._create_cluster_config(config)
+                config_data = cluster_config
+                warnings = ["Using cluster deployment endpoints"]
+            else:
+                # Use local endpoints
+                config_data = self._create_local_config(config)
+                warnings = ["Using local deployment endpoints"]
             
             # Write configuration file
             with open(self.config_file, 'w') as f:
                 json.dump(config_data, f, indent=2)
             
-            # Generate environment file
-            env_data = self._generate_env_data(config)
-            
-            # Write environment file
-            with open(self.env_file, 'w') as f:
-                f.write(env_data)
-            
-            # Validate configuration
-            validation_result = self._validate_configuration(config)
-            
-            if validation_result["success"]:
-                return InstallationResult(
-                    success=True,
-                    message="WebMCP configuration installed successfully",
+            # Test connection
+            connection_test = self._test_connection(config_data)
+            if not connection_test.success:
+                return WebMCPInstallResult(
+                    success=False,
+                    message=f"Configuration saved but connection test failed: {connection_test.message}",
                     config_file_path=str(self.config_file),
-                    warnings=validation_result.get("warnings", [])
-                )
-            else:
-                return InstallationResult(
-                    success=False,
-                    message="WebMCP configuration installed but validation failed",
-                    config_file_path=str(self.config_file),
-                    errors=validation_result.get("errors", []),
-                    warnings=validation_result.get("warnings", [])
-                )
-                
-        except Exception as e:
-            logger.error(f"Failed to install WebMCP configuration: {e}")
-            return InstallationResult(
-                success=False,
-                message=f"Failed to install WebMCP configuration: {e}",
-                errors=[str(e)]
-            )
-    
-    def validate_webmcp_installation(self) -> InstallationResult:
-        """
-        Validate WebMCP installation.
-        
-        Returns:
-            InstallationResult with validation details
-        """
-        logger.info("Validating WebMCP installation...")
-        
-        try:
-            # Check if configuration files exist
-            if not self.config_file.exists():
-                return InstallationResult(
-                    success=False,
-                    message="WebMCP configuration file not found",
-                    errors=["Configuration file missing"]
+                    warnings=warnings,
+                    errors=connection_test.errors
                 )
             
-            if not self.env_file.exists():
-                return InstallationResult(
-                    success=False,
-                    message="WebMCP environment file not found",
-                    errors=["Environment file missing"]
-                )
-            
-            # Load and validate configuration
-            with open(self.config_file, 'r') as f:
-                config_data = json.load(f)
-            
-            # Validate configuration structure
-            validation_result = self._validate_config_data(config_data)
-            
-            if validation_result["success"]:
-                return InstallationResult(
-                    success=True,
-                    message="WebMCP installation validated successfully",
-                    config_file_path=str(self.config_file),
-                    warnings=validation_result.get("warnings", [])
-                )
-            else:
-                return InstallationResult(
-                    success=False,
-                    message="WebMCP installation validation failed",
-                    errors=validation_result.get("errors", [])
-                )
-                
-        except Exception as e:
-            logger.error(f"Failed to validate WebMCP installation: {e}")
-            return InstallationResult(
-                success=False,
-                message=f"Failed to validate WebMCP installation: {e}",
-                errors=[str(e)]
-            )
-    
-    def test_webmcp_integration(self) -> InstallationResult:
-        """
-        Test WebMCP integration.
-        
-        Returns:
-            InstallationResult with test details
-        """
-        logger.info("Testing WebMCP integration...")
-        
-        try:
-            # Test WebMCP server connectivity
-            connectivity_result = self._test_webmcp_connectivity()
-            
-            # Test BMAD API service connectivity
-            bmad_result = self._test_bmad_api_connectivity()
-            
-            # Test MCP tool execution
-            tool_result = self._test_mcp_tool_execution()
-            
-            # Combine results
-            all_success = (
-                connectivity_result["success"] and
-                bmad_result["success"] and
-                tool_result["success"]
-            )
-            
-            errors = []
-            warnings = []
-            
-            if not connectivity_result["success"]:
-                errors.extend(connectivity_result.get("errors", []))
-            if not bmad_result["success"]:
-                errors.extend(bmad_result.get("errors", []))
-            if not tool_result["success"]:
-                errors.extend(tool_result.get("errors", []))
-            
-            warnings.extend(connectivity_result.get("warnings", []))
-            warnings.extend(bmad_result.get("warnings", []))
-            warnings.extend(tool_result.get("warnings", []))
-            
-            if all_success:
-                return InstallationResult(
-                    success=True,
-                    message="WebMCP integration test passed successfully",
-                    warnings=warnings
-                )
-            else:
-                return InstallationResult(
-                    success=False,
-                    message="WebMCP integration test failed",
-                    errors=errors,
-                    warnings=warnings
-                )
-                
-        except Exception as e:
-            logger.error(f"Failed to test WebMCP integration: {e}")
-            return InstallationResult(
-                success=False,
-                message=f"Failed to test WebMCP integration: {e}",
-                errors=[str(e)]
-            )
-    
-    def uninstall_webmcp_configuration(self) -> InstallationResult:
-        """
-        Uninstall WebMCP configuration.
-        
-        Returns:
-            InstallationResult with uninstallation details
-        """
-        logger.info("Uninstalling WebMCP configuration...")
-        
-        try:
-            removed_files = []
-            errors = []
-            
-            # Remove configuration file
-            if self.config_file.exists():
-                self.config_file.unlink()
-                removed_files.append(str(self.config_file))
-            
-            # Remove environment file
-            if self.env_file.exists():
-                self.env_file.unlink()
-                removed_files.append(str(self.env_file))
-            
-            # Remove configuration directory if empty
-            if self.config_dir.exists() and not any(self.config_dir.iterdir()):
-                self.config_dir.rmdir()
-                removed_files.append(str(self.config_dir))
-            
-            return InstallationResult(
+            return WebMCPInstallResult(
                 success=True,
-                message=f"WebMCP configuration uninstalled successfully. Removed: {', '.join(removed_files)}"
+                message="WebMCP configuration installed successfully",
+                config_file_path=str(self.config_file),
+                warnings=warnings + connection_test.warnings
             )
             
         except Exception as e:
-            logger.error(f"Failed to uninstall WebMCP configuration: {e}")
-            return InstallationResult(
+            return WebMCPInstallResult(
                 success=False,
-                message=f"Failed to uninstall WebMCP configuration: {e}",
+                message=f"Failed to install WebMCP configuration: {str(e)}",
                 errors=[str(e)]
             )
     
-    def _generate_config_data(self, config: WebMCPConfig) -> Dict[str, Any]:
-        """Generate configuration data from WebMCPConfig."""
+    def _detect_cluster_deployment(self, server_url: str) -> bool:
+        """Detect if this is a cluster deployment based on URL."""
+        cluster_indicators = [
+            "cerebral.baerautotech.com",
+            "dev.cerebral.baerautotech.com",
+            "webmcp-bmad.dev.cerebral.baerautotech.com"
+        ]
+        return any(indicator in server_url for indicator in cluster_indicators)
+    
+    def _create_cluster_config(self, config: WebMCPConfig) -> Dict[str, Any]:
+        """Create configuration for cluster deployment."""
         return {
+            "deployment_type": "cluster",
+            "webmcp": {
+                "server_url": self.cluster_endpoints["webmcp"],
+                "api_key": config.api_key,
+                "timeout": config.timeout,
+                "health_endpoint": f"{self.cluster_endpoints['webmcp']}/health",
+                "tools_endpoint": f"{self.cluster_endpoints['webmcp']}/mcp/tools",
+                "call_endpoint": f"{self.cluster_endpoints['webmcp']}/mcp/tools/call"
+            },
+            "bmad_api": {
+                "server_url": self.cluster_endpoints["bmad_api"],
+                "auth_token": config.bmad_auth_token,
+                "timeout": config.timeout,
+                "health_endpoint": f"{self.cluster_endpoints['bmad_api']}/health",
+                "project_type_endpoint": f"{self.cluster_endpoints['bmad_api']}/bmad/project-type/detect",
+                "prd_create_endpoint": f"{self.cluster_endpoints['bmad_api']}/bmad/greenfield/prd-create"
+            },
+            "bmad_method": {
+                "server_url": self.cluster_endpoints["bmad_method"],
+                "timeout": config.timeout,
+                "health_endpoint": f"{self.cluster_endpoints['bmad_method']}/health",
+                "agents_endpoint": f"{self.cluster_endpoints['bmad_method']}/bmad/agents",
+                "workflows_endpoint": f"{self.cluster_endpoints['bmad_method']}/bmad/workflows"
+            },
+            "cluster_info": {
+                "dns_resolution": "cerebral.baerautotech.com",
+                "certificates": "Let's Encrypt via cert-manager",
+                "authentication": "Dex OIDC",
+                "load_balancer": "MetalLB"
+            }
+        }
+    
+    def _create_local_config(self, config: WebMCPConfig) -> Dict[str, Any]:
+        """Create configuration for local deployment."""
+        return {
+            "deployment_type": "local",
             "webmcp": {
                 "server_url": config.server_url,
                 "api_key": config.api_key,
-                "timeout_seconds": config.timeout_seconds,
-                "retry_attempts": config.retry_attempts,
-                "enable_health_check": config.enable_health_check,
-                "enable_feature_flags": config.enable_feature_flags,
-                "enable_performance_monitoring": config.enable_performance_monitoring,
-                "enable_security_testing": config.enable_security_testing,
-                "logging_level": config.logging_level
+                "timeout": config.timeout,
+                "health_endpoint": f"{config.server_url}/health",
+                "tools_endpoint": f"{config.server_url}/mcp/tools",
+                "call_endpoint": f"{config.server_url}/mcp/tools/call"
             },
-            "bmad_integration": {
-                "enabled": config.bmad_integration_enabled,
-                "api_url": config.bmad_api_url,
+            "bmad_api": {
+                "server_url": config.bmad_api_url or "http://localhost:8001",
                 "auth_token": config.bmad_auth_token,
-                "circuit_breaker_enabled": config.circuit_breaker_enabled,
-                "rate_limiting_enabled": config.rate_limiting_enabled
+                "timeout": config.timeout,
+                "health_endpoint": f"{config.bmad_api_url or 'http://localhost:8001'}/health"
             },
-            "metadata": {
-                "config_version": config.config_version,
-                "installed_at": datetime.utcnow().isoformat(),
-                "installer_version": "1.0.0"
+            "bmad_method": {
+                "server_url": "http://localhost:8080",
+                "timeout": config.timeout,
+                "health_endpoint": "http://localhost:8080/health"
             }
         }
     
-    def _generate_env_data(self, config: WebMCPConfig) -> str:
-        """Generate environment file data from WebMCPConfig."""
-        env_lines = [
-            "# WebMCP Configuration",
-            f"WEBMCP_SERVER_URL={config.server_url}",
-            f"WEBMCP_TIMEOUT_SECONDS={config.timeout_seconds}",
-            f"WEBMCP_RETRY_ATTEMPTS={config.retry_attempts}",
-            f"WEBMCP_ENABLE_HEALTH_CHECK={str(config.enable_health_check).lower()}",
-            f"WEBMCP_ENABLE_FEATURE_FLAGS={str(config.enable_feature_flags).lower()}",
-            f"WEBMCP_ENABLE_PERFORMANCE_MONITORING={str(config.enable_performance_monitoring).lower()}",
-            f"WEBMCP_ENABLE_SECURITY_TESTING={str(config.enable_security_testing).lower()}",
-            f"WEBMCP_LOGGING_LEVEL={config.logging_level}",
-            "",
-            "# BMAD Integration",
-            f"BMAD_INTEGRATION_ENABLED={str(config.bmad_integration_enabled).lower()}",
-            f"BMAD_API_URL={config.bmad_api_url}",
-            f"BMAD_CIRCUIT_BREAKER_ENABLED={str(config.circuit_breaker_enabled).lower()}",
-            f"BMAD_RATE_LIMITING_ENABLED={str(config.rate_limiting_enabled).lower()}",
-            ""
-        ]
-        
-        if config.api_key:
-            env_lines.append(f"WEBMCP_API_KEY={config.api_key}")
-        
-        if config.bmad_auth_token:
-            env_lines.append(f"BMAD_AUTH_TOKEN={config.bmad_auth_token}")
-        
-        return "\n".join(env_lines)
-    
-    def _validate_configuration(self, config: WebMCPConfig) -> Dict[str, Any]:
-        """Validate WebMCP configuration."""
-        errors = []
-        warnings = []
-        
-        # Validate server URL
-        if not config.server_url.startswith(('http://', 'https://')):
-            errors.append("Server URL must start with http:// or https://")
-        
-        # Validate timeout
-        if config.timeout_seconds <= 0:
-            errors.append("Timeout must be positive")
-        
-        # Validate retry attempts
-        if config.retry_attempts < 0:
-            errors.append("Retry attempts must be non-negative")
-        
-        # Validate BMAD API URL
-        if config.bmad_integration_enabled and not config.bmad_api_url.startswith(('http://', 'https://')):
-            errors.append("BMAD API URL must start with http:// or https://")
-        
-        # Check for missing API key
-        if not config.api_key:
-            warnings.append("API key not provided - some features may not work")
-        
-        # Check for missing BMAD auth token
-        if config.bmad_integration_enabled and not config.bmad_auth_token:
-            warnings.append("BMAD auth token not provided - BMAD integration may not work")
-        
-        return {
-            "success": len(errors) == 0,
-            "errors": errors,
-            "warnings": warnings
-        }
-    
-    def _validate_config_data(self, config_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Validate configuration data structure."""
-        errors = []
-        warnings = []
-        
-        # Check required sections
-        required_sections = ["webmcp", "bmad_integration", "metadata"]
-        for section in required_sections:
-            if section not in config_data:
-                errors.append(f"Missing required section: {section}")
-        
-        # Validate webmcp section
-        if "webmcp" in config_data:
-            webmcp = config_data["webmcp"]
-            required_fields = ["server_url", "timeout_seconds", "retry_attempts"]
-            for field in required_fields:
-                if field not in webmcp:
-                    errors.append(f"Missing required field: webmcp.{field}")
-        
-        # Validate bmad_integration section
-        if "bmad_integration" in config_data:
-            bmad = config_data["bmad_integration"]
-            if bmad.get("enabled", False):
-                if "api_url" not in bmad:
-                    errors.append("BMAD integration enabled but api_url not provided")
-        
-        return {
-            "success": len(errors) == 0,
-            "errors": errors,
-            "warnings": warnings
-        }
-    
-    def _test_webmcp_connectivity(self) -> Dict[str, Any]:
-        """Test WebMCP server connectivity."""
+    def _test_connection(self, config_data: Dict[str, Any]) -> WebMCPInstallResult:
+        """Test connection to WebMCP server."""
         try:
-            # This would normally make an HTTP request to the WebMCP server
-            # For now, we'll simulate a successful test
-            return {
-                "success": True,
-                "message": "WebMCP server connectivity test passed"
-            }
+            webmcp_config = config_data["webmcp"]
+            server_url = webmcp_config["server_url"]
+            health_endpoint = webmcp_config["health_endpoint"]
+            
+            # Test health endpoint
+            with httpx.Client(timeout=config_data["webmcp"]["timeout"]) as client:
+                response = client.get(health_endpoint)
+                response.raise_for_status()
+                
+                health_data = response.json()
+                if health_data.get("status") != "healthy":
+                    return WebMCPInstallResult(
+                        success=False,
+                        message="WebMCP server is not healthy",
+                        errors=["Server health check failed"]
+                    )
+                
+                # Test tools endpoint
+                tools_response = client.get(webmcp_config["tools_endpoint"])
+                tools_response.raise_for_status()
+                
+                tools_data = tools_response.json()
+                tool_count = len(tools_data.get("tools", []))
+                
+                warnings = []
+                if tool_count < 10:
+                    warnings.append(f"Only {tool_count} tools available (expected 10+)")
+                
+                return WebMCPInstallResult(
+                    success=True,
+                    message=f"Connection successful. {tool_count} tools available.",
+                    warnings=warnings
+                )
+                
+        except httpx.ConnectError:
+            return WebMCPInstallResult(
+                success=False,
+                message="Cannot connect to WebMCP server",
+                errors=["Connection refused or server unavailable"]
+            )
+        except httpx.HTTPStatusError as e:
+            return WebMCPInstallResult(
+                success=False,
+                message=f"HTTP error: {e.response.status_code}",
+                errors=[f"HTTP {e.response.status_code}: {e.response.text}"]
+            )
         except Exception as e:
-            return {
-                "success": False,
-                "errors": [f"WebMCP connectivity test failed: {e}"]
-            }
+            return WebMCPInstallResult(
+                success=False,
+                message=f"Connection test failed: {str(e)}",
+                errors=[str(e)]
+            )
     
-    def _test_bmad_api_connectivity(self) -> Dict[str, Any]:
-        """Test BMAD API service connectivity."""
+    def get_configuration(self) -> Optional[Dict[str, Any]]:
+        """Get current WebMCP configuration."""
+        if not self.config_file.exists():
+            return None
+        
         try:
-            # This would normally make an HTTP request to the BMAD API service
-            # For now, we'll simulate a successful test
-            return {
-                "success": True,
-                "message": "BMAD API service connectivity test passed"
-            }
-        except Exception as e:
-            return {
-                "success": False,
-                "errors": [f"BMAD API connectivity test failed: {e}"]
-            }
+            with open(self.config_file, 'r') as f:
+                return json.load(f)
+        except Exception:
+            return None
     
-    def _test_mcp_tool_execution(self) -> Dict[str, Any]:
-        """Test MCP tool execution."""
+    def validate_cluster_deployment(self) -> WebMCPInstallResult:
+        """Validate cluster deployment endpoints."""
         try:
-            # This would normally test MCP tool execution
-            # For now, we'll simulate a successful test
-            return {
-                "success": True,
-                "message": "MCP tool execution test passed"
-            }
+            results = []
+            warnings = []
+            errors = []
+            
+            for service, url in self.cluster_endpoints.items():
+                try:
+                    with httpx.Client(timeout=10) as client:
+                        response = client.get(f"{url}/health")
+                        response.raise_for_status()
+                        results.append(f"✓ {service}: {url}")
+                except Exception as e:
+                    errors.append(f"✗ {service}: {url} - {str(e)}")
+            
+            if errors:
+                return WebMCPInstallResult(
+                    success=False,
+                    message="Some cluster services are not accessible",
+                    errors=errors,
+                    warnings=warnings
+                )
+            
+            return WebMCPInstallResult(
+                success=True,
+                message="All cluster services are accessible",
+                warnings=warnings
+            )
+            
         except Exception as e:
-            return {
-                "success": False,
-                "errors": [f"MCP tool execution test failed: {e}"]
-            }
+            return WebMCPInstallResult(
+                success=False,
+                message=f"Cluster validation failed: {str(e)}",
+                errors=[str(e)]
+            )

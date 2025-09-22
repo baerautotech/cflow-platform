@@ -37,6 +37,11 @@ def cli() -> int:
     parser.add_argument("--bmad-api-url", default="http://localhost:8001", help="BMAD API service URL")
     parser.add_argument("--bmad-auth-token", help="BMAD authentication token")
     parser.add_argument("--overwrite-config", action="store_true", help="Overwrite existing WebMCP configuration")
+    parser.add_argument("--cluster-deployment", action="store_true", help="Configure for cluster deployment (Cerebral cloud)")
+    parser.add_argument("--validate-cluster", action="store_true", help="Validate cluster deployment endpoints")
+    parser.add_argument("--cluster-webmcp-url", default="https://webmcp-bmad.dev.cerebral.baerautotech.com", help="Cluster WebMCP server URL")
+    parser.add_argument("--cluster-bmad-api-url", default="https://bmad-api.dev.cerebral.baerautotech.com", help="Cluster BMAD API service URL")
+    parser.add_argument("--cluster-bmad-method-url", default="https://bmad-method.dev.cerebral.baerautotech.com", help="Cluster BMAD-Method service URL")
     args = parser.parse_args()
 
     rc = 0
@@ -82,11 +87,19 @@ def cli() -> int:
         try:
             from cflow_platform.core.webmcp_installer import WebMCPInstaller, WebMCPConfig
             
+            # Determine server URL based on deployment type
+            if args.cluster_deployment:
+                server_url = args.cluster_webmcp_url
+                print(f"🌐 Configuring for cluster deployment: {server_url}")
+            else:
+                server_url = args.webmcp_server_url
+                print(f"🏠 Configuring for local deployment: {server_url}")
+            
             # Create WebMCP configuration
             config = WebMCPConfig(
-                server_url=args.webmcp_server_url,
+                server_url=server_url,
                 api_key=args.webmcp_api_key,
-                bmad_api_url=args.bmad_api_url,
+                bmad_api_url=args.bmad_api_url if not args.cluster_deployment else args.cluster_bmad_api_url,
                 bmad_auth_token=args.bmad_auth_token
             )
             
@@ -114,6 +127,35 @@ def cli() -> int:
             print(f"✗ WebMCP configuration setup failed: {e}")
             rc |= 1
 
+    # Validate cluster deployment
+    if args.validate_cluster and rc == 0:
+        print("Validating cluster deployment endpoints...")
+        try:
+            from cflow_platform.core.webmcp_installer import WebMCPInstaller
+            
+            installer = WebMCPInstaller()
+            result = installer.validate_cluster_deployment()
+            
+            if result.success:
+                print(f"✓ Cluster deployment validation successful")
+                print(f"  {result.message}")
+                if result.warnings:
+                    for warning in result.warnings:
+                        print(f"  Warning: {warning}")
+            else:
+                print(f"✗ Cluster deployment validation failed: {result.message}")
+                if result.errors:
+                    for error in result.errors:
+                        print(f"  Error: {error}")
+                rc |= 1
+                
+        except ImportError as e:
+            print(f"✗ WebMCP installer not available: {e}")
+            rc |= 1
+        except Exception as e:
+            print(f"✗ Cluster validation failed: {e}")
+            rc |= 1
+
     # Optional: Supabase migrations
     if args.apply_migrations and rc == 0:
         rc |= _run([sys.executable, "-m", "cflow_platform.cli.migrate_supabase", "--apply"])
@@ -137,7 +179,16 @@ def cli() -> int:
         if args.setup_bmad or args.verify_bmad:
             print("BMAD integration components verified and ready.")
         if args.setup_webmcp:
-            print("WebMCP configuration installed and ready.")
+            if args.cluster_deployment:
+                print("WebMCP configuration installed and ready for cluster deployment.")
+                print("🌐 Cluster endpoints configured:")
+                print(f"  WebMCP: {args.cluster_webmcp_url}")
+                print(f"  BMAD API: {args.cluster_bmad_api_url}")
+                print(f"  BMAD-Method: {args.cluster_bmad_method_url}")
+            else:
+                print("WebMCP configuration installed and ready for local deployment.")
+        if args.validate_cluster:
+            print("Cluster deployment validation completed.")
     else:
         print("One-touch installer completed with issues. See logs above.")
     return rc
