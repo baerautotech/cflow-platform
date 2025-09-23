@@ -8,6 +8,8 @@ on:
       - 'vendor/bmad/**'
       - 'infrastructure/docker/Dockerfile.bmad-api'
       - 'infrastructure/docker/requirements-bmad.txt'
+      - 'infrastructure/kubernetes/bmad-api-*.yaml'
+      - 'infrastructure/kubernetes/grafana-dashboard-provisioning.yaml'
       - '.github/workflows/bmad-api-build.yml'
   pull_request:
     branches: [main, dev]
@@ -16,6 +18,8 @@ on:
       - 'vendor/bmad/**'
       - 'infrastructure/docker/Dockerfile.bmad-api'
       - 'infrastructure/docker/requirements-bmad.txt'
+      - 'infrastructure/kubernetes/bmad-api-*.yaml'
+      - 'infrastructure/kubernetes/grafana-dashboard-provisioning.yaml'
       - '.github/workflows/bmad-api-build.yml'
 
 env:
@@ -75,11 +79,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Deploy to development
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl
         run: |
-          echo "Deploying BMAD API service to development environment"
-          # Add deployment commands here when ready
-          echo "Deployment would happen here"
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+
+      - name: Deploy BMAD API to development
+        run: |
+          export KUBECONFIG=kubeconfig
+          kubectl apply -f infrastructure/kubernetes/bmad-api-enhanced-deployment.yaml
+          kubectl apply -f infrastructure/kubernetes/bmad-api-enhanced-monitoring.yaml
+          kubectl apply -f infrastructure/kubernetes/bmad-api-enhanced-dashboard.yaml
+          kubectl apply -f infrastructure/kubernetes/grafana-dashboard-provisioning.yaml
+          kubectl rollout restart deployment/grafana -n monitoring
+          kubectl rollout status deployment/bmad-api-enhanced -n cerebral-development --timeout=300s
 
   deploy-production:
     needs: build-and-push
@@ -91,8 +109,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Deploy to production
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl
         run: |
-          echo "Deploying BMAD API service to production environment"
-          # Add deployment commands here when ready
-          echo "Deployment would happen here"
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+
+      - name: Deploy BMAD API to production
+        run: |
+          export KUBECONFIG=kubeconfig
+          kubectl apply -f infrastructure/kubernetes/bmad-api-enhanced-deployment.yaml
+          kubectl apply -f infrastructure/kubernetes/bmad-api-enhanced-monitoring.yaml
+          kubectl apply -f infrastructure/kubernetes/bmad-api-enhanced-dashboard.yaml
+          kubectl apply -f infrastructure/kubernetes/grafana-dashboard-provisioning.yaml
+          kubectl rollout restart deployment/grafana -n monitoring
+          kubectl rollout status deployment/bmad-api-enhanced -n cerebral-production --timeout=300s

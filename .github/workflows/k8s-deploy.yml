@@ -1,0 +1,103 @@
+name: Kubernetes Manifest Deployment
+
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - 'infrastructure/kubernetes/**'
+      - '.github/workflows/k8s-deploy.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+        - development
+        - production
+
+jobs:
+  deploy-kubernetes:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'development') }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [ "${{ github.event.inputs.environment }}" != "" ]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+          else
+            echo "environment=development" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy BMAD API manifests
+        if: contains(github.event.head_commit.modified, 'infrastructure/kubernetes/bmad-api') || contains(github.event.head_commit.added, 'infrastructure/kubernetes/bmad-api')
+        run: |
+          export KUBECONFIG=kubeconfig
+          echo "Deploying BMAD API manifests..."
+          kubectl apply -f infrastructure/kubernetes/bmad-api-enhanced-deployment.yaml
+          kubectl apply -f infrastructure/kubernetes/bmad-api-enhanced-monitoring.yaml
+          kubectl apply -f infrastructure/kubernetes/bmad-api-enhanced-dashboard.yaml
+          kubectl rollout status deployment/bmad-api-enhanced -n cerebral-${{ steps.env.outputs.environment }} --timeout=300s
+
+      - name: Deploy Grafana dashboards
+        if: contains(github.event.head_commit.modified, 'infrastructure/kubernetes/grafana-dashboard-provisioning.yaml') || contains(github.event.head_commit.added, 'infrastructure/kubernetes/grafana-dashboard-provisioning.yaml')
+        run: |
+          export KUBECONFIG=kubeconfig
+          echo "Deploying Grafana dashboard provisioning..."
+          kubectl apply -f infrastructure/kubernetes/grafana-dashboard-provisioning.yaml
+          kubectl rollout restart deployment/grafana -n monitoring
+          kubectl rollout status deployment/grafana -n monitoring --timeout=300s
+
+      - name: Deploy monitoring manifests
+        if: contains(github.event.head_commit.modified, 'infrastructure/kubernetes/bmad-api-enhanced-monitoring.yaml') || contains(github.event.head_commit.added, 'infrastructure/kubernetes/bmad-api-enhanced-monitoring.yaml')
+        run: |
+          export KUBECONFIG=kubeconfig
+          echo "Deploying monitoring manifests..."
+          kubectl apply -f infrastructure/kubernetes/bmad-api-enhanced-monitoring.yaml
+
+      - name: Verify deployment
+        run: |
+          export KUBECONFIG=kubeconfig
+          echo "Verifying deployment..."
+          kubectl get pods -n cerebral-${{ steps.env.outputs.environment }} -l app=bmad-api-enhanced
+          kubectl get pods -n monitoring -l app=grafana
+          kubectl get configmap -n monitoring | grep dashboard
+
+      - name: Health check
+        run: |
+          export KUBECONFIG=kubeconfig
+          echo "Running health checks..."
+          # Check BMAD API health
+          kubectl get svc bmad-api-enhanced-service -n cerebral-${{ steps.env.outputs.environment }} -o jsonpath='{.spec.clusterIP}' > /dev/null
+          # Check Grafana health
+          kubectl get svc grafana -n monitoring -o jsonpath='{.spec.clusterIP}' > /dev/null
+
+      - name: Deployment summary
+        run: |
+          echo "🎉 Kubernetes deployment completed successfully!"
+          echo "📊 Deployment Summary:"
+          echo "  Environment: ${{ steps.env.outputs.environment }}"
+          echo "  SHA: ${{ github.sha }}"
+          echo "  Branch: ${{ github.ref_name }}"
+          echo ""
+          echo "🌐 Access URLs:"
+          echo "  Grafana: https://grafana.dev.cerebral.baerautotech.com"
+          echo "  BMAD API: http://bmad-api-enhanced-service.cerebral-${{ steps.env.outputs.environment }}.svc.cluster.local:8000"
