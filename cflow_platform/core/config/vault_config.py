@@ -190,6 +190,38 @@ class VaultConfig:
                 "username": os.getenv("GITHUB_USERNAME")
             }
     
+    async def get_minio_config(self) -> Dict[str, Optional[str]]:
+        """Get MinIO configuration from Vault with fallback to environment."""
+        try:
+            vault_result = await self.vault.get_secret_category("minio")
+            
+            if vault_result.get("success"):
+                secrets = vault_result.get("secrets", {})
+                return {
+                    "endpoint": secrets.get("minio_endpoint"),
+                    "access_key": secrets.get("minio_access_key"),
+                    "secret_key": secrets.get("minio_secret_key"),
+                    "secure": secrets.get("minio_secure")
+                }
+            else:
+                # Fallback to environment variables
+                return {
+                    "endpoint": os.getenv("MINIO_ENDPOINT"),
+                    "access_key": os.getenv("MINIO_ACCESS_KEY"),
+                    "secret_key": os.getenv("MINIO_SECRET_KEY"),
+                    "secure": os.getenv("MINIO_SECURE")
+                }
+                
+        except Exception as e:
+            print(f"[WARN] Failed to get MinIO config from Vault: {e}")
+            # Fallback to environment variables
+            return {
+                "endpoint": os.getenv("MINIO_ENDPOINT"),
+                "access_key": os.getenv("MINIO_ACCESS_KEY"),
+                "secret_key": os.getenv("MINIO_SECRET_KEY"),
+                "secure": os.getenv("MINIO_SECURE")
+            }
+    
     async def get_redis_config(self) -> Dict[str, Optional[str]]:
         """Get Redis configuration from Vault with fallback to environment."""
         try:

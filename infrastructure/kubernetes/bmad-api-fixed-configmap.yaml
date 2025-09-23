@@ -1,0 +1,483 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bmad-api-fixed-code
+  namespace: cerebral-alpha
+data:
+  simple_main.py: |
+    #!/usr/bin/env python3
+    """
+    Simple BMAD API Service for Cluster Deployment
+    """
+    
+    import asyncio
+    import logging
+    import os
+    import json
+    from datetime import datetime
+    from typing import Dict, Any, Optional
+    from fastapi import FastAPI, HTTPException
+    from fastapi.responses import JSONResponse
+    import uvicorn
+    
+    # Configure logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    
+    # Create FastAPI app
+    app = FastAPI(
+        title="BMAD API Service",
+        description="BMAD API Service with Provider Integration",
+        version="1.0.0"
+    )
+    
+    # Global state
+    app_state = {
+        "startup_time": datetime.utcnow(),
+        "request_count": 0,
+        "providers_configured": False
+    }
+    
+    # Initialize provider router
+    try:
+        from provider_router import provider_router
+        app_state["providers_configured"] = True
+        logger.info("Provider router initialized successfully")
+    except ImportError as e:
+        logger.warning(f"Provider router not available: {e}")
+        provider_router = None
+    
+    @app.get("/")
+    async def root():
+        """Root endpoint."""
+        return {
+            "service": "BMAD API Service",
+            "version": "1.0.0",
+            "status": "running",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    
+    @app.get("/bmad/health")
+    async def health_check():
+        """Health check endpoint."""
+        try:
+            health_status = {
+                "status": "healthy",
+                "service": "bmad-api",
+                "version": "1.0.0",
+                "timestamp": datetime.utcnow().isoformat(),
+                "uptime_seconds": (datetime.utcnow() - app_state["startup_time"]).total_seconds(),
+                "request_count": app_state["request_count"],
+                "providers_configured": app_state["providers_configured"]
+            }
+            
+            # Check provider status if available
+            if provider_router:
+                try:
+                    provider_status = provider_router.get_provider_status()
+                    health_status["provider_status"] = provider_status
+                except Exception as e:
+                    health_status["provider_error"] = str(e)
+            
+            return health_status
+            
+        except Exception as e:
+            logger.error(f"Health check failed: {e}")
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "status": "unhealthy",
+                    "service": "bmad-api",
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "error": str(e)
+                }
+            )
+    
+    @app.get("/bmad/providers/status")
+    async def get_provider_status():
+        """Get status of all LLM providers."""
+        if not provider_router:
+            raise HTTPException(status_code=503, detail="Provider router not available")
+        
+        try:
+            status = provider_router.get_provider_status()
+            return {
+                "status": "success",
+                "providers": status,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        except Exception as e:
+            logger.error(f"Failed to get provider status: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    @app.post("/bmad/providers/test")
+    async def test_provider(provider_id: Optional[str] = None):
+        """Test a specific provider or all providers."""
+        if not provider_router:
+            raise HTTPException(status_code=503, detail="Provider router not available")
+        
+        try:
+            if provider_id:
+                # Test specific provider
+                test_request = {
+                    "messages": [{"role": "user", "content": "Hello, this is a test message."}],
+                    "max_tokens": 10
+                }
+                result = await provider_router.route_request(test_request, provider_id)
+                return {
+                    "status": "success",
+                    "provider_id": provider_id,
+                    "test_result": result,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            else:
+                # Test all providers
+                status = provider_router.get_provider_status()
+                return {
+                    "status": "success",
+                    "message": "Provider status retrieved",
+                    "providers": status,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+        except Exception as e:
+            logger.error(f"Provider test failed: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    @app.get("/bmad/tools")
+    async def list_bmad_tools():
+        """List all available BMAD tools."""
+        return {
+            "tools": [
+                "bmad_brownfield_prd_create",
+                "bmad_brownfield_arch_create", 
+                "bmad_brownfield_story_create",
+                "bmad_expansion_packs_install",
+                "bmad_expansion_packs_list",
+                "bmad_expansion_packs_enable",
+                "bmad_project_type_detect",
+                "bmad_workflow_execute"
+            ],
+            "count": 8,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    
+    @app.post("/bmad/workflow/execute")
+    async def execute_workflow(workflow_data: Dict[str, Any]):
+        """Execute a BMAD workflow."""
+        try:
+            app_state["request_count"] += 1
+            
+            workflow_name = workflow_data.get("workflow", "unknown")
+            arguments = workflow_data.get("arguments", {})
+            
+            # Simple workflow execution
+            result = {
+                "status": "success",
+                "workflow": workflow_name,
+                "result": {
+                    "output": f"Workflow {workflow_name} executed successfully",
+                    "arguments": arguments,
+                    "timestamp": datetime.utcnow().isoformat()
+                },
+                "metadata": {
+                    "execution_time": "simulated",
+                    "provider": "simple_executor",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Workflow execution failed: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    @app.middleware("http")
+    async def add_request_id(request, call_next):
+        """Add request ID and increment counter."""
+        app_state["request_count"] += 1
+        response = await call_next(request)
+        return response
+    
+    if __name__ == "__main__":
+        # Run the application
+        uvicorn.run(
+            "simple_main:app",
+            host="0.0.0.0",
+            port=8001,
+            log_level="info",
+            access_log=True
+        )
+  provider_router.py: |
+    """
+    BMAD Provider Router - Simplified Version
+    """
+    
+    import asyncio
+    import logging
+    import os
+    import httpx
+    import json
+    from typing import Dict, Any, Optional, List
+    from enum import Enum
+    from dataclasses import dataclass
+    from datetime import datetime, timedelta
+    import uuid
+    
+    logger = logging.getLogger(__name__)
+    
+    class ProviderType(Enum):
+        """Enumeration of supported LLM providers."""
+        OPENAI = "openai"
+        ANTHROPIC = "anthropic"
+        GOOGLE = "google"
+        AZURE_OPENAI = "azure_openai"
+        LOCAL = "local"
+    
+    @dataclass
+    class ProviderConfig:
+        """Configuration for an LLM provider."""
+        provider_type: ProviderType
+        api_key: str
+        base_url: Optional[str] = None
+        model: str = "gpt-4"
+        max_tokens: int = 4000
+        temperature: float = 0.7
+        timeout: int = 30
+        retry_attempts: int = 3
+        health_check_interval: int = 300  # 5 minutes
+    
+    @dataclass
+    class ProviderHealth:
+        """Health status of a provider."""
+        provider_id: str
+        is_healthy: bool
+        last_check: datetime
+        response_time_ms: Optional[float] = None
+        error_message: Optional[str] = None
+        consecutive_failures: int = 0
+    
+    class ProviderRouter:
+        """
+        Routes BMAD workflow requests to appropriate LLM providers.
+        """
+        
+        def __init__(self):
+            """Initialize the provider router."""
+            self.providers: Dict[str, ProviderConfig] = {}
+            self.health_status: Dict[str, ProviderHealth] = {}
+            self.default_provider: Optional[str] = None
+            self.failover_order: List[str] = []
+            
+            # Initialize providers from environment
+            self._initialize_providers()
+        
+        def _initialize_providers(self):
+            """Initialize providers from environment variables."""
+            # OpenAI Provider
+            if os.getenv("OPENAI_API_KEY"):
+                provider_id = "openai-primary"
+                self.providers[provider_id] = ProviderConfig(
+                    provider_type=ProviderType.OPENAI,
+                    api_key=os.getenv("OPENAI_API_KEY"),
+                    model=os.getenv("OPENAI_MODEL", "gpt-4"),
+                    max_tokens=int(os.getenv("OPENAI_MAX_TOKENS", "4000")),
+                    temperature=float(os.getenv("OPENAI_TEMPERATURE", "0.7"))
+                )
+                self.health_status[provider_id] = ProviderHealth(
+                    provider_id=provider_id,
+                    is_healthy=True,
+                    last_check=datetime.utcnow()
+                )
+                if not self.default_provider:
+                    self.default_provider = provider_id
+            
+            # Anthropic Provider
+            if os.getenv("ANTHROPIC_API_KEY"):
+                provider_id = "anthropic-primary"
+                self.providers[provider_id] = ProviderConfig(
+                    provider_type=ProviderType.ANTHROPIC,
+                    api_key=os.getenv("ANTHROPIC_API_KEY"),
+                    model=os.getenv("ANTHROPIC_MODEL", "claude-3-sonnet-20240229"),
+                    max_tokens=int(os.getenv("ANTHROPIC_MAX_TOKENS", "4000")),
+                    temperature=float(os.getenv("ANTHROPIC_TEMPERATURE", "0.7"))
+                )
+                self.health_status[provider_id] = ProviderHealth(
+                    provider_id=provider_id,
+                    is_healthy=True,
+                    last_check=datetime.utcnow()
+                )
+                if not self.default_provider:
+                    self.default_provider = provider_id
+            
+            # Set failover order
+            self.failover_order = list(self.providers.keys())
+            
+            logger.info(f"Initialized {len(self.providers)} providers: {list(self.providers.keys())}")
+            logger.info(f"Default provider: {self.default_provider}")
+        
+        async def route_request(self, request: Dict[str, Any], provider_id: Optional[str] = None) -> Dict[str, Any]:
+            """
+            Route a request to an appropriate provider.
+            """
+            if not self.providers:
+                # Return mock response if no providers configured
+                return {
+                    "choices": [{
+                        "message": {
+                            "content": "Mock response: No providers configured. Please set API keys in environment variables.",
+                            "role": "assistant"
+                        }
+                    }],
+                    "usage": {"total_tokens": 10},
+                    "provider": "mock"
+                }
+            
+            # Determine which providers to try
+            if provider_id:
+                providers_to_try = [provider_id] if provider_id in self.providers else []
+            else:
+                providers_to_try = self._get_healthy_providers()
+            
+            if not providers_to_try:
+                raise Exception("No healthy providers available")
+            
+            last_error = None
+            
+            for provider_id in providers_to_try:
+                try:
+                    logger.info(f"Routing request to provider: {provider_id}")
+                    result = await self._execute_request(provider_id, request)
+                    
+                    # Update health status on success
+                    self._update_provider_health(provider_id, True)
+                    
+                    logger.info(f"Request successfully routed to provider: {provider_id}")
+                    return result
+                    
+                except Exception as e:
+                    logger.warning(f"Provider {provider_id} failed: {e}")
+                    self._update_provider_health(provider_id, False, str(e))
+                    last_error = e
+                    continue
+            
+            # All providers failed
+            raise Exception(f"All providers failed. Last error: {last_error}")
+        
+        async def _execute_request(self, provider_id: str, request: Dict[str, Any]) -> Dict[str, Any]:
+            """Execute a request using a specific provider."""
+            provider = self.providers[provider_id]
+            
+            if provider.provider_type == ProviderType.OPENAI:
+                return await self._execute_openai_request(provider, request)
+            elif provider.provider_type == ProviderType.ANTHROPIC:
+                return await self._execute_anthropic_request(provider, request)
+            else:
+                raise Exception(f"Unsupported provider type: {provider.provider_type}")
+        
+        async def _execute_openai_request(self, provider: ProviderConfig, request: Dict[str, Any]) -> Dict[str, Any]:
+            """Execute a request using OpenAI API."""
+            headers = {
+                "Authorization": f"Bearer {provider.api_key}",
+                "Content-Type": "application/json"
+            }
+            
+            payload = {
+                "model": provider.model,
+                "messages": request.get("messages", []),
+                "max_tokens": provider.max_tokens,
+                "temperature": provider.temperature
+            }
+            
+            async with httpx.AsyncClient(timeout=provider.timeout) as client:
+                response = await client.post(
+                    "https://api.openai.com/v1/chat/completions",
+                    headers=headers,
+                    json=payload
+                )
+                response.raise_for_status()
+                return response.json()
+        
+        async def _execute_anthropic_request(self, provider: ProviderConfig, request: Dict[str, Any]) -> Dict[str, Any]:
+            """Execute a request using Anthropic API."""
+            headers = {
+                "x-api-key": provider.api_key,
+                "Content-Type": "application/json",
+                "anthropic-version": "2023-06-01"
+            }
+            
+            payload = {
+                "model": provider.model,
+                "messages": request.get("messages", []),
+                "max_tokens": provider.max_tokens,
+                "temperature": provider.temperature
+            }
+            
+            async with httpx.AsyncClient(timeout=provider.timeout) as client:
+                response = await client.post(
+                    "https://api.anthropic.com/v1/messages",
+                    headers=headers,
+                    json=payload
+                )
+                response.raise_for_status()
+                return response.json()
+        
+        def _get_healthy_providers(self) -> List[str]:
+            """Get list of healthy providers in failover order."""
+            healthy_providers = []
+            for provider_id in self.failover_order:
+                if provider_id in self.health_status and self.health_status[provider_id].is_healthy:
+                    healthy_providers.append(provider_id)
+            return healthy_providers
+        
+        def _update_provider_health(self, provider_id: str, is_healthy: bool, error_message: Optional[str] = None):
+            """Update provider health status."""
+            if provider_id not in self.health_status:
+                self.health_status[provider_id] = ProviderHealth(
+                    provider_id=provider_id,
+                    is_healthy=is_healthy,
+                    last_check=datetime.utcnow()
+                )
+            
+            health = self.health_status[provider_id]
+            health.last_check = datetime.utcnow()
+            
+            if is_healthy:
+                health.is_healthy = True
+                health.consecutive_failures = 0
+                health.error_message = None
+            else:
+                health.consecutive_failures += 1
+                health.error_message = error_message
+                
+                # Mark as unhealthy after 3 consecutive failures
+                if health.consecutive_failures >= 3:
+                    health.is_healthy = False
+        
+        def get_provider_status(self) -> Dict[str, Any]:
+            """Get status of all providers."""
+            return {
+                "providers": {
+                    provider_id: {
+                        "config": {
+                            "provider_type": provider.provider_type.value,
+                            "model": provider.model,
+                            "max_tokens": provider.max_tokens,
+                            "temperature": provider.temperature
+                        },
+                        "health": {
+                            "is_healthy": self.health_status[provider_id].is_healthy,
+                            "last_check": self.health_status[provider_id].last_check.isoformat(),
+                            "response_time_ms": self.health_status[provider_id].response_time_ms,
+                            "consecutive_failures": self.health_status[provider_id].consecutive_failures,
+                            "error_message": self.health_status[provider_id].error_message
+                        }
+                    }
+                    for provider_id, provider in self.providers.items()
+                },
+                "default_provider": self.default_provider,
+                "failover_order": self.failover_order
+            }
+    
+    # Global provider router instance
+    provider_router = ProviderRouter()

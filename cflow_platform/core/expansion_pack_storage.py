@@ -77,15 +77,15 @@ class ExpansionPackStorage:
             minio_secret_key = self.vault_config.get_config_value_sync("MINIO_SECRET_KEY", "minio")
             minio_secure = self.vault_config.get_config_value_sync("MINIO_SECURE", "minio", fallback_to_env=False)
             
-            # Fallback to environment variables
+            # Fallback to environment variables - CLOUD PLATFORM ONLY
             if not minio_endpoint:
-                minio_endpoint = os.getenv("MINIO_ENDPOINT", "localhost:9000")
+                minio_endpoint = os.getenv("MINIO_ENDPOINT", "minio.cerebral.baerautotech.com")
             if not minio_access_key:
-                minio_access_key = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
+                minio_access_key = os.getenv("MINIO_ACCESS_KEY", "")
             if not minio_secret_key:
-                minio_secret_key = os.getenv("MINIO_SECRET_KEY", "minioadmin")
+                minio_secret_key = os.getenv("MINIO_SECRET_KEY", "")
             if not minio_secure:
-                minio_secure = os.getenv("MINIO_SECURE", "false").lower() == "true"
+                minio_secure = os.getenv("MINIO_SECURE", "true").lower() == "true"  # HTTPS for cloud platform
             
             self.minio_client = Minio(
                 minio_endpoint,

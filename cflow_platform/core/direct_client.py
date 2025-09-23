@@ -259,8 +259,7 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             from ..handlers.advanced_features_handlers import bmad_workflow_discover
             return await bmad_workflow_discover(kwargs or {})
         elif tool_name == "bmad_workflow_start":
-            from ..handlers.advanced_features_handlers import bmad_workflow_start
-            return await bmad_workflow_start(kwargs or {})
+            return await handler.bmad_workflow_start(**kwargs)
         elif tool_name == "bmad_workflow_execute_step":
             from ..handlers.advanced_features_handlers import bmad_workflow_execute_step
             return await bmad_workflow_execute_step(kwargs or {})
@@ -285,8 +284,6 @@ async def execute_mcp_tool(tool_name: str, **kwargs: Any) -> Dict[str, Any]:
             from ..handlers.advanced_features_handlers import bmad_monitoring_get_status
             return await bmad_monitoring_get_status(kwargs or {})
         
-        elif tool_name == "bmad_workflow_start":
-            return await handler.bmad_workflow_start(**kwargs)
         elif tool_name == "bmad_workflow_next":
             return await handler.bmad_workflow_next(**kwargs)
         elif tool_name == "bmad_expansion_packs_list":

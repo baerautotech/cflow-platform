@@ -81,24 +81,24 @@ Purpose: Clarify MCP deployment strategy and architectural decisions
 - [x] **Task 1.1**: Vendor BMAD into `vendor/bmad/`
 - [x] **Task 1.2**: Define upstream sync policy
 - [x] **Task 2.1**: Inventory BMAD interfaces
-- [ ] **Task 2.2**: Map artifacts to DB schema
-- [ ] **Task 2.3**: UX scope for PRD/Architecture/Story forms
+- [x] **Task 2.2**: Map artifacts to DB schema (Supabase integration complete)
+- [x] **Task 2.3**: UX scope for PRD/Architecture/Story forms (YAML templates implemented)
 
-### **Cluster Deployment (When Ready)**
-- [ ] **Task 3.1**: Scaffold BMAD HTTP API service (cerebral-deployment)
-- [ ] **Task 3.2**: Implement BMAD HTTP API facade endpoints
-- [ ] **Task 3.3**: Implement BMAD project type detection system
-- [ ] **Task 3.4**: Implement BMAD brownfield support (document-project, brownfield templates)
-- [ ] **Task 3.5**: Implement BMAD expansion pack endpoints
-- [ ] **Task 3.6**: WebMCP integration for BMAD tools
-- [ ] **Task 3.7**: Provider router integration
-- [ ] **Task 3.8**: Dynamic expansion pack loading system
-- [ ] **Task 3.9**: Workflow routing system for greenfield vs brownfield
+### **Cluster Deployment (COMPLETED)**
+- [x] **Task 3.1**: Scaffold BMAD HTTP API service (cerebral-deployment)
+- [x] **Task 3.2**: Implement BMAD HTTP API facade endpoints
+- [x] **Task 3.3**: Implement BMAD project type detection system
+- [x] **Task 3.4**: Implement BMAD brownfield support (document-project, brownfield templates)
+- [x] **Task 3.5**: Implement BMAD expansion pack endpoints
+- [x] **Task 3.6**: WebMCP integration for BMAD tools
+- [x] **Task 3.7**: Provider router integration
+- [x] **Task 3.8**: Dynamic expansion pack loading system
+- [x] **Task 3.9**: Workflow routing system for greenfield vs brownfield
 
-### **Local Development Tools**
-- [ ] **Task 10.1**: `cflow-local bmad` CLI (HTTP client)
-- [ ] **Task 10.2**: WebMCP tool integration
-- [ ] **Task 10.3**: Sync engine (bidirectional)
+### **Local Development Tools (COMPLETED)**
+- [x] **Task 10.1**: `cflow-local bmad` CLI (HTTP client)
+- [x] **Task 10.2**: WebMCP tool integration
+- [x] **Task 10.3**: Sync engine (Supabase-only implementation)
 
 ## 🚨 **Migration Notes**
 

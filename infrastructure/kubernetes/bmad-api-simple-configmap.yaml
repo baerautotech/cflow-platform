@@ -1,0 +1,138 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bmad-api-simple-code
+  namespace: cerebral-alpha
+data:
+  simple_server.py: |
+    #!/usr/bin/env python3
+    """
+    Simple BMAD API Server using built-in HTTP server
+    """
+    
+    import json
+    import os
+    from datetime import datetime
+    from http.server import HTTPServer, BaseHTTPRequestHandler
+    from urllib.parse import urlparse, parse_qs
+    
+    class BMADAPIHandler(BaseHTTPRequestHandler):
+        """HTTP request handler for BMAD API."""
+        
+        def __init__(self, *args, **kwargs):
+            self.request_count = 0
+            self.startup_time = datetime.utcnow()
+            super().__init__(*args, **kwargs)
+        
+        def do_GET(self):
+            """Handle GET requests."""
+            self.request_count += 1
+            
+            if self.path == '/':
+                self._send_response(200, {
+                    "service": "BMAD API Service",
+                    "version": "1.0.0",
+                    "status": "running",
+                    "timestamp": datetime.utcnow().isoformat()
+                })
+            elif self.path == '/bmad/health':
+                self._send_response(200, {
+                    "status": "healthy",
+                    "service": "bmad-api",
+                    "version": "1.0.0",
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "uptime_seconds": (datetime.utcnow() - self.startup_time).total_seconds(),
+                    "request_count": self.request_count,
+                    "providers_configured": bool(os.getenv("OPENAI_API_KEY") or os.getenv("ANTHROPIC_API_KEY"))
+                })
+            elif self.path == '/bmad/providers/status':
+                self._send_response(200, {
+                    "status": "success",
+                    "providers": {
+                        "openai": {
+                            "configured": bool(os.getenv("OPENAI_API_KEY")),
+                            "model": os.getenv("OPENAI_MODEL", "gpt-4")
+                        },
+                        "anthropic": {
+                            "configured": bool(os.getenv("ANTHROPIC_API_KEY")),
+                            "model": os.getenv("ANTHROPIC_MODEL", "claude-3-sonnet-20240229")
+                        }
+                    },
+                    "timestamp": datetime.utcnow().isoformat()
+                })
+            elif self.path == '/bmad/tools':
+                self._send_response(200, {
+                    "tools": [
+                        "bmad_brownfield_prd_create",
+                        "bmad_brownfield_arch_create", 
+                        "bmad_brownfield_story_create",
+                        "bmad_expansion_packs_install",
+                        "bmad_expansion_packs_list",
+                        "bmad_expansion_packs_enable",
+                        "bmad_project_type_detect",
+                        "bmad_workflow_execute"
+                    ],
+                    "count": 8,
+                    "timestamp": datetime.utcnow().isoformat()
+                })
+            else:
+                self._send_response(404, {"error": "Not found"})
+        
+        def do_POST(self):
+            """Handle POST requests."""
+            self.request_count += 1
+            
+            if self.path == '/bmad/providers/test':
+                self._send_response(200, {
+                    "status": "success",
+                    "message": "Provider test endpoint available",
+                    "timestamp": datetime.utcnow().isoformat()
+                })
+            elif self.path == '/bmad/workflow/execute':
+                content_length = int(self.headers.get('Content-Length', 0))
+                post_data = self.rfile.read(content_length)
+                
+                try:
+                    workflow_data = json.loads(post_data.decode('utf-8'))
+                    workflow_name = workflow_data.get("workflow", "unknown")
+                    arguments = workflow_data.get("arguments", {})
+                    
+                    result = {
+                        "status": "success",
+                        "workflow": workflow_name,
+                        "result": {
+                            "output": f"Workflow {workflow_name} executed successfully",
+                            "arguments": arguments,
+                            "timestamp": datetime.utcnow().isoformat()
+                        },
+                        "metadata": {
+                            "execution_time": "simulated",
+                            "provider": "simple_executor",
+                            "timestamp": datetime.utcnow().isoformat()
+                        }
+                    }
+                    
+                    self._send_response(200, result)
+                    
+                except json.JSONDecodeError:
+                    self._send_response(400, {"error": "Invalid JSON"})
+            else:
+                self._send_response(404, {"error": "Not found"})
+        
+        def _send_response(self, status_code, data):
+            """Send JSON response."""
+            self.send_response(status_code)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            
+            response_json = json.dumps(data, indent=2)
+            self.wfile.write(response_json.encode('utf-8'))
+        
+        def log_message(self, format, *args):
+            """Override to reduce log noise."""
+            pass
+    
+    if __name__ == '__main__':
+        server = HTTPServer(('0.0.0.0', 8001), BMADAPIHandler)
+        print('BMAD API Server running on port 8001')
+        server.serve_forever()

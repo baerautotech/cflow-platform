@@ -5,26 +5,30 @@ from pathlib import Path
 from importlib.util import spec_from_file_location, module_from_spec
 import importlib
 
-from .local_task_manager import LocalTaskManager
+from .supabase_task_manager import supabase_task_manager
 
 
 def _load_task_manager_class() -> Any:
-    """Resolve TaskManager class using local implementation (vendor-free)."""
-    return LocalTaskManager
+    """Resolve TaskManager class using Supabase-only implementation."""
+    return supabase_task_manager
 
 
 class TaskManagerAdapter:
     """Adapter exposing simple methods used by package handlers, backed by monorepo TaskManager."""
 
     def __init__(self, tenant_id: Optional[str] = None):
-        TaskManager = _load_task_manager_class()
-        # LocalTaskManager ignores tenant_id; keep signature for compatibility
-        self._manager = TaskManager()
+        # Use Supabase task manager directly
+        self._manager = supabase_task_manager
+        self._tenant_id = tenant_id
 
     async def get_task_stats(self) -> Dict[str, int]:
-        # LocalTaskManager does not track stats; return counts based on list_all
-        tasks = self._manager.list_all()
-        return {"total": len(tasks)}
+        # Get comprehensive stats from Supabase task manager
+        stats = self._manager.get_stats()
+        return {
+            "total": stats.get("total_tasks", 0),
+            "supabase_available": stats.get("supabase_available", False),
+            **stats.get("status_breakdown", {})
+        }
 
     async def list_tasks(self, status: Optional[str] = None, include_subtasks: bool = False) -> List[Dict[str, Any]]:
         # Default to pending if no status requested

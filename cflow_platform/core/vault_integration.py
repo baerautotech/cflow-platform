@@ -292,13 +292,15 @@ class BMADVaultIntegration:
                         "github_username": os.getenv("GITHUB_USERNAME"),
                     }
                 },
-                "redis": {
-                    "path": "redis",
+                "minio": {
+                    "path": "minio",
                     "secrets": {
-                        "redis_url": os.getenv("REDIS_URL"),
-                        "redis_password": os.getenv("REDIS_PASSWORD"),
+                        "minio_endpoint": os.getenv("MINIO_ENDPOINT"),
+                        "minio_access_key": os.getenv("MINIO_ACCESS_KEY"),
+                        "minio_secret_key": os.getenv("MINIO_SECRET_KEY"),
+                        "minio_secure": os.getenv("MINIO_SECURE"),
                     }
-                }
+                },
             }
             
             # Migrate each category

@@ -20,9 +20,21 @@ from fastapi.responses import JSONResponse
 import uvicorn
 
 from .auth_service import JWTAuthService, get_current_user
-from .vendor_bmad_integration import VendorBMADIntegration
+from .vendor_bmad_integration import VendorBMADIntegration, ProductionModeViolationError
 from .error_handler import ErrorHandler
 from .performance_monitor import PerformanceMonitor
+from .performance_optimizer import performance_optimizer, cached, rate_limited, circuit_breaker
+from .analytics_engine import analytics_engine, track_api_request, track_workflow_start, track_workflow_complete, track_workflow_fail
+from .supabase_task_integration import (
+    bmad_supabase_task_manager, 
+    create_bmad_prd_task, 
+    create_bmad_architecture_task, 
+    create_bmad_story_task,
+    track_bmad_workflow_execution
+)
+from .yaml_task_templates import bmad_template_manager
+from .persona_endpoints import router as persona_router
+from .provider_router import provider_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -50,6 +62,55 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add performance optimization middleware
+@app.middleware("http")
+async def performance_middleware(request: Request, call_next):
+    """Performance optimization middleware."""
+    start_time = time.time()
+    
+    # Add optimizer to request state
+    request.state.optimizer = performance_optimizer
+    
+    # Update request statistics
+    performance_optimizer._stats['total_requests'] += 1
+    
+    try:
+        response = await call_next(request)
+        
+        # Calculate response time
+        process_time = time.time() - start_time
+        performance_optimizer._stats['avg_response_time'] = (
+            (performance_optimizer._stats['avg_response_time'] * 
+             (performance_optimizer._stats['total_requests'] - 1) + process_time) /
+            performance_optimizer._stats['total_requests']
+        )
+        
+        # Track API request analytics
+        try:
+            user_id = getattr(request.state, 'user_id', None)
+            session_id = getattr(request.state, 'session_id', None)
+            track_api_request(
+                user_id=user_id,
+                session_id=session_id,
+                endpoint=request.url.path,
+                duration_ms=process_time * 1000,
+                success=response.status_code < 400
+            )
+        except Exception as e:
+            logger.warning(f"Failed to track API request analytics: {e}")
+        
+        # Add performance headers
+        response.headers["X-Process-Time"] = str(process_time)
+        response.headers["X-Cache-Hit-Rate"] = str(
+            performance_optimizer.get_stats()['cache']['hit_rate']
+        )
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Performance middleware error: {e}")
+        return await call_next(request)
 
 # Initialize services
 auth_service = JWTAuthService()
@@ -180,6 +241,278 @@ async def root():
     }
 
 
+@app.get("/bmad/analytics")
+async def get_analytics_report():
+    """Get comprehensive analytics report"""
+    try:
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "analytics": analytics_engine.get_comprehensive_report()
+        }
+    except Exception as e:
+        logger.error(f"Analytics report failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get analytics report")
+
+
+@app.get("/bmad/analytics/real-time")
+async def get_real_time_analytics():
+    """Get real-time analytics metrics"""
+    try:
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "metrics": analytics_engine.get_real_time_metrics()
+        }
+    except Exception as e:
+        logger.error(f"Real-time analytics failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get real-time analytics")
+
+
+@app.get("/bmad/analytics/user/{user_id}")
+async def get_user_analytics(user_id: str):
+    """Get analytics for a specific user"""
+    try:
+        user_analytics = analytics_engine.get_user_analytics(user_id)
+        if not user_analytics:
+            raise HTTPException(status_code=404, detail="User analytics not found")
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "user_analytics": user_analytics
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"User analytics failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get user analytics")
+
+
+@app.get("/bmad/analytics/workflow/{workflow_name}")
+async def get_workflow_analytics(workflow_name: str):
+    """Get analytics for a specific workflow"""
+    try:
+        workflow_analytics = analytics_engine.get_workflow_analytics(workflow_name)
+        if not workflow_analytics:
+            raise HTTPException(status_code=404, detail="Workflow analytics not found")
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "workflow_analytics": workflow_analytics
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Workflow analytics failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get workflow analytics")
+
+
+@app.get("/bmad/tasks")
+async def list_bmad_tasks(
+    project_id: Optional[str] = None,
+    tenant_id: Optional[str] = None,
+    status: Optional[str] = None,
+    workflow_type: Optional[str] = None
+):
+    """List BMAD tasks from Supabase"""
+    try:
+        tasks = await bmad_supabase_task_manager.list_bmad_tasks(
+            project_id=project_id,
+            tenant_id=tenant_id,
+            status=status,
+            workflow_type=workflow_type
+        )
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "tasks": tasks,
+            "count": len(tasks),
+            "filters": {
+                "project_id": project_id,
+                "tenant_id": tenant_id,
+                "status": status,
+                "workflow_type": workflow_type
+            }
+        }
+    except Exception as e:
+        logger.error(f"Failed to list BMAD tasks: {e}")
+        raise HTTPException(status_code=500, detail="Failed to list BMAD tasks")
+
+
+@app.get("/bmad/tasks/{task_id}")
+async def get_bmad_task(task_id: str):
+    """Get a specific BMAD task"""
+    try:
+        task = await bmad_supabase_task_manager.get_bmad_task(task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="BMAD task not found")
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "task": task
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get BMAD task: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get BMAD task")
+
+
+@app.post("/bmad/tasks/{task_id}/status")
+async def update_bmad_task_status(
+    task_id: str,
+    request_data: Dict[str, Any],
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Update BMAD task status"""
+    try:
+        status = request_data.get("status")
+        metadata = request_data.get("metadata", {})
+        
+        if not status:
+            raise HTTPException(status_code=400, detail="Status is required")
+        
+        # Add user info to metadata
+        metadata["updated_by"] = current_user.get("user_id")
+        metadata["updated_at"] = datetime.utcnow().isoformat()
+        
+        success = await bmad_supabase_task_manager.update_bmad_task_status(
+            task_id=task_id,
+            status=status,
+            metadata=metadata
+        )
+        
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to update task status")
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "message": f"Task {task_id} status updated to {status}",
+            "task_id": task_id,
+            "new_status": status
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update BMAD task status: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update task status")
+
+
+@app.get("/bmad/templates")
+async def list_bmad_templates():
+    """List available BMAD task templates"""
+    try:
+        templates = bmad_template_manager.list_templates()
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "templates": templates,
+            "count": len(templates)
+        }
+    except Exception as e:
+        logger.error(f"Failed to list BMAD templates: {e}")
+        raise HTTPException(status_code=500, detail="Failed to list templates")
+
+
+@app.post("/bmad/templates/{template_id}/create-task")
+async def create_task_from_template(
+    template_id: str,
+    request_data: Dict[str, Any],
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Create a task from a BMAD template"""
+    try:
+        project_id = request_data.get("project_id")
+        tenant_id = request_data.get("tenant_id")
+        parameters = request_data.get("parameters", {})
+        
+        if not project_id or not tenant_id:
+            raise HTTPException(status_code=400, detail="project_id and tenant_id are required")
+        
+        # Add user info to parameters
+        parameters["created_by"] = current_user.get("user_id")
+        parameters["created_at"] = datetime.utcnow().isoformat()
+        
+        task_id = await bmad_supabase_task_manager.create_bmad_task_from_template(
+            template_id=template_id,
+            project_id=project_id,
+            tenant_id=tenant_id,
+            parameters=parameters
+        )
+        
+        if not task_id:
+            raise HTTPException(status_code=500, detail="Failed to create task from template")
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "message": f"Task created from template {template_id}",
+            "task_id": task_id,
+            "template_id": template_id
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create task from template: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create task from template")
+
+
+@app.get("/bmad/task-management/stats")
+async def get_bmad_task_stats():
+    """Get BMAD task management statistics"""
+    try:
+        stats = bmad_supabase_task_manager.get_stats()
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "stats": stats
+        }
+    except Exception as e:
+        logger.error(f"Failed to get BMAD task stats: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get task stats")
+
+
+@app.get("/bmad/analytics/provider/{provider_name}")
+async def get_provider_analytics(provider_name: str):
+    """Get analytics for a specific provider"""
+    try:
+        provider_analytics = analytics_engine.get_provider_analytics(provider_name)
+        if not provider_analytics:
+            raise HTTPException(status_code=404, detail="Provider analytics not found")
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "provider_analytics": provider_analytics
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Provider analytics failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get provider analytics")
+
+
+@app.get("/bmad/performance")
+async def get_performance_stats():
+    """Get performance statistics"""
+    try:
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "stats": performance_optimizer.get_stats()
+        }
+    except Exception as e:
+        logger.error(f"Performance stats failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get performance stats")
+
+
 @app.get("/bmad/health")
 async def health_check():
     """Detailed health check"""
@@ -193,6 +526,10 @@ async def health_check():
             "timestamp": datetime.utcnow().isoformat(),
             "tools_count": len(BMAD_TOOLS),
             "vendor_bmad_status": vendor_status,
+            "provider_router": provider_router.get_provider_status(),
+            "performance": performance_optimizer.get_stats(),
+            "analytics": analytics_engine.get_real_time_metrics(),
+            "task_management": bmad_supabase_task_manager.get_stats(),
             "version": "1.0.0"
         }
     except Exception as e:
@@ -203,6 +540,59 @@ async def health_check():
             "timestamp": datetime.utcnow().isoformat(),
             "error": str(e),
             "version": "1.0.0"
+        }
+
+
+@app.get("/bmad/providers/status")
+async def get_provider_status():
+    """Get status of all LLM providers."""
+    try:
+        status = provider_router.get_provider_status()
+        return {
+            "status": "success",
+            "providers": status,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Failed to get provider status: {e}")
+        return {
+            "status": "error",
+            "message": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+@app.post("/bmad/providers/test")
+async def test_provider(provider_id: str = None):
+    """Test a specific provider or all providers."""
+    try:
+        if provider_id:
+            # Test specific provider
+            test_request = {
+                "messages": [{"role": "user", "content": "Hello, this is a test message."}],
+                "max_tokens": 10
+            }
+            result = await provider_router.route_request(test_request, provider_id)
+            return {
+                "status": "success",
+                "provider_id": provider_id,
+                "test_result": result,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        else:
+            # Test all providers
+            status = provider_router.get_provider_status()
+            return {
+                "status": "success",
+                "message": "Provider status retrieved",
+                "providers": status,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+    except Exception as e:
+        logger.error(f"Provider test failed: {e}")
+        return {
+            "status": "error",
+            "message": str(e),
+            "timestamp": datetime.utcnow().isoformat()
         }
 
 
@@ -662,6 +1052,83 @@ async def list_installed_expansion_packs():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ============================================================================
+# PRODUCTION MODE CONTROL ENDPOINTS
+# ============================================================================
+
+@app.get("/bmad/production-mode/status")
+async def get_production_mode_status():
+    """Get current production mode status"""
+    try:
+        return {
+            "production_mode": vendor_bmad.PRODUCTION_MODE,
+            "allow_mock_mode": vendor_bmad.ALLOW_MOCK_MODE,
+            "mock_mode_explicitly_requested": vendor_bmad.MOCK_MODE_EXPLICITLY_REQUESTED,
+            "stats": vendor_bmad.get_stats(),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Failed to get production mode status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/bmad/production-mode/enforce")
+async def enforce_production_mode(
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Enforce production mode - disable mock mode completely"""
+    try:
+        vendor_bmad.enforce_production_mode()
+        
+        logger.warning(f"🚨 PRODUCTION MODE ENFORCED by user: {current_user.get('user_id', 'unknown')}")
+        
+        return {
+            "status": "success",
+            "message": "Production mode enforced - mock mode disabled",
+            "production_mode": vendor_bmad.PRODUCTION_MODE,
+            "allow_mock_mode": vendor_bmad.ALLOW_MOCK_MODE,
+            "mock_mode_explicitly_requested": vendor_bmad.MOCK_MODE_EXPLICITLY_REQUESTED,
+            "enforced_by": current_user.get("user_id"),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to enforce production mode: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/bmad/production-mode/request-mock")
+async def request_mock_mode(
+    request: Request,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Explicitly request mock mode for testing/development"""
+    try:
+        body = await request.json()
+        reason = body.get("reason", "User explicitly requested mock mode")
+        
+        # This is the ONLY way to enable mock mode in production
+        mock_enabled = vendor_bmad.request_mock_mode(reason)
+        
+        logger.warning(f"🚨 MOCK MODE REQUESTED by user: {current_user.get('user_id', 'unknown')} - Reason: {reason}")
+        
+        return {
+            "status": "success",
+            "mock_mode_enabled": mock_enabled,
+            "message": f"Mock mode {'enabled' if mock_enabled else 'not available'}",
+            "reason": reason,
+            "production_mode": vendor_bmad.PRODUCTION_MODE,
+            "allow_mock_mode": vendor_bmad.ALLOW_MOCK_MODE,
+            "mock_mode_explicitly_requested": vendor_bmad.MOCK_MODE_EXPLICITLY_REQUESTED,
+            "requested_by": current_user.get("user_id"),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to request mock mode: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # Error handlers
 @app.exception_handler(404)
 async def not_found_handler(request: Request, exc: HTTPException):
@@ -677,6 +1144,21 @@ async def internal_error_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=500,
         content={"error": "Internal server error"}
+    )
+
+
+@app.exception_handler(ProductionModeViolationError)
+async def production_mode_violation_handler(request: Request, exc: ProductionModeViolationError):
+    """Handle production mode violations"""
+    logger.error(f"🚨 PRODUCTION MODE VIOLATION: {exc}")
+    return JSONResponse(
+        status_code=403,
+        content={
+            "error": "Production Mode Violation",
+            "message": str(exc),
+            "code": "PRODUCTION_MODE_VIOLATION",
+            "timestamp": datetime.utcnow().isoformat()
+        }
     )
 
 
@@ -704,6 +1186,9 @@ def run_server(
         reload=False  # Set to True for development
     )
 
+
+# Include persona management router
+app.include_router(persona_router)
 
 if __name__ == "__main__":
     # Configuration from environment variables

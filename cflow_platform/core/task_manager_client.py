@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 import httpx
-from .local_task_manager import LocalTaskManager
+from .supabase_task_manager import supabase_task_manager
 import os
 
 
@@ -38,10 +38,9 @@ class TaskManagerClient:
     async def list_by_status(self, status: str) -> List[Dict[str, Any]]:
         ep = await self._endpoint()
         if not ep:
-            # Local-first fallback: SQLite
+            # Use Supabase task manager directly
             try:
-                ltm = LocalTaskManager()
-                return ltm.list_by_status(status)
+                return supabase_task_manager.list_by_status(status)
             except Exception:
                 pass
             # Secondary fallback: ChromaDB (read-only)
@@ -92,24 +91,9 @@ class TaskManagerClient:
 
     async def get_task(self, task_id: str | None) -> Dict[str, Any]:
         if task_id:
-            # SQLite first
+            # Use Supabase task manager directly
             try:
-                ltm = LocalTaskManager()
-                return ltm.get_task(task_id)
-            except Exception:
-                pass
-            # ChromaDB fallback
-            try:
-                chroma_path = os.environ.get("CFLOW_CHROMADB_PATH")
-                from chromadb import PersistentClient  # type: ignore
-                from chromadb.config import Settings  # type: ignore
-                if chroma_path:
-                    client = PersistentClient(path=chroma_path, settings=Settings(anonymized_telemetry=False, allow_reset=False))
-                    col = client.get_or_create_collection(name=self.collection)
-                    result = col.get(ids=[task_id], include=["metadatas"])  # type: ignore
-                    md = (result.get("metadatas") or [[]])[0]
-                    if md and isinstance(md[0], dict):
-                        return md[0]
+                return supabase_task_manager.get_task(task_id)
             except Exception:
                 pass
             return {"task_id": task_id}
@@ -124,8 +108,7 @@ class TaskManagerClient:
         ep = await self._endpoint()
         if not ep:
             try:
-                ltm = LocalTaskManager()
-                return ltm.add_task(title, description, priority)
+                return supabase_task_manager.add_task(title, description, priority)
             except Exception:
                 return None
         return await self.add(title, description, priority)
@@ -134,8 +117,7 @@ class TaskManagerClient:
         ep = await self._endpoint()
         if not ep and task_id:
             try:
-                ltm = LocalTaskManager()
-                return ltm.update_task(task_id, updates)
+                return supabase_task_manager.update_task(task_id, updates)
             except Exception:
                 return False
         return bool(task_id)
@@ -144,8 +126,7 @@ class TaskManagerClient:
         ep = await self._endpoint()
         if not ep and task_id and status:
             try:
-                ltm = LocalTaskManager()
-                return ltm.update_status(task_id, status)
+                return supabase_task_manager.update_status(task_id, status)
             except Exception:
                 return False
         return bool(task_id and status)
@@ -154,8 +135,7 @@ class TaskManagerClient:
         ep = await self._endpoint()
         if not ep and task_id:
             try:
-                ltm = LocalTaskManager()
-                return ltm.delete_task(task_id)
+                return supabase_task_manager.delete_task(task_id)
             except Exception:
                 return False
         return bool(task_id)

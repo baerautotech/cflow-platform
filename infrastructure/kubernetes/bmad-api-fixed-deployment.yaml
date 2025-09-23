@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bmad-api-fixed
+  namespace: cerebral-alpha
+  labels:
+    app: bmad-api-fixed
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bmad-api-fixed
+  template:
+    metadata:
+      labels:
+        app: bmad-api-fixed
+    spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: bmad-api-fixed
+        image: python@sha256:a0939570b38cddeb861b8e75d20b1c8218b21562b18f301171904b544e8cf228
+        command: ["python", "/app/simple_main.py"]
+        workingDir: /app
+        ports:
+        - containerPort: 8001
+        env:
+        - name: BMAD_SESSION_TIMEOUT_MINUTES
+          value: "60"
+        - name: BMAD_DB_CLIENT_TYPE
+          value: "mock"
+        - name: OPENAI_API_KEY
+          value: "your-openai-api-key"
+        - name: ANTHROPIC_API_KEY
+          value: "your-anthropic-api-key"
+        - name: AZURE_OPENAI_API_KEY
+          value: "your-azure-openai-api-key"
+        - name: AZURE_OPENAI_ENDPOINT
+          value: "https://your-resource.openai.azure.com/"
+        volumeMounts:
+        - name: bmad-api-code
+          mountPath: /app
+        livenessProbe:
+          httpGet:
+            path: /bmad/health
+            port: 8001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /bmad/health
+            port: 8001
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+          seccompProfile:
+            type: RuntimeDefault
+      volumes:
+      - name: bmad-api-code
+        configMap:
+          name: bmad-api-fixed-code
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bmad-api-fixed-service
+  namespace: cerebral-alpha
+  labels:
+    app: bmad-api-fixed
+spec:
+  selector:
+    app: bmad-api-fixed
+  ports:
+  - port: 8001
+    targetPort: 8001
+    protocol: TCP
+  type: ClusterIP

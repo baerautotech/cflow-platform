@@ -10,9 +10,9 @@ except Exception:  # pragma: no cover
     httpx = None  # type: ignore
 
 try:
-    from cflow_platform.core.local_task_manager import LocalTaskManager  # type: ignore
+    from cflow_platform.core.supabase_task_manager import supabase_task_manager  # type: ignore
 except Exception:  # pragma: no cover
-    LocalTaskManager = None  # type: ignore
+    supabase_task_manager = None  # type: ignore
 
 
 def _safe_get(d: Dict[str, Any], *keys: str) -> Any:
@@ -28,7 +28,7 @@ def handle_pg_event(event: Dict[str, Any]) -> None:
     """Best-effort mapping from Supabase Realtime payloads to local stores.
 
     Supported tables (by convention):
-    - cerebraflow_tasks → LocalTaskManager (SQLite)
+    - cerebraflow_tasks → SupabaseTaskManager (Supabase)
     - documentation_files → ChromaDB collection 'cerebral_docs'
     """
     try:
@@ -51,30 +51,12 @@ def handle_pg_event(event: Dict[str, Any]) -> None:
 
 
 def _apply_task_event(evt: str, rec: Dict[str, Any]) -> None:
-    if LocalTaskManager is None:
+    if supabase_task_manager is None:
         return
-    tm = LocalTaskManager()
-    task_id = str(rec.get("id") or rec.get("task_id") or "").strip()
-    title = str(rec.get("title") or rec.get("name") or "").strip()
-    description = str(rec.get("description") or rec.get("content") or "").strip()
-    status = str(rec.get("status") or "pending").strip()
-    priority = str(rec.get("priority") or "medium").strip()
-    if not task_id:
-        return
-    try:
-        if evt == "DELETE":
-            tm.delete_task(task_id)
-            return
-        # Upsert-like behavior
-        existing = tm.get_task(task_id)
-        if existing:
-            tm.update_task(task_id, {"title": title or existing.get("title"), "description": description or existing.get("description"), "status": status or existing.get("status"), "priority": priority or existing.get("priority")})
-        else:
-            # add_task generates id; to preserve id, do insert via update path
-            tm.add_task(title or f"Task {task_id}", description or "", priority=priority)
-            tm.update_task(task_id, {"task_id": task_id})  # ensure id alignment if schema differs
-    except Exception:
-        return
+    # Note: Supabase task manager handles events directly via realtime
+    # This function is kept for compatibility but doesn't need to do anything
+    # since Supabase handles the synchronization automatically
+    pass
 
 
 def _apply_doc_event(evt: str, rec: Dict[str, Any]) -> None:

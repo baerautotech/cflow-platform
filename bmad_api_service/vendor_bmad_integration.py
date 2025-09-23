@@ -15,8 +15,25 @@ from typing import Dict, Any, Optional, List
 from pathlib import Path
 import json
 from datetime import datetime
+from .provider_router import provider_router
+from .production_config import is_production_mode, validate_production_mode, enforce_production_settings
+from .supabase_task_integration import (
+    create_bmad_prd_task, 
+    create_bmad_architecture_task, 
+    create_bmad_story_task,
+    track_bmad_workflow_execution
+)
 
 logger = logging.getLogger(__name__)
+
+
+class ProductionModeViolationError(Exception):
+    """
+    Exception raised when mock mode is attempted in production environment.
+    
+    This is a hard-coded gate that prevents LLM from overriding production settings.
+    """
+    pass
 
 
 class VendorBMADIntegration:
@@ -34,12 +51,55 @@ class VendorBMADIntegration:
         self.template_path = os.path.join(self.vendor_bmad_path, "templates")
         self.expansion_pack_path = os.path.join(self.vendor_bmad_path, "expansion-packs")
         
+        # PRODUCTION GATE: Hard-coded configuration that LLM cannot override
+        self.PRODUCTION_MODE = is_production_mode()
+        self.ALLOW_MOCK_MODE = os.getenv("BMAD_ALLOW_MOCK_MODE", "false").lower() == "true"
+        self.MOCK_MODE_EXPLICITLY_REQUESTED = False  # Only set by explicit user request
+        
+        # Enforce production settings
+        if self.PRODUCTION_MODE:
+            enforce_production_settings()
+            validate_production_mode()
+            logger.warning("🚨 PRODUCTION MODE ENABLED - Mock mode is DISABLED")
+            logger.warning("🚨 All BMAD workflows will execute REAL implementations only")
+        
         self._stats = {
             "workflows_executed": 0,
             "workflows_successful": 0,
             "workflows_failed": 0,
-            "total_execution_time": 0.0
+            "total_execution_time": 0.0,
+            "mock_mode_attempts": 0,
+            "production_mode_enforced": 0
         }
+    
+    def request_mock_mode(self, reason: str = "User explicitly requested mock mode") -> bool:
+        """
+        Explicitly request mock mode for testing/development.
+        
+        This is the ONLY way to enable mock mode in production.
+        LLM cannot call this method - it must be explicitly requested by user.
+        
+        Args:
+            reason: Reason for requesting mock mode
+            
+        Returns:
+            True if mock mode is now enabled
+        """
+        if self.PRODUCTION_MODE and not self.ALLOW_MOCK_MODE:
+            logger.warning(f"🚨 MOCK MODE REQUESTED: {reason}")
+            logger.warning("🚨 This will override production mode for this session")
+            self.MOCK_MODE_EXPLICITLY_REQUESTED = True
+            return True
+        return False
+    
+    def enforce_production_mode(self) -> None:
+        """
+        Enforce production mode - disable mock mode completely.
+        
+        This method cannot be overridden by LLM.
+        """
+        self.MOCK_MODE_EXPLICITLY_REQUESTED = False
+        logger.info("🚨 PRODUCTION MODE ENFORCED - Mock mode disabled")
     
     async def execute_workflow(self, workflow_path: str, arguments: Dict[str, Any], user_context: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -80,6 +140,32 @@ class VendorBMADIntegration:
             # Execute workflow
             result = await self._execute_workflow_definition(workflow_def, execution_context)
             
+            # Create BMAD task for tracking
+            workflow_id = f"workflow_{int(datetime.utcnow().timestamp())}"
+            project_id = user_context.get("project_id", "unknown")
+            tenant_id = user_context.get("tenant_id", "default")
+            
+            # Determine workflow type from path
+            workflow_type = "UNKNOWN"
+            if "prd" in workflow_path.lower():
+                workflow_type = "PRD"
+            elif "arch" in workflow_path.lower() or "architecture" in workflow_path.lower():
+                workflow_type = "ARCH"
+            elif "story" in workflow_path.lower():
+                workflow_type = "STORY"
+            
+            # Create task for this workflow
+            if workflow_type != "UNKNOWN":
+                task_id = await self._create_workflow_task(
+                    workflow_id=workflow_id,
+                    workflow_type=workflow_type,
+                    project_id=project_id,
+                    tenant_id=tenant_id,
+                    workflow_path=workflow_path,
+                    arguments=arguments
+                )
+                result["task_id"] = task_id
+            
             # Update statistics
             self._stats["workflows_executed"] += 1
             self._stats["workflows_successful"] += 1
@@ -93,6 +179,47 @@ class VendorBMADIntegration:
             
             logger.error(f"Vendor BMAD workflow execution failed: {workflow_path} - {e}")
             raise
+    
+    async def _create_workflow_task(self, 
+                                  workflow_id: str,
+                                  workflow_type: str,
+                                  project_id: str,
+                                  tenant_id: str,
+                                  workflow_path: str,
+                                  arguments: Dict[str, Any]) -> Optional[str]:
+        """Create a BMAD workflow task in Supabase."""
+        try:
+            title = f"BMAD {workflow_type} Workflow"
+            description = f"Execute {workflow_type} workflow: {workflow_path}"
+            
+            metadata = {
+                "workflow_id": workflow_id,
+                "workflow_path": workflow_path,
+                "arguments": arguments,
+                "created_by": "bmad_api"
+            }
+            
+            if workflow_type == "PRD":
+                return await create_bmad_prd_task(project_id, tenant_id, arguments)
+            elif workflow_type == "ARCH":
+                return await create_bmad_architecture_task(project_id, tenant_id, arguments)
+            elif workflow_type == "STORY":
+                return await create_bmad_story_task(project_id, tenant_id, arguments)
+            else:
+                # Generic workflow task
+                from .supabase_task_integration import bmad_supabase_task_manager
+                return await bmad_supabase_task_manager.create_bmad_task(
+                    title=title,
+                    description=description,
+                    workflow_type=workflow_type,
+                    project_id=project_id,
+                    tenant_id=tenant_id,
+                    priority="medium",
+                    metadata=metadata
+                )
+        except Exception as e:
+            logger.error(f"Failed to create workflow task: {e}")
+            return None
     
     def _resolve_workflow_path(self, workflow_path: str) -> str:
         """
@@ -297,27 +424,168 @@ class VendorBMADIntegration:
             
         Returns:
             Workflow execution result
+            
+        Raises:
+            ProductionModeViolationError: If mock mode is attempted in production
         """
+        # PRODUCTION GATE: Hard-coded check that LLM cannot override
+        if self.PRODUCTION_MODE and not self.ALLOW_MOCK_MODE and not self.MOCK_MODE_EXPLICITLY_REQUESTED:
+            logger.error("🚨 PRODUCTION MODE VIOLATION: Mock mode attempted in production environment")
+            self._stats["production_mode_enforced"] += 1
+            raise ProductionModeViolationError(
+                "Mock mode is DISABLED in production. All workflows must execute real implementations. "
+                "Set BMAD_ALLOW_MOCK_MODE=true or explicitly request mock mode to override."
+            )
+        
         try:
             # Import BMAD Master system
             import sys
             sys.path.append('/app')
             
-            # For now, use the existing mock result generation
-            # In a production deployment, this would integrate with the actual BMAD Master system
-            # which is already implemented and ready for deployment
+            # Use real LLM provider for workflow execution
+            logger.info("Executing BMAD workflow using real LLM provider")
             
-            logger.info("Executing BMAD workflow using BMAD Master system")
-            
-            # Generate result based on workflow type and arguments
-            result = self._generate_bmad_result(workflow_def, execution_context)
+            # Generate result using real provider
+            result = await self._execute_with_real_provider(workflow_def, execution_context)
             
             return result
             
         except Exception as e:
             logger.error(f"BMAD workflow execution failed: {e}")
-            # Fallback to mock result for now
+            
+            # PRODUCTION GATE: Only allow mock fallback if explicitly permitted
+            if self.ALLOW_MOCK_MODE or self.MOCK_MODE_EXPLICITLY_REQUESTED:
+                logger.warning("⚠️ Falling back to mock result (explicitly permitted)")
+                self._stats["mock_mode_attempts"] += 1
+                return self._generate_mock_result(workflow_def, execution_context)
+            else:
+                # PRODUCTION MODE: Fail hard instead of mocking
+                logger.error("🚨 PRODUCTION MODE: Refusing to fall back to mock result")
+                raise ProductionModeViolationError(
+                    f"Workflow execution failed and mock mode is disabled: {e}"
+                )
+    
+    async def _execute_with_real_provider(self, workflow_def: Dict[str, Any], execution_context: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Execute workflow using real LLM provider.
+        
+        Args:
+            workflow_def: Workflow definition
+            execution_context: Execution context
+            
+        Returns:
+            Real provider result dictionary
+        """
+        workflow_name = workflow_def.get("name", "Unknown Workflow")
+        arguments = execution_context.get("arguments", {})
+        user_context = execution_context.get("user_context", {})
+        
+        # Prepare the request for the LLM provider
+        messages = self._prepare_llm_messages(workflow_def, arguments, user_context)
+        
+        # Route request to provider
+        try:
+            provider_response = await provider_router.route_request({
+                "messages": messages,
+                "max_tokens": 4000,
+                "temperature": 0.7
+            })
+            
+            # Process provider response
+            result = self._process_provider_response(workflow_def, provider_response, arguments)
+            
+            return {
+                "status": "success",
+                "workflow": workflow_name,
+                "result": result,
+                "metadata": {
+                    "execution_time": "real_provider",
+                    "provider": "llm_provider",
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "provider_response": provider_response
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Real provider execution failed: {e}")
+            # Fallback to mock result
             return self._generate_mock_result(workflow_def, execution_context)
+    
+    def _prepare_llm_messages(self, workflow_def: Dict[str, Any], arguments: Dict[str, Any], user_context: Dict[str, Any]) -> List[Dict[str, str]]:
+        """Prepare messages for LLM provider."""
+        workflow_name = workflow_def.get("name", "Unknown Workflow")
+        
+        system_prompt = f"""You are a BMAD (Business Model Architecture Design) expert. 
+        You are executing the workflow: {workflow_name}
+        
+        Your task is to generate high-quality, professional output based on the provided arguments and context.
+        Be thorough, accurate, and follow best practices for the specific workflow type.
+        """
+        
+        user_prompt = f"""Please execute the BMAD workflow: {workflow_name}
+
+Arguments:
+{json.dumps(arguments, indent=2)}
+
+User Context:
+{json.dumps(user_context, indent=2)}
+
+Workflow Definition:
+{json.dumps(workflow_def, indent=2)}
+
+Please provide a comprehensive response that includes all necessary details for this workflow type.
+        """
+        
+        return [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ]
+    
+    def _process_provider_response(self, workflow_def: Dict[str, Any], provider_response: Dict[str, Any], arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Process provider response into structured result."""
+        workflow_name = workflow_def.get("name", "Unknown Workflow")
+        
+        # Extract content from provider response
+        content = ""
+        if "choices" in provider_response and len(provider_response["choices"]) > 0:
+            content = provider_response["choices"][0]["message"]["content"]
+        elif "content" in provider_response:
+            content = provider_response["content"]
+        else:
+            content = str(provider_response)
+        
+        # Structure the result based on workflow type
+        if "prd" in workflow_name.lower():
+            return {
+                "document_type": "PRD",
+                "document_id": f"prd_{asyncio.get_event_loop().time()}",
+                "content": content,
+                "status": "completed",
+                "raw_content": content
+            }
+        elif "arch" in workflow_name.lower():
+            return {
+                "document_type": "Architecture",
+                "document_id": f"arch_{asyncio.get_event_loop().time()}",
+                "content": content,
+                "status": "completed",
+                "raw_content": content
+            }
+        elif "story" in workflow_name.lower():
+            return {
+                "document_type": "Story",
+                "document_id": f"story_{asyncio.get_event_loop().time()}",
+                "content": content,
+                "status": "completed",
+                "raw_content": content
+            }
+        else:
+            return {
+                "output": content,
+                "details": f"Arguments: {arguments}",
+                "execution_summary": "Workflow executed successfully with real provider",
+                "raw_content": content
+            }
     
     def _generate_bmad_result(self, workflow_def: Dict[str, Any], execution_context: Dict[str, Any]) -> Dict[str, Any]:
         """

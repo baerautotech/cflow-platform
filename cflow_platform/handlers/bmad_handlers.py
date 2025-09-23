@@ -19,6 +19,7 @@ from cflow_platform.core.bmad_hil_integration import BMADHILIntegration
 from cflow_platform.core.bmad_git_workflow import BMADGitWorkflow
 from cflow_platform.core.vault_integration import get_vault_integration
 from cflow_platform.core.bmad_template_loader import get_bmad_template_loader
+from cflow_platform.core.vendor_bmad_wrapper import VendorBMADWrapper
 from supabase import create_client
 
 # Load environment variables from project root
@@ -34,6 +35,7 @@ class BMADHandlers:
         self.bmad_git = BMADGitWorkflow()
         self.vault = get_vault_integration()
         self.template_loader = get_bmad_template_loader()
+        self.vendor_bmad = VendorBMADWrapper()  # Use real vendor BMAD
         self._ensure_supabase()
 
     def _ensure_supabase(self) -> None:
@@ -780,12 +782,117 @@ This document outlines the user stories and implementation approach for {project
             }
 
 
-    async def bmad_workflow_next(self, project_id: Optional[str] = None) -> Dict[str, Any]:
-        """Get next recommended action in workflow."""
+    async def bmad_workflow_start(self, **kwargs) -> Dict[str, Any]:
+        """
+        Start a BMAD workflow using real vendor BMAD workflows.
+        
+        Args:
+            workflow_id: ID of the workflow to start
+            project_path: Path to the project directory
+            project_context: Optional context about the project
+            
+        Returns:
+            Dict with workflow start results
+        """
         try:
-            # Use basic workflow status instead of orchestrator status
-            from ..core.basic_workflow_implementations import get_basic_workflows
-            workflows = get_basic_workflows()
+            workflow_id = kwargs.get("workflow_id", "")
+            project_path = kwargs.get("project_path", ".")
+            project_context = kwargs.get("project_context", {})
+            
+            # Detect project type first
+            project_detection = await self.vendor_bmad.detect_project_type(project_path, project_context)
+            
+            if not project_detection.get("success"):
+                return {
+                    "status": "error",
+                    "message": f"Failed to detect project type: {project_detection.get('error')}"
+                }
+            
+            project_type = project_detection.get("project_type", "unknown")
+            
+            # Start appropriate workflow based on project type
+            if project_type == "brownfield":
+                result = await self.vendor_bmad.start_brownfield_workflow(
+                    project_path=project_path,
+                    workflow_type=workflow_id or "brownfield-service",
+                    enhancement_description=kwargs.get("enhancement_description", ""),
+                    project_context=project_context
+                )
+            else:
+                result = await self.vendor_bmad.start_greenfield_workflow(
+                    project_path=project_path,
+                    workflow_type=workflow_id or "greenfield-fullstack",
+                    project_description=kwargs.get("project_description", ""),
+                    project_context=project_context
+                )
+            
+            if result.get("success"):
+                return {
+                    "status": "success",
+                    "message": result.get("message", "Workflow started successfully"),
+                    "session_id": result.get("session_id"),
+                    "workflow_type": result.get("workflow_type"),
+                    "workflow_name": result.get("workflow_name"),
+                    "first_step": result.get("first_step"),
+                    "total_steps": result.get("total_steps"),
+                    "project_type": project_type
+                }
+            else:
+                return {
+                    "status": "error",
+                    "message": result.get("error", "Failed to start workflow")
+                }
+                
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Failed to start BMAD workflow: {str(e)}"
+            }
+
+    async def bmad_workflow_next(self, project_id: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Get next recommended action in workflow using real vendor BMAD.
+        
+        Args:
+            project_id: ID of the project
+            session_id: ID of the workflow session
+            
+        Returns:
+            Dict with next workflow step
+        """
+        try:
+            session_id = project_id  # Using project_id as session_id for now
+            
+            if not session_id:
+                return {
+                    "status": "error",
+                    "message": "Session ID is required"
+                }
+            
+            # Execute next workflow step using vendor BMAD
+            result = await self.vendor_bmad.execute_workflow_step(session_id)
+            
+            if result.get("success"):
+                return {
+                    "status": "success",
+                    "message": result.get("message", "Next step retrieved successfully"),
+                    "session_id": result.get("session_id"),
+                    "current_step": result.get("current_step"),
+                    "next_step": result.get("next_step"),
+                    "workflow_continuing": result.get("workflow_continuing", False),
+                    "workflow_complete": result.get("workflow_complete", False)
+                }
+            else:
+                return {
+                    "status": "error",
+                    "message": result.get("error", "Failed to get next workflow step")
+                }
+                
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Failed to get next workflow step: {str(e)}"
+            }
             
             if not project_id:
                 return {
@@ -1559,15 +1666,50 @@ This document outlines the epics for {project_name} based on the PRD and Archite
         return "*[To be filled during interactive elicitation]*" in content
 
     async def bmad_workflow_status(self, project_id: Optional[str] = None) -> Dict[str, Any]:
-        """Check BMAD workflow status and HIL session state."""
-        try:
-            # Use the real BMAD HIL integration to check workflow status
-            return await self.bmad_hil.check_workflow_status(project_id or "")
+        """
+        Check BMAD workflow status using real vendor BMAD.
+        
+        Args:
+            project_id: ID of the project (used as session_id)
             
+        Returns:
+            Dict with workflow status
+        """
+        try:
+            session_id = project_id  # Using project_id as session_id for now
+            
+            if not session_id:
+                return {
+                    "status": "error",
+                    "message": "Session ID is required"
+                }
+            
+            # Get workflow status using vendor BMAD
+            result = await self.vendor_bmad.get_workflow_status(session_id)
+            
+            if result.get("success"):
+                return {
+                    "status": "success",
+                    "message": "Workflow status retrieved successfully",
+                    "session_id": result.get("session_id"),
+                    "workflow_type": result.get("workflow_type"),
+                    "status": result.get("status"),
+                    "current_step": result.get("current_step"),
+                    "total_steps": result.get("total_steps"),
+                    "created_at": result.get("created_at"),
+                    "updated_at": result.get("updated_at"),
+                    "completed_at": result.get("completed_at")
+                }
+            else:
+                return {
+                    "status": "error",
+                    "message": result.get("error", "Failed to get workflow status")
+                }
+                
         except Exception as e:
             return {
-                "success": False,
-                "error": f"Failed to check BMAD workflow status: {str(e)}"
+                "status": "error",
+                "message": f"Failed to get workflow status: {str(e)}"
             }
 
     # BMAD Git Workflow Integration
