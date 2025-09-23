@@ -62,9 +62,9 @@ jobs:
         run: |
           export KUBECONFIG=kubeconfig
           echo "Deploying Grafana dashboard provisioning..."
-          kubectl apply -f infrastructure/kubernetes/grafana-dashboard-provisioning.yaml
-          kubectl rollout restart deployment/grafana -n monitoring
-          kubectl rollout status deployment/grafana -n monitoring --timeout=300s
+          kubectl apply -f infrastructure/kubernetes/grafana-dashboard-provisioning.yaml -n cerebral-monitoring
+          kubectl rollout restart deployment/grafana -n cerebral-monitoring
+          kubectl rollout status deployment/grafana -n cerebral-monitoring --timeout=300s
 
       - name: Deploy monitoring manifests
         if: contains(github.event.head_commit.modified, 'infrastructure/kubernetes/bmad-api-enhanced-monitoring.yaml') || contains(github.event.head_commit.added, 'infrastructure/kubernetes/bmad-api-enhanced-monitoring.yaml')
