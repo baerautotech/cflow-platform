@@ -1,0 +1,39 @@
+name: Test Workflow - No External Actions
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/test-workflow.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Test without external actions
+        run: |
+          echo "Testing workflow without external actions"
+          echo "Current directory: $(pwd)"
+          echo "Git status: $(git status --porcelain)"
+          echo "This should work if the issue is action-specific"
+          
+      - name: Test kubectl access
+        run: |
+          echo "Testing kubectl access..."
+          if command -v kubectl &> /dev/null; then
+            echo "kubectl is available"
+          else
+            echo "Installing kubectl..."
+            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+            chmod +x kubectl
+            sudo mv kubectl /usr/local/bin/
+          fi
+          
+      - name: Test cluster access
+        run: |
+          echo "Testing cluster access..."
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+          kubectl get nodes || echo "Cluster access test completed"
