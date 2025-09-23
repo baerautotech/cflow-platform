@@ -1,0 +1,216 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app: bmad-api-production
+    component: api
+    environment: production
+    tier: backend
+  name: bmad-api-enhanced-monitor
+  namespace: cerebral-production
+spec:
+  endpoints:
+  - interval: 30s
+    path: /bmad/metrics
+    port: http
+    scheme: http
+  - interval: 30s
+    path: /bmad/health
+    port: http
+    scheme: http
+  selector:
+    matchLabels:
+      app: bmad-api-production
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app: bmad-api-production
+    component: api
+    environment: production
+    tier: backend
+  name: bmad-api-enhanced-alerts
+  namespace: cerebral-production
+spec:
+  groups:
+  - name: bmad-api.rules
+    rules:
+    # Basic API Health
+    - alert: BMADAPIDown
+      annotations:
+        description: 'BMAD API service has been down for more than 5 minutes.'
+        summary: 'BMAD API service is down'
+      expr: up{job="bmad-api-production"} == 0
+      for: 5m
+      labels:
+        severity: critical
+    
+    - alert: BMADAPIHighErrorRate
+      annotations:
+        description: 'BMAD API error rate is above 5% for more than 5 minutes.'
+        summary: 'BMAD API high error rate'
+      expr: rate(bmad_api_errors_total[5m]) / rate(bmad_api_requests_total[5m]) > 0.05
+      for: 5m
+      labels:
+        severity: warning
+    
+    - alert: BMADAPIHighResponseTime
+      annotations:
+        description: 'BMAD API average response time is above 2 seconds for more than 5 minutes.'
+        summary: 'BMAD API high response time'
+      expr: histogram_quantile(0.95, rate(bmad_api_request_duration_seconds_bucket[5m])) > 2
+      for: 5m
+      labels:
+        severity: warning
+    
+    # Resource Usage
+    - alert: BMADAPIHighCPUUsage
+      annotations:
+        description: 'BMAD API CPU usage is above 80% for more than 10 minutes.'
+        summary: 'BMAD API high CPU usage'
+      expr: rate(container_cpu_usage_seconds_total{pod=~"bmad-api-production-.*"}[5m]) > 0.8
+      for: 10m
+      labels:
+        severity: warning
+    
+    - alert: BMADAPIHighMemoryUsage
+      annotations:
+        description: 'BMAD API memory usage is above 90% for more than 10 minutes.'
+        summary: 'BMAD API high memory usage'
+      expr: container_memory_usage_bytes{pod=~"bmad-api-production-.*"} / container_spec_memory_limit_bytes > 0.9
+      for: 10m
+      labels:
+        severity: warning
+    
+    # Workflow Monitoring
+    - alert: BMADAPIWorkflowFailures
+      annotations:
+        description: 'BMAD workflow failure rate is above 10% for more than 5 minutes.'
+        summary: 'BMAD API workflow failures'
+      expr: rate(bmad_workflow_failures_total[5m]) / rate(bmad_workflow_executions_total[5m]) > 0.1
+      for: 5m
+      labels:
+        severity: warning
+    
+    - alert: BMADAPIWorkflowSlowExecution
+      annotations:
+        description: 'BMAD workflow execution time is above 30 seconds for more than 5 minutes.'
+        summary: 'BMAD API slow workflow execution'
+      expr: histogram_quantile(0.95, rate(bmad_workflow_duration_seconds_bucket[5m])) > 30
+      for: 5m
+      labels:
+        severity: warning
+    
+    # Supabase Integration Monitoring
+    - alert: BMADAPISupabaseConnectionIssues
+      annotations:
+        description: 'BMAD API Supabase connection failures are above 5 per minute for more than 5 minutes.'
+        summary: 'BMAD API Supabase connection issues'
+      expr: rate(bmad_supabase_connection_failures_total[5m]) > 5
+      for: 5m
+      labels:
+        severity: critical
+    
+    - alert: BMADAPISupabaseTaskCreationFailures
+      annotations:
+        description: 'BMAD API Supabase task creation failures are above 3 per minute for more than 5 minutes.'
+        summary: 'BMAD API Supabase task creation issues'
+      expr: rate(bmad_supabase_task_creation_failures_total[5m]) > 3
+      for: 5m
+      labels:
+        severity: warning
+    
+    - alert: BMADAPISupabaseHighLatency
+      annotations:
+        description: 'BMAD API Supabase operations latency is above 1 second for more than 5 minutes.'
+        summary: 'BMAD API Supabase high latency'
+      expr: histogram_quantile(0.95, rate(bmad_supabase_operation_duration_seconds_bucket[5m])) > 1
+      for: 5m
+      labels:
+        severity: warning
+    
+    # Provider Router Monitoring
+    - alert: BMADAPIProviderRouterFailures
+      annotations:
+        description: 'BMAD API provider router failures are above 5 per minute for more than 5 minutes.'
+        summary: 'BMAD API provider router issues'
+      expr: rate(bmad_provider_router_failures_total[5m]) > 5
+      for: 5m
+      labels:
+        severity: warning
+    
+    - alert: BMADAPIProviderHighLatency
+      annotations:
+        description: 'BMAD API provider response latency is above 5 seconds for more than 5 minutes.'
+        summary: 'BMAD API provider high latency'
+      expr: histogram_quantile(0.95, rate(bmad_provider_response_duration_seconds_bucket[5m])) > 5
+      for: 5m
+      labels:
+        severity: warning
+    
+    # Performance Optimization Monitoring
+    - alert: BMADAPICacheHitRateLow
+      annotations:
+        description: 'BMAD API cache hit rate is below 70% for more than 10 minutes.'
+        summary: 'BMAD API low cache hit rate'
+      expr: rate(bmad_cache_hits_total[5m]) / rate(bmad_cache_requests_total[5m]) < 0.7
+      for: 10m
+      labels:
+        severity: warning
+    
+    - alert: BMADAPICircuitBreakerOpen
+      annotations:
+        description: 'BMAD API circuit breaker is open for more than 5 minutes.'
+        summary: 'BMAD API circuit breaker open'
+      expr: bmad_circuit_breaker_state == 1
+      for: 5m
+      labels:
+        severity: critical
+    
+    - alert: BMADAPIRateLimitExceeded
+      annotations:
+        description: 'BMAD API rate limit exceeded more than 10 times per minute for more than 5 minutes.'
+        summary: 'BMAD API rate limit exceeded'
+      expr: rate(bmad_rate_limit_exceeded_total[5m]) > 10
+      for: 5m
+      labels:
+        severity: warning
+    
+    # Analytics and Business Intelligence
+    - alert: BMADAPIAnalyticsProcessingFailures
+      annotations:
+        description: 'BMAD API analytics processing failures are above 3 per minute for more than 5 minutes.'
+        summary: 'BMAD API analytics processing issues'
+      expr: rate(bmad_analytics_processing_failures_total[5m]) > 3
+      for: 5m
+      labels:
+        severity: warning
+    
+    - alert: BMADAPIUserActivityDrop
+      annotations:
+        description: 'BMAD API user activity has dropped by more than 50% compared to the previous hour.'
+        summary: 'BMAD API user activity drop'
+      expr: rate(bmad_user_requests_total[1h]) < rate(bmad_user_requests_total[1h] offset 1h) * 0.5
+      for: 10m
+      labels:
+        severity: warning
+    
+    # Expansion Pack Monitoring
+    - alert: BMADAPIExpansionPackIssues
+      annotations:
+        description: 'BMAD expansion pack installation failures are above 3 per minute for more than 5 minutes.'
+        summary: 'BMAD API expansion pack issues'
+      expr: rate(bmad_expansion_pack_failures_total[5m]) > 3
+      for: 5m
+      labels:
+        severity: warning
+    
+    - alert: BMADAPIExpansionPackActivationFailures
+      annotations:
+        description: 'BMAD expansion pack activation failures are above 2 per minute for more than 5 minutes.'
+        summary: 'BMAD API expansion pack activation issues'
+      expr: rate(bmad_expansion_pack_activation_failures_total[5m]) > 2
+      for: 5m
+      labels:
+        severity: warning

@@ -1,0 +1,516 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: bmad-api-production
+    component: monitoring
+    environment: production
+    tier: backend
+  name: bmad-api-enhanced-dashboard
+  namespace: cerebral-production
+data:
+  dashboard.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "BMAD API Enhanced Production Dashboard",
+        "tags": ["bmad", "api", "production", "enhanced"],
+        "timezone": "browser",
+        "panels": [
+          {
+            "id": 1,
+            "title": "BMAD API Health Status",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "up{job=\"bmad-api-production\"}",
+                "legendFormat": "API Status"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "mappings": [
+                  {
+                    "options": {
+                      "0": {
+                        "text": "DOWN"
+                      },
+                      "1": {
+                        "text": "UP"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ],
+                "color": {
+                  "mode": "thresholds"
+                },
+                "thresholds": {
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": 0
+                    },
+                    {
+                      "color": "green",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 6,
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "id": 2,
+            "title": "Supabase Connection Status",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "bmad_supabase_connection_status",
+                "legendFormat": "Supabase Status"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "mappings": [
+                  {
+                    "options": {
+                      "0": {
+                        "text": "DISCONNECTED"
+                      },
+                      "1": {
+                        "text": "CONNECTED"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ],
+                "color": {
+                  "mode": "thresholds"
+                },
+                "thresholds": {
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": 0
+                    },
+                    {
+                      "color": "green",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 6,
+              "x": 6,
+              "y": 0
+            }
+          },
+          {
+            "id": 3,
+            "title": "Provider Router Status",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "bmad_provider_router_status",
+                "legendFormat": "Provider Status"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "mappings": [
+                  {
+                    "options": {
+                      "0": {
+                        "text": "DOWN"
+                      },
+                      "1": {
+                        "text": "UP"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ],
+                "color": {
+                  "mode": "thresholds"
+                },
+                "thresholds": {
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": 0
+                    },
+                    {
+                      "color": "green",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 6,
+              "x": 12,
+              "y": 0
+            }
+          },
+          {
+            "id": 4,
+            "title": "Circuit Breaker Status",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "bmad_circuit_breaker_state",
+                "legendFormat": "Circuit Breaker"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "mappings": [
+                  {
+                    "options": {
+                      "0": {
+                        "text": "CLOSED"
+                      },
+                      "1": {
+                        "text": "OPEN"
+                      },
+                      "2": {
+                        "text": "HALF-OPEN"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ],
+                "color": {
+                  "mode": "thresholds"
+                },
+                "thresholds": {
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": 0
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 2
+                    }
+                  ]
+                }
+              }
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 6,
+              "x": 18,
+              "y": 0
+            }
+          },
+          {
+            "id": 5,
+            "title": "Request Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(bmad_api_requests_total[5m])",
+                "legendFormat": "Requests/sec"
+              }
+            ],
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 0,
+              "y": 8
+            }
+          },
+          {
+            "id": 6,
+            "title": "Error Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(bmad_api_errors_total[5m]) / rate(bmad_api_requests_total[5m]) * 100",
+                "legendFormat": "Error Rate %"
+              }
+            ],
+            "gridPos": {
+              "h": 8,
+              "w": 6,
+              "x": 12,
+              "y": 8
+            }
+          },
+          {
+            "id": 7,
+            "title": "Cache Hit Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(bmad_cache_hits_total[5m]) / rate(bmad_cache_requests_total[5m]) * 100",
+                "legendFormat": "Cache Hit Rate %"
+              }
+            ],
+            "gridPos": {
+              "h": 8,
+              "w": 6,
+              "x": 18,
+              "y": 8
+            }
+          },
+          {
+            "id": 8,
+            "title": "Response Time",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(bmad_api_request_duration_seconds_bucket[5m]))",
+                "legendFormat": "95th percentile"
+              },
+              {
+                "expr": "histogram_quantile(0.50, rate(bmad_api_request_duration_seconds_bucket[5m]))",
+                "legendFormat": "50th percentile"
+              }
+            ],
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 0,
+              "y": 16
+            }
+          },
+          {
+            "id": 9,
+            "title": "Supabase Operation Latency",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(bmad_supabase_operation_duration_seconds_bucket[5m]))",
+                "legendFormat": "95th percentile"
+              },
+              {
+                "expr": "histogram_quantile(0.50, rate(bmad_supabase_operation_duration_seconds_bucket[5m]))",
+                "legendFormat": "50th percentile"
+              }
+            ],
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 12,
+              "y": 16
+            }
+          },
+          {
+            "id": 10,
+            "title": "CPU Usage",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(container_cpu_usage_seconds_total{pod=~\"bmad-api-production-.*\"}[5m]) * 100",
+                "legendFormat": "CPU Usage %"
+              }
+            ],
+            "gridPos": {
+              "h": 8,
+              "w": 6,
+              "x": 0,
+              "y": 24
+            }
+          },
+          {
+            "id": 11,
+            "title": "Memory Usage",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "container_memory_usage_bytes{pod=~\"bmad-api-production-.*\"} / 1024 / 1024",
+                "legendFormat": "Memory Usage MB"
+              }
+            ],
+            "gridPos": {
+              "h": 8,
+              "w": 6,
+              "x": 6,
+              "y": 24
+            }
+          },
+          {
+            "id": 12,
+            "title": "Workflow Executions",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(bmad_workflow_executions_total[5m])",
+                "legendFormat": "Workflows/sec"
+              },
+              {
+                "expr": "rate(bmad_workflow_failures_total[5m])",
+                "legendFormat": "Failures/sec"
+              }
+            ],
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 12,
+              "y": 24
+            }
+          },
+          {
+            "id": 13,
+            "title": "Supabase Task Operations",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(bmad_supabase_task_creations_total[5m])",
+                "legendFormat": "Task Creations/sec"
+              },
+              {
+                "expr": "rate(bmad_supabase_task_updates_total[5m])",
+                "legendFormat": "Task Updates/sec"
+              },
+              {
+                "expr": "rate(bmad_supabase_task_deletions_total[5m])",
+                "legendFormat": "Task Deletions/sec"
+              }
+            ],
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 0,
+              "y": 32
+            }
+          },
+          {
+            "id": 14,
+            "title": "Provider Performance",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(bmad_provider_openai_requests_total[5m])",
+                "legendFormat": "OpenAI Requests/sec"
+              },
+              {
+                "expr": "rate(bmad_provider_anthropic_requests_total[5m])",
+                "legendFormat": "Anthropic Requests/sec"
+              },
+              {
+                "expr": "rate(bmad_provider_azure_requests_total[5m])",
+                "legendFormat": "Azure Requests/sec"
+              }
+            ],
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 12,
+              "y": 32
+            }
+          },
+          {
+            "id": 15,
+            "title": "User Activity",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(bmad_user_requests_total[5m])",
+                "legendFormat": "User Requests/sec"
+              },
+              {
+                "expr": "bmad_active_users_total",
+                "legendFormat": "Active Users"
+              }
+            ],
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 0,
+              "y": 40
+            }
+          },
+          {
+            "id": 16,
+            "title": "Expansion Pack Activity",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(bmad_expansion_pack_installs_total[5m])",
+                "legendFormat": "Installs/sec"
+              },
+              {
+                "expr": "rate(bmad_expansion_pack_activations_total[5m])",
+                "legendFormat": "Activations/sec"
+              },
+              {
+                "expr": "rate(bmad_expansion_pack_failures_total[5m])",
+                "legendFormat": "Failures/sec"
+              }
+            ],
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 12,
+              "y": 40
+            }
+          },
+          {
+            "id": 17,
+            "title": "Analytics Processing",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(bmad_analytics_events_processed_total[5m])",
+                "legendFormat": "Events Processed/sec"
+              },
+              {
+                "expr": "rate(bmad_analytics_processing_failures_total[5m])",
+                "legendFormat": "Processing Failures/sec"
+              }
+            ],
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 0,
+              "y": 48
+            }
+          },
+          {
+            "id": 18,
+            "title": "Rate Limiting",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(bmad_rate_limit_exceeded_total[5m])",
+                "legendFormat": "Rate Limit Exceeded/sec"
+              },
+              {
+                "expr": "bmad_rate_limit_active_total",
+                "legendFormat": "Active Rate Limits"
+              }
+            ],
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 12,
+              "y": 48
+            }
+          }
+        ],
+        "time": {
+          "from": "now-1h",
+          "to": "now"
+        },
+        "refresh": "30s"
+      }
+    }
