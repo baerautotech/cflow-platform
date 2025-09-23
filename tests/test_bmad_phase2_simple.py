@@ -54,7 +54,7 @@ class TestPhase2ModuleImports:
     def test_context_serialization_import(self):
         """Test context serialization import."""
         try:
-            from cflow_platform.core.bmad_context_serialization import ContextSerializer
+            from cflow_platform.core.bmad_context_serialization import BMADContextSerializer
             assert ContextSerializer is not None
         except ImportError as e:
             pytest.fail(f"Failed to import context serializer: {e}")
@@ -123,7 +123,7 @@ class TestPhase2ClassInstantiation:
     
     def test_context_serializer_instantiation(self):
         """Test ContextSerializer instantiation."""
-        from cflow_platform.core.bmad_context_serialization import ContextSerializer
+        from cflow_platform.core.bmad_context_serialization import BMADContextSerializer
         
         # Create serializer
         serializer = ContextSerializer()
@@ -155,7 +155,7 @@ class TestPhase2BasicFunctionality:
     
     def test_context_serialization_basic(self):
         """Test basic context serialization."""
-        from cflow_platform.core.bmad_context_serialization import ContextSerializer, SerializationFormat
+        from cflow_platform.core.bmad_context_serialization import BMADContextSerializer, SerializationFormat
         
         serializer = ContextSerializer()
         

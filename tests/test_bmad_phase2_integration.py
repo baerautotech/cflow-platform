@@ -31,8 +31,8 @@ from unittest.mock import AsyncMock, patch, MagicMock
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from cflow_platform.core.bmad_persona_context import PersonaContext, BMADPersonaContextManager
-from cflow_platform.core.bmad_session_manager import BMADSessionManager, MockDBSessionClient
-from cflow_platform.core.bmad_task_checkpoint import BMADTaskCheckpoint, MockDBCheckpointClient
+from cflow_platform.core.bmad_session_manager import BMADSessionManager
+from cflow_platform.core.bmad_task_checkpoint import BMADTaskCheckpoint
 from cflow_platform.core.bmad_context_serialization import ContextSerializer, SerializationFormat
 from cflow_platform.core.bmad_unified_persona_system import BMADUnifiedPersonaSystem
 

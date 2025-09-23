@@ -94,6 +94,10 @@ class BMADSupabaseTaskManager:
                 logger.error("Failed to create BMAD task - no data returned")
                 return None
                 
+        except Exception as e:
+            logger.error(f"Failed to create BMAD task from template: {e}")
+            return None
+                
     async def create_bmad_task(self, 
                               title: str, 
                               description: str, 
