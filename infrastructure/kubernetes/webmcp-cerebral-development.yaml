@@ -1,0 +1,246 @@
+---
+# WebMCP Server Deployment for Cerebral Development
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webmcp
+  namespace: cerebral-development
+  labels:
+    app: webmcp
+    component: mcp-server
+    environment: development
+    tier: core
+    version: 1.0.0
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: webmcp
+  template:
+    metadata:
+      labels:
+        app: webmcp
+        component: mcp-server
+        environment: development
+        tier: core
+        version: 1.0.0
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: webmcp
+        image: ghcr.io/baerautotech/cflow-platform-webmcp:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        env:
+        - name: WEBMCP_HOST
+          value: "0.0.0.0"
+        - name: WEBMCP_PORT
+          value: "8000"
+        - name: WEBMCP_WORKERS
+          value: "1"
+        - name: WEBMCP_LOG_LEVEL
+          value: "info"
+        - name: PYTHONPATH
+          value: "/app"
+        - name: SUPABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: webmcp-secrets
+              key: supabase-url
+              optional: true
+        - name: SUPABASE_ANON_KEY
+          valueFrom:
+            secretKeyRef:
+              name: webmcp-secrets
+              key: supabase-anon-key
+              optional: true
+        - name: VAULT_URL
+          valueFrom:
+            secretKeyRef:
+              name: webmcp-secrets
+              key: vault-url
+              optional: true
+        - name: VAULT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: webmcp-secrets
+              key: vault-token
+              optional: true
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp-storage
+          mountPath: /tmp
+        - name: logs-storage
+          mountPath: /app/logs
+      volumes:
+      - name: tmp-storage
+        emptyDir:
+          sizeLimit: 1Gi
+      - name: logs-storage
+        emptyDir:
+          sizeLimit: 100Mi
+      securityContext:
+        fsGroup: 1000
+      restartPolicy: Always
+      serviceAccountName: webmcp-sa
+
+---
+# Service for WebMCP
+apiVersion: v1
+kind: Service
+metadata:
+  name: webmcp-service
+  namespace: cerebral-development
+  labels:
+    app: webmcp
+    component: mcp-server
+    environment: development
+    tier: core
+spec:
+  selector:
+    app: webmcp
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  type: ClusterIP
+
+---
+# ServiceAccount for WebMCP
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: webmcp-sa
+  namespace: cerebral-development
+  labels:
+    app: webmcp
+    component: mcp-server
+    environment: development
+    tier: core
+
+---
+# ConfigMap for WebMCP
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: webmcp-config
+  namespace: cerebral-development
+  labels:
+    app: webmcp
+    component: mcp-server
+    environment: development
+    tier: core
+data:
+  WEBMCP_HOST: "0.0.0.0"
+  WEBMCP_PORT: "8000"
+  WEBMCP_WORKERS: "1"
+  WEBMCP_LOG_LEVEL: "info"
+  PYTHONPATH: "/app"
+
+---
+# Secret for WebMCP (placeholder - replace with actual values)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: webmcp-secrets
+  namespace: cerebral-development
+  labels:
+    app: webmcp
+    component: mcp-server
+    environment: development
+    tier: core
+type: Opaque
+data:
+  # Base64 encoded values - replace with actual secrets
+  supabase-url: ""  # echo -n "your-supabase-url" | base64
+  supabase-anon-key: ""  # echo -n "your-supabase-key" | base64
+  vault-url: ""     # echo -n "your-vault-url" | base64
+  vault-token: ""   # echo -n "your-vault-token" | base64
+
+---
+# Ingress for WebMCP
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webmcp-ingress
+  namespace: cerebral-development
+  labels:
+    app: webmcp
+    component: mcp-server
+    environment: development
+    tier: core
+  annotations:
+    # cert-manager annotations
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # nginx annotations
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/rate-limit: "200"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    # Auth annotations
+    nginx.ingress.kubernetes.io/auth-url: "https://auth.dev.cerebral.baerautotech.com/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://auth.dev.cerebral.baerautotech.com/auth/start?rd=$escaped_request_uri"
+    nginx.ingress.kubernetes.io/auth-response-headers: "X-Auth-Request-User,X-Auth-Request-Email,X-Auth-Request-Groups,X-Auth-Request-Access-Token"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://cerebral.baerautotech.com,https://dev.cerebral.baerautotech.com"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET,POST,PUT,DELETE,OPTIONS"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - webmcp.dev.cerebral.baerautotech.com
+    secretName: webmcp-tls
+  rules:
+  - host: webmcp.dev.cerebral.baerautotech.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: webmcp-service
+            port:
+              number: 8000
