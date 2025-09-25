@@ -178,24 +178,9 @@ data:
   PYTHONPATH: "/app"
 
 ---
-# Secret for WebMCP (placeholder - replace with actual values)
-apiVersion: v1
-kind: Secret
-metadata:
-  name: webmcp-secrets
-  namespace: cerebral-development
-  labels:
-    app: webmcp
-    component: mcp-server
-    environment: development
-    tier: core
-type: Opaque
-data:
-  # Base64 encoded values - replace with actual secrets
-  supabase-url: ""  # echo -n "your-supabase-url" | base64
-  supabase-anon-key: ""  # echo -n "your-supabase-key" | base64
-  vault-url: ""     # echo -n "your-vault-url" | base64
-  vault-token: ""   # echo -n "your-vault-token" | base64
+# Note: WebMCP secrets are managed by External Secrets Operator
+# The webmcp-secrets Secret is automatically created by webmcp-externalsecret.yaml
+# which pulls secrets from Vault at secret/app/webmcp
 
 ---
 # Ingress for WebMCP
@@ -244,3 +229,4 @@ spec:
             name: webmcp-service
             port:
               number: 8000
+
