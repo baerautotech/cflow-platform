@@ -83,6 +83,41 @@ To comprehensively validate a story draft before implementation begins, ensuring
 - **Reference accuracy**: Verify all source references are correct and accessible
 - **Fact checking**: Cross-reference claims against epic and architecture documents
 
+### 8.5. Comprehensive Epic/Architecture Gap Analysis
+
+#### 8.5.1 Epic Requirements Coverage Analysis
+- **Story Goal Alignment**: Verify story goal matches epic story definition exactly
+- **Epic Integration Requirements**: Check all integration requirements from epic are covered
+- **Epic Success Criteria**: Verify all relevant success criteria are addressed
+- **Epic Dependencies**: Ensure all epic-level dependencies are included
+- **Epic Risk Mitigation**: Verify risk mitigation strategies are addressed
+- **Epic Timeline**: Check if story aligns with epic timeline and critical path
+
+#### 8.5.2 Architecture Document Coverage Analysis
+- **Tech Stack Requirements**: Verify all relevant technology stack requirements
+- **API Specifications**: Check all API endpoints and specifications are covered
+- **Service Integration**: Verify all service integration requirements
+- **Security Requirements**: Ensure all security and compliance requirements
+- **Performance Requirements**: Verify all performance and scalability requirements
+- **Deployment Requirements**: Check all deployment and infrastructure requirements
+- **Data Models**: Verify all data models and schemas are addressed
+- **Integration Patterns**: Check all integration patterns and workflows
+
+#### 8.5.3 Cross-Document Requirement Mapping
+- **Epic → Architecture Mapping**: Map each epic requirement to architecture specifications
+- **Architecture → Story Mapping**: Map each architecture requirement to story tasks
+- **Missing Requirement Identification**: Flag any requirements not covered in story
+- **Overlapping Requirement Analysis**: Identify duplicate or conflicting requirements
+- **Dependency Chain Validation**: Verify requirement dependencies are properly handled
+- **Coverage Gap Analysis**: Calculate percentage of requirements covered
+
+#### 8.5.4 Gap Analysis Report Generation
+- **Critical Gaps**: Requirements completely missing from story
+- **Partial Gaps**: Requirements partially covered but incomplete
+- **Over-Coverage**: Story includes requirements not in epic/architecture
+- **Misalignment**: Story requirements that contradict epic/architecture
+- **Coverage Percentage**: Quantitative measure of requirement coverage (target: >95%)
+
 ### 9. Dev Agent Implementation Readiness
 
 - **Self-contained context**: Can the story be implemented without reading external docs?
@@ -128,9 +163,20 @@ Provide a structured validation report including:
 - Inconsistencies with architecture documents
 - Invented libraries, patterns, or standards
 
+#### Epic/Architecture Gap Analysis Results
+
+- **Critical Gaps**: Requirements completely missing from story
+- **Partial Gaps**: Requirements partially covered but incomplete
+- **Over-Coverage**: Story includes requirements not in epic/architecture
+- **Misalignment**: Story requirements that contradict epic/architecture
+- **Coverage Percentage**: Quantitative measure of requirement coverage
+- **Missing Epic Requirements**: Specific epic requirements not addressed
+- **Missing Architecture Requirements**: Specific architecture requirements not addressed
+
 #### Final Assessment
 
 - **GO**: Story is ready for implementation
 - **NO-GO**: Story requires fixes before implementation
 - **Implementation Readiness Score**: 1-10 scale
+- **Coverage Score**: Percentage of epic/architecture requirements covered
 - **Confidence Level**: High/Medium/Low for successful implementation
