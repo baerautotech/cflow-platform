@@ -31,13 +31,26 @@ spec:
           type: RuntimeDefault
       containers:
       - name: webmcp
-        image: ghcr.io/baerautotech/cflow-platform-webmcp:latest
+        image: python@sha256:a0939570b38cddeb861b8e75d20b1c8218b21562b18f301171904b544e8cf228
         imagePullPolicy: Always
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            set -eu
+            CODE_DIR=/opt/webmcp
+            mkdir -p "${CODE_DIR}"
+            python -m pip install --no-cache-dir --upgrade pip
+            python -m pip install --no-cache-dir --target "${CODE_DIR}" \
+              "https://github.com/baerautotech/cflow-platform/archive/refs/heads/${WEBMCP_REF}.zip"
+            export PYTHONPATH="${CODE_DIR}:${PYTHONPATH:-}"
+            exec python -m cflow_platform.core.webmcp_server
         ports:
         - containerPort: 8000
           name: http
           protocol: TCP
         env:
+        - name: WEBMCP_REF
+          value: main
         - name: WEBMCP_HOST
           value: "0.0.0.0"
         - name: WEBMCP_PORT
@@ -47,7 +60,7 @@ spec:
         - name: WEBMCP_LOG_LEVEL
           value: "info"
         - name: PYTHONPATH
-          value: "/app"
+          value: "/opt/webmcp"
         - name: SUPABASE_URL
           valueFrom:
             secretKeyRef:
@@ -111,6 +124,8 @@ spec:
           mountPath: /tmp
         - name: logs-storage
           mountPath: /app/logs
+        - name: code-storage
+          mountPath: /opt/webmcp
       volumes:
       - name: tmp-storage
         emptyDir:
@@ -118,6 +133,9 @@ spec:
       - name: logs-storage
         emptyDir:
           sizeLimit: 100Mi
+      - name: code-storage
+        emptyDir:
+          sizeLimit: 1Gi
       securityContext:
         fsGroup: 1000
       restartPolicy: Always
