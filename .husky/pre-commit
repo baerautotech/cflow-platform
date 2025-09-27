@@ -1,0 +1,8 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+bash scripts/vendor_overrides_check.sh || {
+  echo "\nVendor override drift detected. Run scripts/vendor_overrides_apply.sh then re-stage changes." >&2
+  exit 1
+}
+

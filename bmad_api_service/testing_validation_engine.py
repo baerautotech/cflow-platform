@@ -257,3 +257,4 @@ validation_engine = BMADTestingValidationEngine()
 if os.getenv("BMAD_PRODUCTION_MODE", "true").lower() == "true":
     result = validation_engine.enforce_production_gate()
     validation_engine.add_validation_result(result)
+

@@ -45,6 +45,9 @@ class SupabaseTaskManager:
                os.getenv("SUPABASE_ANON_KEY") or "").strip()
         
         if not url or not key:
+            # PRODUCTION GATE: Hard fail instead of mock mode fallback
+            if os.getenv("BMAD_PRODUCTION_MODE", "false").lower() == "true":
+                raise RuntimeError("PRODUCTION GATE VIOLATION: Supabase credentials not found in production mode. Mock mode is UNACCEPTABLE!")
             logger.warning("Supabase credentials not found - using mock mode")
             return
         

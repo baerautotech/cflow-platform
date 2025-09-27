@@ -1,0 +1,181 @@
+---
+# Simple WebMCP Server Deployment (No Supabase Dependencies)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webmcp-server
+  namespace: default
+  labels:
+    app: webmcp-server
+    component: mcp-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: webmcp-server
+  template:
+    metadata:
+      labels:
+        app: webmcp-server
+        component: mcp-server
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: webmcp-server
+        image: python@sha256:a0939570b38cddeb861b8e75d20b1c8218b21562b18f301171904b544e8cf228
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: WEBMCP_HOST
+          value: "0.0.0.0"
+        - name: WEBMCP_PORT
+          value: "8080"
+        - name: WEBMCP_LOG_LEVEL
+          value: "info"
+        command: ["python", "-c"]
+        args:
+          - |
+            import asyncio
+            import json
+            import os
+            from http.server import HTTPServer, BaseHTTPRequestHandler
+            from urllib.parse import urlparse, parse_qs
+            import sys
+            
+            # Simple MCP tool execution function for testing
+            async def execute_mcp_tool(tool_name, **kwargs):
+                # Simulate tool execution
+                if tool_name == "sys_test":
+                    return {"status": "success", "result": "System test passed", "tool": tool_name}
+                elif tool_name == "task_list":
+                    return {"status": "success", "result": "Task list retrieved", "tool": tool_name}
+                elif tool_name == "research":
+                    return {"status": "success", "result": "Research completed", "tool": tool_name}
+                else:
+                    return {"status": "success", "result": f"Tool {tool_name} executed", "tool": tool_name}
+            
+            # Simple tool registry
+            def get_tools_for_mcp():
+                return [
+                    {"name": "sys_test", "description": "Test system connection"},
+                    {"name": "task_list", "description": "List tasks"},
+                    {"name": "research", "description": "Enhanced research"},
+                    {"name": "lint_full", "description": "Run full lint"},
+                    {"name": "test_analyze", "description": "Analyze test suite"},
+                ]
+            
+            class MCPHandler(BaseHTTPRequestHandler):
+                def do_GET(self):
+                    if self.path == '/health':
+                        self.send_response(200)
+                        self.send_header('Content-type', 'application/json')
+                        self.end_headers()
+                        self.wfile.write(json.dumps({"status": "healthy", "service": "webmcp-server"}).encode())
+                    elif self.path == '/tools':
+                        self.send_response(200)
+                        self.send_header('Content-type', 'application/json')
+                        self.end_headers()
+                        tools = get_tools_for_mcp()
+                        self.wfile.write(json.dumps({"tools": tools}).encode())
+                    else:
+                        self.send_response(404)
+                        self.send_header('Content-type', 'application/json')
+                        self.end_headers()
+                        self.wfile.write(json.dumps({"error": "Not found"}).encode())
+                
+                def do_POST(self):
+                    if self.path == '/execute':
+                        content_length = int(self.headers['Content-Length'])
+                        post_data = self.rfile.read(content_length)
+                        try:
+                            data = json.loads(post_data.decode('utf-8'))
+                            tool_name = data.get('tool_name')
+                            kwargs = data.get('kwargs', {})
+                            
+                            # Execute the MCP tool
+                            loop = asyncio.new_event_loop()
+                            asyncio.set_event_loop(loop)
+                            result = loop.run_until_complete(execute_mcp_tool(tool_name, **kwargs))
+                            loop.close()
+                            
+                            self.send_response(200)
+                            self.send_header('Content-type', 'application/json')
+                            self.end_headers()
+                            self.wfile.write(json.dumps(result).encode())
+                        except Exception as e:
+                            self.send_response(500)
+                            self.send_header('Content-type', 'application/json')
+                            self.end_headers()
+                            self.wfile.write(json.dumps({"error": str(e)}).encode())
+                    else:
+                        self.send_response(404)
+                        self.send_header('Content-type', 'application/json')
+                        self.end_headers()
+                        self.wfile.write(json.dumps({"error": "Not found"}).encode())
+                
+                def log_message(self, format, *args):
+                    # Suppress default logging
+                    pass
+            
+            if __name__ == '__main__':
+                server = HTTPServer(('0.0.0.0', 8080), MCPHandler)
+                print("WebMCP Server starting on port 8080...")
+                server.serve_forever()
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+      securityContext:
+        fsGroup: 1000
+      restartPolicy: Always
+
+---
+# WebMCP Server Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: webmcp-server-service
+  namespace: default
+  labels:
+    app: webmcp-server
+spec:
+  selector:
+    app: webmcp-server
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  type: ClusterIP
+

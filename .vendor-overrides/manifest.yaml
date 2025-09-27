@@ -1,0 +1,11 @@
+upstream:
+  project: bmad-method
+  source_path: vendor/bmad
+  upstream_version_file: vendor/bmad/UPSTREAM_VERSION
+overrides:
+  - path: bmad-core/agents/dev.md
+    rationale: Harden dev agent to reduce hallucinations; enforce grounding and read-before-write.
+    owner: platform-dev
+    strategy: overlay
+    last_updated: 2025-09-26
+

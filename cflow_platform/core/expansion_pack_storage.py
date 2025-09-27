@@ -79,7 +79,7 @@ class ExpansionPackStorage:
             
             # Fallback to environment variables - CLOUD PLATFORM ONLY
             if not minio_endpoint:
-                minio_endpoint = os.getenv("MINIO_ENDPOINT", "minio.cerebral.baerautotech.com")
+                minio_endpoint = os.getenv("MINIO_ENDPOINT", "minio.cerebral.baerauto.com")
             if not minio_access_key:
                 minio_access_key = os.getenv("MINIO_ACCESS_KEY", "")
             if not minio_secret_key:
@@ -87,11 +87,31 @@ class ExpansionPackStorage:
             if not minio_secure:
                 minio_secure = os.getenv("MINIO_SECURE", "true").lower() == "true"  # HTTPS for cloud platform
             
+            # Configure MinIO client for standalone MinIO (not AWS S3)
+            import ssl
+            import urllib3
+            from urllib3.util.ssl_ import create_urllib3_context
+            
+            # Disable SSL warnings for self-signed certificates
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            
+            # Create SSL context that's more lenient for self-signed certificates
+            ssl_context = create_urllib3_context()
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+            
+            # Create HTTP client with custom SSL context
+            http_client = urllib3.PoolManager(ssl_context=ssl_context)
+            
+            # Initialize MinIO client for standalone MinIO
+            # Note: This uses MinIO's native API, not AWS S3 compatibility mode
             self.minio_client = Minio(
                 minio_endpoint,
                 access_key=minio_access_key,
                 secret_key=minio_secret_key,
-                secure=minio_secure
+                secure=minio_secure,
+                http_client=http_client,
+                region='us-east-1'  # Default region for standalone MinIO
             )
             
             # Ensure buckets exist

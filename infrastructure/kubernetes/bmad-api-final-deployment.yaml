@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bmad-api-final
+  namespace: cerebral-alpha
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bmad-api-final
+  template:
+    metadata:
+      labels:
+        app: bmad-api-final
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: bmad-api
+        image: python@sha256:a0939570b38cddeb861b8e75d20b1c8218b21562b18f301171904b544e8cf228
+        command: ["sh", "-c"]
+        args: ["pip install fastapi uvicorn python-multipart && python /app/main.py"]
+        ports:
+        - containerPort: 8001
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: LOG_LEVEL
+          value: INFO
+        - name: BMAD_ENVIRONMENT
+          value: production
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - name: bmad-code
+          mountPath: /app
+        livenessProbe:
+          httpGet:
+            path: /bmad/health
+            port: 8001
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /bmad/health
+            port: 8001
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: bmad-code
+        configMap:
+          name: bmad-api-brownfield-code
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bmad-api-final-service
+  namespace: cerebral-alpha
+spec:
+  selector:
+    app: bmad-api-final
+  ports:
+  - port: 8001
+    targetPort: 8001
+    protocol: TCP
+  type: ClusterIP

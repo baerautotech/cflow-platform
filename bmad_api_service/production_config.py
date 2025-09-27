@@ -119,3 +119,4 @@ def enforce_production_settings() -> None:
 # Auto-enforce production settings on import
 if is_production_mode():
     enforce_production_settings()
+

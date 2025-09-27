@@ -1,0 +1,17 @@
+name: Vendor Overrides Check
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run vendor overrides check
+        run: |
+          bash scripts/vendor_overrides_check.sh
+

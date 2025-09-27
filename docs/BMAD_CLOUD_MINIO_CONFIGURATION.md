@@ -357,3 +357,4 @@ This cloud-native MinIO configuration ensures that:
 - **Integration with Cerebral cluster**
 
 The migration from localhost to cloud platform is **critical** for the success of the BMAD cloud migration and ensures that all documentation and task systems work properly in the cloud environment.
+

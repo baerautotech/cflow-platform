@@ -242,7 +242,7 @@ def _report_databases(project_root: str | None) -> dict:
     # MinIO
     try:
         import httpx  # type: ignore
-        minio_endpoint = env.get("MINIO_ENDPOINT") or env.get("S3_ENDPOINT") or "minio.cerebral.baerautotech.com"
+        minio_endpoint = env.get("MINIO_ENDPOINT") or env.get("S3_ENDPOINT") or "minio.cerebral.baerauto.com"
         minio_access = env.get("MINIO_ACCESS_KEY")
         minio_secret = env.get("MINIO_SECRET_KEY")
         minio_health = None
