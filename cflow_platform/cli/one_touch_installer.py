@@ -43,6 +43,28 @@ def cli() -> int:
     parser.add_argument("--cluster-bmad-api-url", default="https://bmad-api.dev.cerebral.baerautotech.com", help="Cluster BMAD API service URL")
     parser.add_argument("--cluster-bmad-method-url", default="https://bmad-method.dev.cerebral.baerautotech.com", help="Cluster BMAD-Method service URL")
     args = parser.parse_args()
+    project_root = Path.cwd()
+
+    # Ensure env files are ready
+    try:
+        from cflow_platform.core.env_manager import ensure_env_files
+
+        env_results = ensure_env_files(project_root)
+        for result in env_results:
+            rel = result.target.relative_to(project_root)
+            if result.skipped_reason == 'template_missing':
+                print(f'⚠️  Skipped env management for {rel}: template missing')
+            elif result.created:
+                print(f'✅ Created {rel} from template')
+            elif result.appended_keys:
+                keys = ', '.join(result.appended_keys)
+                print(f'✅ Updated {rel}; appended keys: {keys}')
+                if result.backup_path:
+                    print(f'   Backup saved to {result.backup_path}')
+            else:
+                print(f'ℹ️  {rel} already up to date')
+    except Exception as exc:
+        print(f'⚠️  Env preparation skipped: {exc}')
 
     rc = 0
     # Verify environment (non-interactive)

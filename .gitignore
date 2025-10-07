@@ -24,3 +24,4 @@ uv.lock
 .cerebraflow/cflow-sync.pid
 .env
 .DS_Store
+.cerebraflow/backups/

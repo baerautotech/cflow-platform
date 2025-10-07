@@ -70,6 +70,11 @@ jobs:
           done
           
           echo "✅ Kyverno compliance check passed!"
+
+      - name: Enforce Sealed Secrets docs guard
+        run: |
+          chmod +x scripts/ci/check-no-vault-docs.sh
+          scripts/ci/check-no-vault-docs.sh
       
       - name: Generate validation summary
         run: |
