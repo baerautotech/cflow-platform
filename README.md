@@ -2,6 +2,23 @@
 
 This package provides Phase 1 wrappers to allow early consumption of CFlow APIs before the full repo split.
 
+## 🚀 Building & Deploying
+
+This repository uses the **BaerAutoTech automated build system**.
+
+**Automatic builds**: Pushing to `main` or `develop` triggers automatic build and deploy.
+
+**Manual trigger**:
+```bash
+gh workflow run build-and-deploy.yml
+```
+
+**View builds**: https://github.com/baerautotech/cflow-platform/actions
+
+**Full documentation**: https://github.com/baerautotech/cerebral-deployment/blob/main/DEVELOPER_QUICK_START.md
+
+---
+
 - Public API: `cflow_platform.public_api` (proxies to monorepo `.cerebraflow/core/mcp/core/public_api.py`)
 - SDK: `cflow_platform.sdk.CFlowClient` to execute MCP tools
 - CLI:

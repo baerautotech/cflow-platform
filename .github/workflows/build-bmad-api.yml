@@ -1,0 +1,69 @@
+name: Build BMAD API
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'bmad_api_service/**'
+      - 'infrastructure/docker/Dockerfile.bmad-api'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: [self-hosted]
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Determine environment
+        id: env
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "namespace=cerebral-production" >> $GITHUB_OUTPUT
+            echo "environment=production" >> $GITHUB_OUTPUT
+          else
+            echo "namespace=cerebral-development" >> $GITHUB_OUTPUT
+            echo "environment=development" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Build with Kaniko
+        id: build
+        uses: baerautotech/cerebral-deployment/.github/actions/build-with-kaniko@main
+        with:
+          image-name: 'cerebral/bmad-api'
+          dockerfile: 'infrastructure/docker/Dockerfile.bmad-api'
+          context: '.'
+          build-args: |
+            [
+              "VERSION=${{ github.ref_name }}",
+              "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
+              "VCS_REF=${{ github.sha }}"
+            ]
+      
+      - name: Deploy to Kubernetes
+        run: |
+          echo "Deploying BMAD API to ${{ steps.env.outputs.namespace }}"
+          
+          kubectl set image deployment/bmad-api \
+            bmad-api=${{ steps.build.outputs.image }} \
+            -n ${{ steps.env.outputs.namespace }}
+          
+          kubectl rollout status deployment/bmad-api \
+            -n ${{ steps.env.outputs.namespace }} \
+            --timeout=5m
+      
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n ${{ steps.env.outputs.namespace }} -l app=bmad-api
+          echo "✅ BMAD API deployed successfully"
+      
+      - name: Output summary
+        run: |
+          echo "## BMAD API Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image**: \`${{ steps.build.outputs.image }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Digest**: \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: \`${{ steps.env.outputs.environment }}\`" >> $GITHUB_STEP_SUMMARY
+
