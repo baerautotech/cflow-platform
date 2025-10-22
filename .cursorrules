@@ -1,64 +1,75 @@
-# CFlow Platform Repository
+# Cursor Rules - Supabase Database Access
 
-## Build & Deploy (October 2025)
+## Database Connection: Use /root/supabase_connect.sh
 
-**This repo uses automated build system** - push code triggers automatic build and deploy.
-
-### GitHub Actions
-
-**Workflows**: Located in `.github/workflows/` in THIS repo
-
-**Runners**: Organization-level in `actions-runner-system` namespace
-
-**Check status**:
-```bash
-kubectl get pods -n actions-runner-system
-gh api orgs/baerautotech/actions/runners
+Supabase database access is through a simple shell script at:
+```
+/root/supabase_connect.sh
 ```
 
-### Building Images
-
-**Use shared action**:
-```yaml
-- uses: baerautotech/cerebral-deployment/.github/actions/build-with-kaniko@main
-  with:
-    image-name: 'cerebral/<service>'
-    dockerfile: 'infrastructure/docker/Dockerfile.<service>'
-    context: '.'
-```
-
-**Action clones THIS repo** (cflow-platform) and builds from YOUR code.
-
-### Registry
-
-- Internal: `internal-registry.registry.svc.cluster.local:5000`
-- External: `registry.dev.cerebral.baerautotech.com`
-
-### Common Commands
+### Quick Commands
 
 ```bash
-# Trigger build
-gh workflow run build-bmad-api.yml
+# List tables
+/root/supabase_connect.sh list-tables
 
-# Watch build
-gh run watch
+# Show table schema
+/root/supabase_connect.sh schema <table_name>
 
-# Check deployment
-kubectl get pods -n cerebral-development -l app=bmad-api
+# Count records
+/root/supabase_connect.sh count <table_name>
+
+# Run SQL query
+/root/supabase_connect.sh query "SELECT * FROM table_name LIMIT 10;"
+
+# Open psql
+/root/supabase_connect.sh psql
 ```
 
-### Documentation
+### Connection Details
 
-**Quick start**: https://github.com/baerautotech/cerebral-deployment/blob/main/DEVELOPER_QUICK_START.md
+Session Pooler (Production):
+```
+host: aws-0-us-east-2.pooler.supabase.com
+user: postgres.txlzlhcrfippujcmnief
+password: rC@UUh9Z%*WQ
+port: 5432
+dbname: postgres
+```
 
-### For Agents
+### For Python Code
 
-**Do NOT**:
-- ❌ Check `github-runners` namespace (old, terminating)
-- ❌ Create workflows in cerebral-deployment repo
-- ❌ Use manual Kaniko jobs
+```python
+import subprocess
 
-**DO**:
-- ✅ Check `actions-runner-system` namespace
-- ✅ Use workflows in THIS repo
-- ✅ Use shared build-with-kaniko action
+def query_supabase(sql):
+    result = subprocess.run(
+        ['/root/supabase_connect.sh', 'query', sql],
+        capture_output=True,
+        text=True
+    )
+    return result.stdout
+```
+
+### For Schema Changes
+
+```bash
+# Create table
+/root/supabase_connect.sh query "CREATE TABLE ..."
+
+# Add column
+/root/supabase_connect.sh query "ALTER TABLE ... ADD COLUMN ..."
+
+# View structure
+/root/supabase_connect.sh schema table_name
+```
+
+### No External Dependencies
+
+- No MCP
+- No CLI tools
+- No Python packages
+- Just psql (comes with PostgreSQL)
+- Simple bash script
+
+Reference: SUPABASE_CONNECTION_GUIDE.md
